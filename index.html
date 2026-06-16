@@ -8,8 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
+        /* Pull-to-refresh aur scroll issue rokne ke liye */
         html, body { overscroll-behavior-y: contain !important; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #cbd5e1; display: flex; justify-content: center; margin: 0; overscroll-behavior-y: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #cbd5e1; display: flex; justify-content: center; margin: 0; padding: 0; }
         .app-container { width: 100%; max-width: 480px; height: 100dvh; background: #f8fafc; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.2); }
         .app-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 2rem; position: relative; }
         .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
@@ -19,9 +20,12 @@
         .glass-card { background: rgba(255,255,255,0.98); border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
         .sidebar-menu { transition: transform 0.3s ease; position: absolute; top: 0; left: 0; height: 100%; z-index: 100; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Modal Animation */
+        .modal-zoom { animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @media print {
             body { background: #fff !important; } .app-container { max-width: 100% !important; box-shadow: none !important; display: block; overflow: visible; }
-            .app-body { overflow: visible !important; } #auth-container, #app-header, #app-sidebar-menu, .no-print { display: none !important; }
+            .app-body { overflow: visible !important; } #auth-container, #app-header, #app-sidebar-menu, .no-print, #global-modal-overlay { display: none !important; }
             #print-paper-template, #print-receipt-template { display: block !important; } .view-panel { display: none !important; }
             .print-page-break { page-break-after: always; display: block !important; margin-bottom: 2rem; } .print-page-final { display: block !important; }
         }
@@ -29,6 +33,7 @@
 </head>
 <body>
     <div class="app-container">
+        
         <div id="auth-container" class="absolute inset-0 bg-white z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
             <div class="text-center mb-8 mt-4">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl mx-auto mb-5 shadow-xl flex items-center justify-center transform rotate-3"><span class="text-4xl text-white font-black">₹</span></div>
@@ -69,13 +74,14 @@
                 <button onclick="toggleSidebarMenu(false)" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 btn-fluid font-bold text-sm">✕</button>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 space-y-2 pr-1" id="sidebar-navigation-nodes">
-                <button onclick="routePanelSection('dashboard')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">📊</span> Branch Dashboard</button>
+                <button onclick="routePanelSection('dashboard')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">📊</span> Dashboard</button>
                 <button onclick="routePanelSection('requests')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-indigo-300 flex items-center justify-between hidden"><div><span class="text-lg mr-2">📥</span> Requests</div><span class="bg-indigo-600 text-white rounded-md px-2 py-0.5 text-[9px]" id="req-count-badge">0</span></button>
                 <button onclick="routePanelSection('clients')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">👥</span> Client Directory</button>
                 <button onclick="routePanelSection('ledger')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">💵</span> Collection Ledger</button>
                 <button onclick="routePanelSection('kyc')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">📑</span> KYC Form</button>
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-amber-400 mt-4 hidden"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">🔄</span> Renew Client</button>
+                
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 text-rose-400 border border-rose-900/30 mt-4 hidden"><span class="text-lg mr-2">✏️</span> Edit/Delete Data</button>
                 <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 text-blue-400 border border-blue-900/30 hidden"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
                 <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 text-emerald-400 border border-emerald-900/30 hidden"><span class="text-lg mr-2">⚙️</span> Setup Nodes</button>
@@ -92,20 +98,54 @@
         <div class="app-body px-4 pt-4 hidden" id="main-views-container">
 
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
-                <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4">
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3"><label class="text-[10px] font-black text-purple-900 uppercase">Target Node:</label><select id="head-analytics-branch-selector" onchange="triggerDashboardAnalyticsRefresh()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
-                    <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden"><div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div><div class="relative z-10"><p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-profit-title">Global Profit</p><h3 class="text-4xl font-black mt-1" id="head-profit-view">₹0</h3><div class="grid grid-cols-2 gap-4 pt-5 border-t border-white/10 mt-4 text-xs"><div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Portfolio</p><p class="text-lg font-black" id="head-portfolio-view">₹0</p></div><div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Active Books</p><p class="text-lg font-black" id="head-active-accounts">0</p></div></div></div></div>
-                    <div class="mt-4 border-t border-slate-100 pt-4"><h3 class="text-[10px] font-black text-slate-500 uppercase mb-3">Verification Queue</h3><div id="head-approval-zone" class="space-y-3"></div></div>
+                <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <label class="text-[10px] font-black text-purple-900 uppercase">Master Filter:</label>
+                        <select id="head-analytics-branch-selector" onchange="refreshHeadDashboardStats()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+                        <div class="relative z-10">
+                            <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Global Target View</p>
+                            <h3 class="text-4xl font-black mt-1" id="head-total-outstanding">₹0</h3>
+                            <p class="text-[9px] text-purple-300 font-bold uppercase mt-1">Total Loan Outstanding (Market)</p>
+                            
+                            <div class="grid grid-cols-2 gap-4 pt-5 border-t border-white/10 mt-4 text-xs">
+                                <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Total Active Clients</p><p class="text-xl font-black text-emerald-400" id="head-total-clients">0</p></div>
+                                <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Total Profit Generable</p><p class="text-xl font-black text-white" id="head-profit-view">₹0</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
+                            <p class="text-[9px] font-black text-blue-600 uppercase">Today's Advance EMI</p>
+                            <p class="text-xl font-black text-blue-700 mt-1" id="head-today-advance">₹0</p>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl">
+                            <p class="text-[9px] font-black text-amber-600 uppercase">Today's Direct Settle</p>
+                            <p class="text-xl font-black text-amber-700 mt-1" id="head-today-settle">₹0</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 border-t border-slate-100 pt-4">
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase mb-3">Approval Verification Queue</h3>
+                        <div id="head-approval-zone" class="space-y-3"></div>
+                    </div>
                 </div>
 
-                <div class="glass-card p-4 rounded-2xl flex items-center justify-between shadow-sm role-staff hidden"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch View:</label><select id="dashboard-active-branch-select" onchange="triggerDashboardAnalyticsRefresh()" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none"></select></div>
+                <div class="glass-card p-4 rounded-2xl flex items-center justify-between shadow-sm role-staff hidden">
+                    <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch View:</label>
+                    <select id="dashboard-active-branch-select" onchange="refreshHeadDashboardStats()" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none"></select>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="glass-card p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-slate-400 uppercase">Today's Disbursal</p><p class="text-2xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
                     <div class="glass-card p-5 rounded-[1.5rem] border-blue-200"><p class="text-[9px] font-black text-blue-500 uppercase">Monthly Disbursal</p><p class="text-2xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
                     <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-emerald-600 uppercase">Today's Collection</p><p class="text-2xl font-black text-emerald-600 mt-2" id="m-collection-today">₹0</p></div>
                     <div class="bg-rose-50 border border-rose-100 p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-rose-500 uppercase">Today's Overdue</p><p class="text-2xl font-black text-rose-600 mt-2" id="m-od-today">₹0</p></div>
-                    <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Clients</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
-                    <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Deactive Clients</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
+                    <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
+                    <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
                     <div class="glass-card p-5 rounded-[1.5rem] text-center bg-purple-50/40 border-purple-100"><p class="text-[9px] font-black text-purple-600 uppercase">Newly Added</p><p class="text-2xl font-black text-purple-700 mt-2" id="m-new-clients">0</p></div>
                     <div class="glass-card p-5 rounded-[1.5rem] text-center bg-amber-50/40 border-amber-100"><p class="text-[9px] font-black text-amber-600 uppercase">Renewed</p><p class="text-2xl font-black text-amber-700 mt-2" id="m-renew-clients">0</p></div>
                 </div>
@@ -121,7 +161,10 @@
             <div id="view-node-clients" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
-                    <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200"><select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="total">Total Active</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option></select><select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-4 mt-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select></div>
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="total">Total Active</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
+                        <select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-4 mt-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                    </div>
                     <div class="flex justify-between items-center px-1"><span class="text-[10px] font-black uppercase text-slate-500">Results</span><span class="text-[10px] font-black bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg" id="report-count-badge">0 Found</span></div>
                     <div id="client-directory-list-zone" class="space-y-4 max-h-[50vh] overflow-y-auto pr-1"></div>
                 </div>
@@ -145,7 +188,7 @@
                         <input type="text" id="new-cust-id-ref" placeholder="12-Digit Aadhaar Reference" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none">
                         
                         <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-4 mt-2">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Custom Principal Amount (₹)</label><input type="number" id="new-loan-principal" value="5000" oninput="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-indigo-700"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Principal Amount (₹)</label><input type="number" id="new-loan-principal" value="5000" oninput="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-indigo-700"></div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Select Plan</label><select id="new-loan-amount" onchange="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none"><option value="100-days">100 Days</option><option value="30-weeks">30 Weeks</option><option value="36-weeks">36 Weeks</option></select></div>
                                 <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Interest ROI %</label><input type="number" id="new-loan-roi" value="12" oninput="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none text-center"></div>
@@ -202,18 +245,77 @@
                 </div>
             </div>
 
+            <div id="view-node-admin-edit" class="view-panel hidden animate-fade space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 space-y-4">
+                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
+                    <select id="admin-edit-client-select" onchange="loadClientForEdit()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                    
+                    <div id="admin-edit-form-block" class="space-y-3 hidden">
+                        <input type="text" id="edit-cust-name" placeholder="Client Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Outstanding</label><input type="number" id="edit-cust-outstanding" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue</label><input type="number" id="edit-cust-od" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Cycle EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option></select></div>
+                        </div>
+                        <div class="flex gap-2 pt-4 border-t border-slate-100">
+                            <button onclick="saveClientEdits()" class="btn-fluid flex-1 bg-slate-900 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md">Save Changes</button>
+                            <button onclick="deleteClientRecord()" class="btn-fluid w-16 bg-rose-100 text-rose-600 font-black py-4 rounded-xl text-lg shadow-sm">🗑</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-node-staff-manage" class="view-panel hidden animate-fade space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 space-y-4">
+                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👨‍💼</div><h3 class="text-xs font-black text-blue-600 uppercase">Staff Management</h3></div>
+                    
+                    <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 space-y-3">
+                        <p class="text-[9px] font-black uppercase text-blue-600">Add New Field Officer</p>
+                        <input type="text" id="new-staff-name" placeholder="Full Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold">
+                        <div class="grid grid-cols-2 gap-2"><input type="text" id="new-staff-username" placeholder="Username" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><input type="password" id="new-staff-pass" placeholder="Password" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></div>
+                        <select id="new-staff-branch" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></select>
+                        <button onclick="createNewStaffAccount()" class="btn-fluid w-full bg-blue-600 text-white font-black py-3.5 rounded-lg text-[10px] uppercase shadow-md">Create Staff</button>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-3">Active Staff Directory</p>
+                        <div id="active-staff-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-node-setup" class="view-panel hidden animate-fade space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 space-y-5">
+                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
+                    
+                    <div class="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 space-y-3">
+                        <p class="text-[9px] font-black uppercase text-emerald-600">Create New Branch</p>
+                        <div class="flex gap-2"><input type="text" id="setup-branch-name" placeholder="Branch Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewBranch()" class="bg-emerald-600 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
+                        <div id="setup-branch-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                        <p class="text-[9px] font-black uppercase text-slate-600">Create New Centre Cluster</p>
+                        <select id="setup-centre-parent" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></select>
+                        <div class="flex gap-2"><input type="text" id="setup-centre-name" placeholder="Centre Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewCentre()" class="bg-slate-800 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
+                        <div id="setup-centre-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
             <div id="view-node-cust-apply" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl">📝</div><h3 class="text-sm font-black text-blue-600 uppercase">Apply For New Loan</h3></div>
                     <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
                         <input type="text" id="apply-cust-name" placeholder="Applicant Full Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:outline-none">
                         <input type="text" id="apply-cust-phone" disabled class="w-full p-4 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-500">
-                        
                         <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-3 mt-2">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Required Amount (₹)</label><input type="number" id="apply-cust-principal" value="5000" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-indigo-700"></div>
                             <select id="apply-cust-plan" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="100-days">100 Days Plan (Daily)</option><option value="30-weeks">30 Weeks Plan (Weekly)</option></select>
                         </div>
-                        
                         <button onclick="submitCustomerLoanRequest()" class="btn-fluid w-full py-4 bg-blue-600 text-white font-black text-xs uppercase rounded-xl shadow-lg mt-4">Submit Application</button>
                     </div>
                 </div>
@@ -285,6 +387,14 @@
             </div>
 
         </div>
+
+        <div id="global-modal-overlay" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex items-end justify-center sm:items-center">
+            <div id="modal-content" class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-6 relative modal-zoom shadow-2xl">
+                <button onclick="closeGlobalModal()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full font-black flex items-center justify-center">✕</button>
+                <div id="modal-injection-zone"></div>
+            </div>
+        </div>
+
     </div> 
     
     <div id="print-paper-template" class="hidden bg-white max-w-4xl mx-auto text-black font-serif">
@@ -340,9 +450,9 @@
 
     <script>
         // ==========================================
-        // 🚀 DATABASE & CLOUD SYNC LOGIC (YE MAIN HAI)
+        // 🚀 DATABASE & CLOUD SYNC LOGIC
         // ==========================================
-        const API_URL = "https://opas-backend-z1iz.onrender.com/api/clients"; // Aapka Render backend aage chalkar yahan aayega
+        const API_URL = "https://opas-backend-z1iz.onrender.com/api/clients"; 
         
         let currentActiveStaffTab = 'daily'; 
         let currentlyLoggedInMobile = ''; 
@@ -354,56 +464,40 @@
         let centreList = [{ id: "c1", branch: "हिनौता", name: "Dhadta Core Centre" }, { id: "c2", branch: "हिनौता", name: "Rampur Central Area" }];
         let staffDb = { "staff01": { pass: "staff123", name: "Vikas Kumar", empId: "EMP-VK09", branch: "हिनौता", role: "Field Officer" } };
 
-        // Ab serverDb aayega direct cloud se!
         let serverDb = {}; 
 
-        // 1. DATA LOAD KARNA (App khulte hi)
+        // 1. DATA LOAD 
         async function loadDataFromCloud() {
             try {
                 const response = await fetch(API_URL);
                 if (response.ok) {
                     serverDb = await response.json();
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
-                } else {
-                    document.getElementById('cloud-status').innerText = "⚠️ Cloud Error";
-                }
-            } catch (error) {
-                console.error("Cloud se connect nahi ho paya:", error);
-                document.getElementById('cloud-status').innerText = "⚠️ Backend Offline";
-            }
+                } else { document.getElementById('cloud-status').innerText = "⚠️ Cloud Error"; }
+            } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Backend Offline"; }
         }
 
-        // 2. DATA SAVE KARNA (Jab bhi koi badlav ho)
+        // 2. DATA SAVE
         async function saveDataToCloud(mobileNumber) {
             try {
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
-                const dataToSave = serverDb[mobileNumber];
-                
                 await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        mobile: mobileNumber,
-                        data: dataToSave
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mobile: mobileNumber, data: serverDb[mobileNumber] })
                 });
                 document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
-            } catch (error) {
-                console.error("Data save hone mein error:", error);
-                document.getElementById('cloud-status').innerText = "⚠️ Save Failed";
-            }
+            } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Save Failed"; }
         }
 
-        // INIT (Khulte hi pehle data layega)
+        // INIT
         window.addEventListener('DOMContentLoaded', async () => { 
             await loadDataFromCloud(); 
             syncSetupDropdowns(); 
         });
 
         // ==========================================
-        // PURANA SAARA LOGIC YAHAN SE WAISE HI HAI
+        // UI HELPERS & UTILS
         // ==========================================
-
         function setHtmlSafe(id, val) { try { const el = document.getElementById(id); if(el) el.innerText = (val !== undefined && val !== null && val !== "") ? val : "-"; } catch (e) {} }
         function getSafeValue(id) { try { const el = document.getElementById(id); return el ? el.value : ""; } catch (e) { return ""; } }
 
@@ -416,7 +510,7 @@
         }
         function calculateNextEmiDate(planType, fromDateStr) {
             let d = new Date();
-            if(fromDateStr && fromDateStr !== "N/A") { let parts = fromDateStr.split('-'); if(parts.length === 3) d = new Date(parts[2], parseInt(parts[1])-1, parts[0]); }
+            if(fromDateStr && fromDateStr !== "N/A" && fromDateStr !== "Completed") { let parts = fromDateStr.split('-'); if(parts.length === 3) d = new Date(parts[2], parseInt(parts[1])-1, parts[0]); }
             d.setDate(d.getDate() + (planType === 'daily' ? 1 : 7)); return formatSysDate(d);
         }
 
@@ -424,17 +518,26 @@
             try { const m = document.getElementById('app-sidebar-menu'); if(!m) return; if (open) m.classList.remove('-translate-x-full'); else m.classList.add('-translate-x-full'); } catch (e) {} 
         }
 
+        function openGlobalModal(htmlContent) {
+            document.getElementById('modal-injection-zone').innerHTML = htmlContent;
+            document.getElementById('global-modal-overlay').classList.remove('hidden');
+        }
+        function closeGlobalModal() {
+            document.getElementById('global-modal-overlay').classList.add('hidden');
+            document.getElementById('modal-injection-zone').innerHTML = '';
+        }
+
         function routePanelSection(panelId) {
             try {
                 document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
                 if (panelId === 'dashboard') {
                     document.getElementById('view-node-dashboard')?.classList.remove('hidden');
-                    if (currentLoggedInRole === 'head') { document.getElementById('head-exclusive-stats')?.classList.remove('hidden'); renderHeadApprovalBox(); } 
+                    if (currentLoggedInRole === 'head') { document.getElementById('head-exclusive-stats')?.classList.remove('hidden'); refreshHeadDashboardStats(); } 
                     else { document.getElementById('head-exclusive-stats')?.classList.add('hidden'); }
                 } else { document.getElementById('view-node-' + panelId)?.classList.remove('hidden'); }
                 toggleSidebarMenu(false);
 
-                if(panelId === 'dashboard' && currentLoggedInRole === 'staff') triggerDashboardAnalyticsRefresh();
+                if(panelId === 'dashboard' && currentLoggedInRole === 'staff') refreshHeadDashboardStats();
                 if(panelId === 'ledger') renderStaffLedgerSheets();
                 if(panelId === 'clients') { syncReportDropdowns(); renderClientDirectory(); }
                 if(panelId === 'renew') syncRenewalClientsDropdown();
@@ -445,11 +548,15 @@
                 if(panelId === 'cust-profile') { if(serverDb[currentlyLoggedInMobile]) { const ab = document.getElementById('cust-edit-address'); if (ab) ab.value = serverDb[currentlyLoggedInMobile].address || ""; } }
                 if(panelId === 'staff-manage') renderStaffList();
                 if(panelId === 'admin-edit') syncAdminEditDropdown();
+                if(panelId === 'setup') renderSetupLists();
                 
                 const appBody = document.getElementById('main-views-container'); if(appBody) appBody.scrollTop = 0;
             } catch (e) { console.error(e); }
         }
 
+        // ==========================================
+        // SETUP NODES (Branch & Centre) - HEAD
+        // ==========================================
         function syncSetupDropdowns() {
             try {
                 let bOpt = `<option value="">-- Select Branch --</option>`; branchList.forEach(b => { bOpt += `<option value="${b}">${b}</option>`; });
@@ -463,37 +570,58 @@
 
                 let hOpt = `<option value="ALL">Global View</option>`; branchList.forEach(b => { hOpt += `<option value="${b}">Branch: ${b}</option>`; });
                 let hb = document.getElementById('head-analytics-branch-selector'); if(hb) hb.innerHTML = hOpt;
+                
                 syncReportDropdowns();
+                renderSetupLists();
             } catch(e) {}
         }
 
-        function syncReportDropdowns() {
+        function renderSetupLists() {
             try {
-                let opts = `<option value="">-- Target Centre --</option>`; centreList.forEach(c => { opts += `<option value="${c.name}">${c.name} (${c.branch})</option>`; });
-                let cs = document.getElementById('report-centre-filter'); if(cs) cs.innerHTML = opts;
-            } catch(e) {}
-        }
+                // Render Branches
+                let bHtml = '';
+                branchList.forEach(b => {
+                    bHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-emerald-100"><span class="text-xs font-black text-slate-800">${b}</span><button onclick="deleteBranch('${b}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded">Delete</button></div>`;
+                });
+                let bl = document.getElementById('setup-branch-list'); if(bl) bl.innerHTML = bHtml;
 
-        function syncKycCentreDropdown() {
-            try {
-                const sb = getSafeValue('new-cust-branch'); const cd = document.getElementById('new-cust-center');
-                if(!sb) { if(cd) { cd.innerHTML = `<option value="">Select Branch First</option>`; cd.disabled = true; } return; }
-                let mc = centreList.filter(c => c.branch === sb); let opts = `<option value="">-- Select Centre --</option>`;
-                mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
-                if(cd) { cd.innerHTML = opts; cd.disabled = false; }
+                // Render Centres
+                let cHtml = '';
+                centreList.forEach(c => {
+                    cHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><div><span class="text-xs font-black text-slate-800 block">${c.name}</span><span class="text-[9px] text-slate-400 font-bold">Branch: ${c.branch}</span></div><button onclick="deleteCentre('${c.id}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded">Delete</button></div>`;
+                });
+                let cl = document.getElementById('setup-centre-list'); if(cl) cl.innerHTML = cHtml;
             } catch(e) {}
         }
 
         function createNewBranch() { 
             const n = getSafeValue('setup-branch-name').trim(); if(!n) { alert("Branch name empty."); return; } 
+            if(branchList.includes(n)) { alert("Branch already exists."); return; }
             branchList.push(n); alert(`Branch ${n} Created!`); document.getElementById('setup-branch-name').value = ''; syncSetupDropdowns(); 
         }
+        function deleteBranch(name) {
+            if(confirm(`Delete branch ${name}?`)) {
+                branchList = branchList.filter(b => b !== name);
+                centreList = centreList.filter(c => c.branch !== name); // Delete associated centres
+                syncSetupDropdowns();
+            }
+        }
+
         function createNewCentre() { 
             const pb = getSafeValue('setup-centre-parent'); const cn = getSafeValue('setup-centre-name').trim(); 
             if(!pb || !cn) { alert("Select branch & enter centre."); return; } 
-            centreList.push({ id: "c" + (centreList.length + 1), branch: pb, name: cn }); alert(`Centre ${cn} Saved!`); document.getElementById('setup-centre-name').value = ''; syncReportDropdowns(); 
+            centreList.push({ id: "c" + Date.now(), branch: pb, name: cn }); alert(`Centre ${cn} Saved!`); document.getElementById('setup-centre-name').value = ''; syncSetupDropdowns(); 
+        }
+        function deleteCentre(id) {
+            if(confirm("Delete this Centre?")) {
+                centreList = centreList.filter(c => c.id !== id);
+                syncSetupDropdowns();
+            }
         }
 
+        // ==========================================
+        // STAFF MANAGEMENT - HEAD
+        // ==========================================
         function createNewStaffAccount() {
             const n = getSafeValue('new-staff-name').trim(); const u = getSafeValue('new-staff-username').trim(); const p = getSafeValue('new-staff-pass').trim(); const b = getSafeValue('new-staff-branch');
             if(!n || !u || !p || !b) { alert("Fill all fields."); return; } 
@@ -508,12 +636,21 @@
                 const zone = document.getElementById('active-staff-list'); let html = '';
                 Object.keys(staffDb).forEach(u => { 
                     let s = staffDb[u]; 
-                    html += `<div class="bg-white p-4 border border-slate-200 rounded-2xl shadow-sm flex justify-between"><div><p class="text-xs font-black text-slate-800">${s.name||'N/A'} <span class="text-[9px] text-slate-400">(${u})</span></p><p class="text-[9px] text-blue-600 font-bold mt-1 uppercase">Branch: ${s.branch||'N/A'}</p></div><span class="text-[9px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-black">${s.empId||'N/A'}</span></div>`; 
+                    html += `<div class="bg-white p-4 border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-2">
+                        <div class="flex justify-between"><div><p class="text-xs font-black text-slate-800">${s.name||'N/A'} <span class="text-[9px] text-slate-400">(${u})</span></p><p class="text-[9px] text-blue-600 font-bold mt-1 uppercase">Branch: ${s.branch||'N/A'}</p></div><span class="text-[9px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-black">${s.empId||'N/A'}</span></div>
+                        <button onclick="deleteStaff('${u}')" class="text-[9px] font-bold text-rose-500 text-right uppercase tracking-widest mt-1">Delete Staff</button>
+                    </div>`; 
                 });
-                if(zone) zone.innerHTML = html;
+                if(zone) zone.innerHTML = html || `<p class="text-[10px] text-center text-slate-400">No staff found.</p>`;
             } catch(e) {}
         }
+        function deleteStaff(u) {
+            if(confirm("Delete this staff account?")) { delete staffDb[u]; renderStaffList(); }
+        }
 
+        // ==========================================
+        // ADMIN DATA EDIT - HEAD
+        // ==========================================
         function syncAdminEditDropdown() {
             try {
                 const sel = document.getElementById('admin-edit-client-select'); let opts = `<option value="">-- Select Client --</option>`;
@@ -533,61 +670,97 @@
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
              try {
                  serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = parseInt(getSafeValue('edit-cust-outstanding'))||0; serverDb[m].cycleEmi = parseInt(getSafeValue('edit-cust-emi'))||0; serverDb[m].overdue = parseInt(getSafeValue('edit-cust-od'))||0; serverDb[m].status = getSafeValue('edit-cust-status') || serverDb[m].status;
-                 await saveDataToCloud(m); // DATA SAVED TO CLOUD
-                 alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); renderHeadApprovalBox(); 
+                 await saveDataToCloud(m); 
+                 alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats(); 
              } catch(e) { alert("Error saving data."); }
         }
         function deleteClientRecord() {
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-             if(confirm("⚠ PERMANENTLY DELETE client?")) { try { delete serverDb[m]; alert("Client removed locally (Note: API deletion code needed for cloud)."); syncAdminEditDropdown(); renderHeadApprovalBox(); } catch(e) {} }
+             if(confirm("⚠ PERMANENTLY DELETE client?")) { try { delete serverDb[m]; alert("Client permanently removed."); syncAdminEditDropdown(); refreshHeadDashboardStats(); } catch(e) {} }
         }
 
-        function triggerDashboardAnalyticsRefresh() {
+        // ==========================================
+        // DASHBOARD MASTER ANALYTICS (HEAD & STAFF)
+        // ==========================================
+        function refreshHeadDashboardStats() {
             try {
-                const sb = getSafeValue('dashboard-active-branch-select'); if(!sb) return;
-                let dT=0, dM=0, cT=0, oT=0, aC=0, deC=0, nC=0, rC=0;
-                Object.keys(serverDb).forEach(key => {
-                    let c = serverDb[key];
-                    if (c.branch === sb) {
-                        if (c.status === "Active") aC++; if (c.status === "Deactive") deC++;
-                        if (c.isFirstLoan && c.isApproved) nC++; if (c.isRenewed) rC++;
-                        if (c.isApproved) { 
-                            dM += (c.principal||0); 
-                            if(c.emiSettled==='received' || c.emiSettled==='online_paid') cT += (c.cycleEmi||0); 
-                            if(c.emiSettled==='bounce') oT += (c.cycleEmi||0); 
-                            if(c.advancePaid > 0) cT += c.advancePaid; 
+                const headSelector = getSafeValue('head-analytics-branch-selector') || "ALL";
+                const staffSelector = getSafeValue('dashboard-active-branch-select');
+                // Decide which filter to use based on role
+                const activeFilter = currentLoggedInRole === 'head' ? headSelector : staffSelector;
+
+                let cp = 0, csp = 0, cac = 0; // Total Profit, Total Portfolio, Total Accounts
+                let dT = 0, dM = 0, cT = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
+                let todayAdv = 0, todaySettle = 0;
+                let todayStr = formatSysDate(new Date());
+                
+                if(currentLoggedInRole === 'head') {
+                    setHtmlSafe('head-filter-title', activeFilter === "ALL" ? "Global Target View" : `Branch View: ${activeFilter}`);
+                }
+
+                let pKey = null; // For pending approval box
+                
+                Object.keys(serverDb).forEach(k => {
+                    let f = serverDb[k]; 
+                    let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
+                    
+                    if(match) {
+                        if(!f.isApproved && !pKey && f.status === 'Pending Approval') pKey = k;
+                        
+                        if(f.isApproved) { 
+                            cp += (f.interestAmt||0); 
+                            csp += (f.principal||0); 
+                            cac++; 
+                            
+                            // Check transactions for today's advance and settle
+                            if(f.transactions) {
+                                f.transactions.forEach(tx => {
+                                    if(tx.date === todayStr) {
+                                        if(tx.type === 'Advance') todayAdv += tx.amount;
+                                        if(tx.type === 'Direct Settle') todaySettle += tx.amount;
+                                    }
+                                });
+                            }
+                        }
+                        if (f.status === "Active") aC++; 
+                        if (f.status === "Deactive") deC++; 
+                        if (f.isFirstLoan && f.isApproved) nC++; 
+                        if (f.isRenewed) rC++;
+                        
+                        if (f.isApproved) { 
+                            dM += (f.principal||0); 
+                            if(f.emiSettled==='received' || f.emiSettled==='online_paid') cT += (f.cycleEmi||0); 
+                            if(f.emiSettled==='bounce') oT += (f.cycleEmi||0); 
+                            if(f.advancePaid>0) cT += f.advancePaid; 
                         }
                     }
                 });
-                setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); setHtmlSafe('m-disburse-month', `₹${dM.toLocaleString('en-IN')}`); setHtmlSafe('m-collection-today', `₹${cT.toLocaleString('en-IN')}`); setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`); setHtmlSafe('m-active-count', aC); setHtmlSafe('m-deactive-count', deC); setHtmlSafe('m-new-clients', nC); setHtmlSafe('m-renew-clients', rC);
-            } catch(e) {}
-        }
 
-        function renderHeadApprovalBox() {
-            try {
-                const z = document.getElementById('head-approval-zone'); const sh = getSafeValue('head-analytics-branch-selector');
-                let cp = 0; let csp = 0; let cac = 0; let dT = 0, dM = 0, cT = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
-                
-                if(sh !== "ALL" && sh !== "") { setHtmlSafe('head-profit-title', `Profit (${sh})`); } else { setHtmlSafe('head-profit-title', "Global Profit"); }
-                
-                let pKey = null;
-                Object.keys(serverDb).forEach(k => {
-                    let f = serverDb[k]; let match = (sh === "ALL" || sh === "" || f.branch === sh);
-                    if(!f.isApproved && !pKey && f.status === 'Pending Approval') pKey = k;
-                    if(match) {
-                        if(f.isApproved) { cp += (f.interestAmt||0); csp += (f.principal||0); cac++; }
-                        if (f.status === "Active") aC++; if (f.status === "Deactive") deC++; if (f.isFirstLoan && f.isApproved) nC++; if (f.isRenewed) rC++;
-                        if (f.isApproved) { dM += (f.principal||0); if(f.emiSettled==='received' || f.emiSettled==='online_paid') cT += (f.cycleEmi||0); if(f.emiSettled==='bounce') oT += (f.cycleEmi||0); if(f.advancePaid>0) cT += f.advancePaid; }
+                // Update Head Specific Blocks
+                if(currentLoggedInRole === 'head') {
+                    let totalOut = 0;
+                    Object.keys(serverDb).forEach(k => {
+                        if(activeFilter === "ALL" || serverDb[k].branch === activeFilter) {
+                            if(serverDb[k].status === "Active") totalOut += (serverDb[k].outstanding || 0);
+                        }
+                    });
+                    setHtmlSafe('head-total-outstanding', `₹${totalOut.toLocaleString('en-IN')}`);
+                    setHtmlSafe('head-total-clients', cac);
+                    setHtmlSafe('head-profit-view', `₹${cp.toLocaleString('en-IN')}`);
+                    setHtmlSafe('head-today-advance', `₹${todayAdv.toLocaleString('en-IN')}`);
+                    setHtmlSafe('head-today-settle', `₹${todaySettle.toLocaleString('en-IN')}`);
+
+                    // Approval Box
+                    const z = document.getElementById('head-approval-zone');
+                    if (!pKey) { if(z) z.innerHTML = `<p class="text-xs text-slate-400 font-bold uppercase text-center py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed">All flawless.</p>`; } 
+                    else {
+                        let file = serverDb[pKey];
+                        if(z) z.innerHTML = `<div class="p-5 bg-purple-50/80 border border-purple-200 rounded-3xl"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${file.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${file.branch||'NA'} / ${file.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm">Approval Needed</span></div><p class="text-[10px] text-purple-700 font-black mt-2 uppercase bg-white p-2.5 rounded-lg inline-block shadow-sm">₹${(file.principal||0).toLocaleString()} | ROI: ${file.roi||0}%</p><button onclick="executeHeadApproval('${pKey}')" class="btn-fluid w-full mt-4 bg-purple-700 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve</button></div>`;
                     }
-                });
-
-                setHtmlSafe('head-profit-view', `₹${cp.toLocaleString('en-IN')}`); setHtmlSafe('head-portfolio-view', `₹${csp.toLocaleString('en-IN')}`); setHtmlSafe('head-active-accounts', `${cac} Accounts`); 
-                
-                if (!pKey) { if(z) z.innerHTML = `<p class="text-xs text-slate-400 font-bold uppercase text-center py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed">All flawless.</p>`; } 
-                else {
-                    let file = serverDb[pKey];
-                    if(z) z.innerHTML = `<div class="p-5 bg-purple-50/80 border border-purple-200 rounded-3xl"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${file.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${file.branch||'NA'} / ${file.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm">Approval Needed</span></div><p class="text-[10px] text-purple-700 font-black mt-2 uppercase bg-white p-2.5 rounded-lg inline-block shadow-sm">₹${(file.principal||0).toLocaleString()} | ROI: ${file.roi||0}%</p><button onclick="executeHeadApproval('${pKey}')" class="btn-fluid w-full mt-4 bg-purple-700 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve</button></div>`;
                 }
+
+                // Update Staff Blocks (Shared view)
+                setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); setHtmlSafe('m-disburse-month', `₹${dM.toLocaleString('en-IN')}`); setHtmlSafe('m-collection-today', `₹${cT.toLocaleString('en-IN')}`); setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`); setHtmlSafe('m-active-count', aC); setHtmlSafe('m-deactive-count', deC); setHtmlSafe('m-new-clients', nC); setHtmlSafe('m-renew-clients', rC);
             } catch(e) {}
         }
 
@@ -595,8 +768,18 @@
             try {
                 if(!serverDb[mobile]) return;
                 serverDb[mobile].isApproved = true; serverDb[mobile].status = "Active"; serverDb[mobile].approvalDate = formatSysDate(new Date()); serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].planName); serverDb[mobile].lastPaymentDate = "N/A"; serverDb[mobile].nextEmiDate = calculateNextEmiDate(serverDb[mobile].planType, null);
-                await saveDataToCloud(mobile); // DATA SAVED TO CLOUD
-                alert("Approved & Synced!"); renderHeadApprovalBox(); 
+                await saveDataToCloud(mobile); 
+                alert("Approved & Synced!"); refreshHeadDashboardStats(); 
+            } catch(e) {}
+        }
+
+        // ==========================================
+        // CLIENT DIRECTORY & FULL INFO MODAL
+        // ==========================================
+        function syncReportDropdowns() {
+            try {
+                let opts = `<option value="">-- Target Centre --</option>`; centreList.forEach(c => { opts += `<option value="${c.name}">${c.name} (${c.branch})</option>`; });
+                let cs = document.getElementById('report-centre-filter'); if(cs) cs.innerHTML = opts;
             } catch(e) {}
         }
 
@@ -608,13 +791,27 @@
                 let html = ''; let count = 0; const sc = cf ? cf.value : "";
 
                 Object.keys(serverDb).forEach(mobile => {
-                    let c = serverDb[mobile]; if (c.status !== "Active" && rt !== "total") return; 
+                    let c = serverDb[mobile]; 
                     let match = false;
-                    if (rt === 'total' && c.status === "Active") match = true; else if (rt === 'new' && c.isFirstLoan && c.status === "Active") match = true; else if (rt === 'renewed' && c.isRenewed && c.status === "Active") match = true; else if (rt === 'centre' && c.center === sc && c.status === "Active") match = true;
+                    if (rt === 'total' && c.status === "Active") match = true; 
+                    else if (rt === 'new' && c.isFirstLoan && c.status === "Active") match = true; 
+                    else if (rt === 'renewed' && c.isRenewed && c.status === "Active") match = true; 
+                    else if (rt === 'centre' && c.center === sc && c.status === "Active") match = true;
+                    else if (rt === 'closed' && c.status === "Deactive") match = true;
 
                     if(match) {
                         count++; let prin = c.totalPayable||0; let out = c.outstanding||0;
-                        html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-2 animate-fade"><div class="flex justify-between items-start"><div><p class="text-[9px] font-mono text-indigo-500 font-bold">${c.id||'NA'}</p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div><span class="text-[9px] font-black px-3 py-1.5 rounded-xl uppercase bg-blue-50 text-blue-600 shadow-inner">${c.planName||'Plan'}</span></div><div class="grid grid-cols-2 gap-4 mt-3 pt-4 border-t border-slate-50 text-[10px]"><div><span class="text-slate-400 font-bold uppercase block mb-1">Branch</span><span class="font-black text-slate-700">${c.branch||'NA'}</span></div><div><span class="text-slate-400 font-bold uppercase block mb-1">Centre</span><span class="font-black text-slate-700">${c.center||'NA'}</span></div><div><span class="text-slate-400 font-bold uppercase block mb-1">Disbursed</span><span class="font-black text-slate-700 text-sm">₹${prin.toLocaleString()}</span></div><div><span class="text-slate-400 font-bold uppercase block mb-1">Remaining</span><span class="font-black text-rose-600 text-sm">₹${out.toLocaleString()}</span></div></div></div>`;
+                        html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-3 animate-fade">
+                            <div class="flex justify-between items-start">
+                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold">${c.id||'NA'}</p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
+                                <span class="text-[9px] font-black px-3 py-1.5 rounded-xl uppercase bg-blue-50 text-blue-600 shadow-inner">${c.planName||'Plan'}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mt-1 pt-3 border-t border-slate-50 text-[10px]">
+                                <div><span class="text-slate-400 font-bold uppercase block mb-1">Branch/Centre</span><span class="font-black text-slate-700">${c.branch||'NA'} / ${c.center||'NA'}</span></div>
+                                <div><span class="text-slate-400 font-bold uppercase block mb-1">Status</span><span class="font-black ${c.status==='Active'?'text-emerald-500':'text-rose-500'}">${c.status}</span></div>
+                            </div>
+                            <button onclick="showClientFullInfo('${mobile}')" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mt-2">More Information</button>
+                        </div>`;
                     }
                 });
 
@@ -624,6 +821,287 @@
             } catch(e) {}
         }
 
+        // FULL INFO & EMI CALENDAR
+        function showClientFullInfo(mobile) {
+            const c = serverDb[mobile]; if(!c) return;
+            
+            let editBtn = '';
+            if(currentLoggedInRole === 'head') {
+                editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-client-select').value='${mobile}'; loadClientForEdit();" class="btn-fluid w-full bg-rose-100 text-rose-600 font-black py-4 rounded-xl text-[10px] uppercase mt-4">✏️ Edit Profile</button>`;
+            }
+
+            let html = `
+                <div class="text-center border-b border-slate-100 pb-4 mb-4">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl font-black">${c.name ? c.name.substring(0,1).toUpperCase() : 'U'}</div>
+                    <h2 class="text-lg font-black text-slate-900">${c.name}</h2>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">${mobile} | ID: ${c.id}</p>
+                </div>
+                <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-2 text-xs">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <h4 class="text-[9px] font-black uppercase text-blue-600 mb-3 border-b border-slate-200 pb-1">Personal Details</h4>
+                        <div class="grid grid-cols-2 gap-y-3">
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Spouse Name</span><span class="font-black text-slate-800">${c.spouse||'N/A'}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Voter ID</span><span class="font-black text-slate-800">${c.voterRef||'N/A'}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Nominee</span><span class="font-black text-slate-800">${c.nominee||'N/A'}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Relation</span><span class="font-black text-slate-800">${c.nomineeRelation||'N/A'}</span></div>
+                            <div class="col-span-2"><span class="block text-[9px] font-bold text-slate-400 uppercase">Full Address</span><span class="font-bold text-slate-700 leading-relaxed">${c.address||'N/A'}</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <h4 class="text-[9px] font-black uppercase text-blue-600 mb-3 border-b border-slate-200 pb-1">Loan Profile</h4>
+                        <div class="grid grid-cols-2 gap-y-3">
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Principal</span><span class="font-black text-slate-800">₹${(c.principal||0).toLocaleString()}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Total Payable</span><span class="font-black text-emerald-600">₹${(c.totalPayable||0).toLocaleString()}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Cycle EMI</span><span class="font-black text-slate-800">₹${c.cycleEmi||0}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Overdue</span><span class="font-black text-rose-500">₹${c.overdue||0}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                    <button onclick="showClientCalendar('${mobile}')" class="btn-fluid w-full bg-slate-900 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md">📅 View EMI Calendar</button>
+                    ${editBtn}
+                </div>
+            `;
+            openGlobalModal(html);
+        }
+
+        function showClientCalendar(mobile) {
+            const c = serverDb[mobile]; if(!c) return;
+            
+            let txHtml = '';
+            
+            // Render Past Loans (If Renewed)
+            if(c.pastLoans && c.pastLoans.length > 0) {
+                txHtml += `<div class="mb-5"><h4 class="text-[10px] font-black uppercase text-slate-400 bg-slate-100 p-2 rounded-lg text-center mb-3">Old Loan History</h4>`;
+                c.pastLoans.forEach((old, idx) => {
+                    txHtml += `<div class="bg-slate-50 border border-slate-200 p-3 rounded-xl mb-3"><p class="text-[9px] font-black text-blue-600 uppercase mb-2">Loan Cycle ${idx+1} (Closed)</p>`;
+                    if(old.transactions && old.transactions.length > 0) {
+                        old.transactions.forEach(t => {
+                            let color = t.type==='Advance' ? 'text-blue-500' : (t.type==='Bounced'?'text-rose-500':(t.type==='Direct Settle'?'text-amber-500':'text-emerald-500'));
+                            txHtml += `<div class="flex justify-between items-center py-2 border-b border-slate-200/50 last:border-0"><span class="text-[9px] font-black text-slate-500 uppercase">${t.date}</span><span class="text-[10px] font-bold text-slate-800">${t.type}</span><span class="text-[10px] font-black ${color}">₹${t.amount}</span></div>`;
+                        });
+                    } else { txHtml += `<p class="text-[9px] text-slate-400 italic">No transactions recorded.</p>`; }
+                    txHtml += `</div>`;
+                });
+                txHtml += `</div>`;
+            }
+
+            // Render Current Loan
+            txHtml += `<div><h4 class="text-[10px] font-black uppercase text-blue-600 bg-blue-50 p-2 rounded-lg text-center mb-3">Current Active Calendar</h4>`;
+            if(c.transactions && c.transactions.length > 0) {
+                // Reverse loop for newest first
+                for(let i = c.transactions.length - 1; i >= 0; i--) { 
+                    let t = c.transactions[i]; 
+                    let color = t.type==='Advance' ? 'text-blue-500' : (t.type==='Bounced'?'text-rose-500':(t.type==='Direct Settle'?'text-amber-500':'text-emerald-500'));
+                    txHtml += `<div class="flex justify-between items-center py-3 border-b border-slate-100 last:border-0"><span class="text-[10px] font-black text-slate-500 uppercase">${t.date}</span><span class="text-xs font-bold text-slate-800">${t.type}</span><span class="text-xs font-black ${color}">₹${t.amount}</span></div>`; 
+                }
+            } else {
+                txHtml += `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">🗓️</p><p class="text-[9px] font-bold text-slate-400 uppercase">No EMI received yet.</p></div>`;
+            }
+            txHtml += `</div>`;
+
+            let html = `
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                    <button onclick="showClientFullInfo('${mobile}')" class="text-xl font-bold text-slate-400">←</button>
+                    <h3 class="text-sm font-black text-slate-900 uppercase">EMI Calendar</h3>
+                    <div class="w-6"></div>
+                </div>
+                <div class="max-h-[60vh] overflow-y-auto pr-2">
+                    ${txHtml}
+                </div>
+            `;
+            document.getElementById('modal-injection-zone').innerHTML = html;
+        }
+
+        // ==========================================
+        // STAFF LEDGER
+        // ==========================================
+        function syncKycCentreDropdown() {
+            try {
+                const sb = getSafeValue('new-cust-branch'); const cd = document.getElementById('new-cust-center');
+                if(!sb) { if(cd) { cd.innerHTML = `<option value="">Select Branch First</option>`; cd.disabled = true; } return; }
+                let mc = centreList.filter(c => c.branch === sb); let opts = `<option value="">-- Select Centre --</option>`;
+                mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
+                if(cd) { cd.innerHTML = opts; cd.disabled = false; }
+            } catch(e) {}
+        }
+
+        function switchStaffTab(t) { 
+            try {
+                currentActiveStaffTab = t; 
+                let d = document.getElementById('tab-daily'); let w = document.getElementById('tab-weekly');
+                if(d) { d.className = t==='daily' ? 'text-[10px] px-5 py-2.5 rounded-lg font-black bg-white text-blue-600 shadow-sm' : 'text-[10px] px-5 py-2.5 rounded-lg font-bold text-slate-400 hover:text-slate-600'; }
+                if(w) { w.className = t==='weekly' ? 'text-[10px] px-5 py-2.5 rounded-lg font-black bg-white text-blue-600 shadow-sm' : 'text-[10px] px-5 py-2.5 rounded-lg font-bold text-slate-400 hover:text-slate-600'; }
+                renderStaffLedgerSheets(); 
+            } catch(e) {}
+        }
+
+        function renderStaffLedgerSheets() {
+            try {
+                const con = document.getElementById('staff-cycle-list-zone'); const bf = getSafeValue('ledger-active-branch-select'); 
+                if(!con) return; con.innerHTML = ''; let h = '';
+                
+                Object.keys(serverDb).forEach(m => {
+                    let a = serverDb[m];
+                    if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active") {
+                        let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
+                        if(a.emiSettled==='received') { bc = 'bg-emerald-100 text-emerald-800'; bt = 'Received'; }
+                        if(a.emiSettled==='bounce') { bc = 'bg-rose-100 text-rose-800'; bt = 'Bounced'; }
+                        if(a.emiSettled==='online_paid') { bc = 'bg-blue-100 text-blue-800'; bt = 'ONLINE PAID'; }
+
+                        let aB = '';
+                        if(a.emiSettled === 'online_paid') { aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; } 
+                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl">Bounced</button>`; }
+
+                        h += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-4 animate-fade">
+                            <div class="flex justify-between items-start">
+                                <div><p class="text-[10px] font-mono text-blue-500 font-bold tracking-widest">${a.id}</p><p class="font-black text-slate-900 text-base mt-1">${a.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centre: ${a.center}</p></div>
+                                <div class="text-right">
+                                    <span class="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest ${bc} block mb-2">${bt}</span>
+                                    <p class="text-[9px] font-bold text-slate-400 uppercase">Due: <span class="text-slate-700 font-black">${a.nextEmiDate}</span></p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-y border-slate-50">
+                                <div class="flex flex-col"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Rem Balance</span><span class="font-black text-slate-800 text-lg">₹${(a.outstanding||0).toLocaleString()}</span></div>
+                                <div class="flex flex-col text-right"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Cycle EMI</span><span class="font-black text-blue-600 text-lg">₹${a.cycleEmi||0}</span></div>
+                            </div>
+                            <div class="flex gap-2">${aB}</div>
+                            <div class="pt-2 flex items-center gap-2">
+                                <input type="number" id="adv-input-${m}" placeholder="Advance Pay" class="w-2/3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none" ${a.emiSettled==='online_paid'?'disabled':''}>
+                                <button onclick="submitAdvanceSettlementAmount('${m}')" class="btn-fluid w-1/3 py-4 bg-slate-900 text-white font-black text-[11px] uppercase rounded-xl shadow-lg shadow-slate-900/20" ${a.emiSettled==='online_paid'?'disabled':''}>Settle</button>
+                            </div>
+                        </div>`;
+                    }
+                });
+                con.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-8 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No accounts found.</p>`;
+            } catch(e) {}
+        }
+
+        function setEmiStatus(m, s) { 
+            try { if(!serverDb[m]) return; serverDb[m].emiSettled = s; renderStaffLedgerSheets(); let btn = document.getElementById('upload-day-btn'); if(btn) { btn.removeAttribute('disabled'); btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20"; } } catch(e) {}
+        }
+        
+        function submitAdvanceSettlementAmount(m) { 
+            try {
+                const v = parseInt(getSafeValue(`adv-input-${m}`)) || 0; if(!serverDb[m]) return;
+                if (v <= 0 || v > serverDb[m].outstanding) { alert("Invalid Amount."); return; } 
+                serverDb[m].advancePaid = v; alert(`₹${v} Advance locked for Upload!`); 
+                let btn = document.getElementById('upload-day-btn'); if(btn) { btn.removeAttribute('disabled'); btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase mt-4 shadow-lg"; }
+            } catch(e) {}
+        }
+
+        async function uploadDayEndReport() {
+            try {
+                Object.keys(serverDb).forEach(m => {
+                    let c = serverDb[m]; if(!c) return; if(!c.transactions) c.transactions = []; 
+                    let today = formatSysDate(new Date());
+
+                    if (c.emiSettled === 'bounce') { 
+                        c.overdue = (c.overdue || 0) + c.cycleEmi; 
+                        c.transactions.push({ date: today, amount: c.cycleEmi, type: 'Bounced' });
+                    } 
+                    else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
+                        c.outstanding = (c.outstanding || 0) - (c.cycleEmi || 0); c.overdue = 0; c.lastPaymentDate = today; 
+                        c.transactions.push({ date: today, amount: c.cycleEmi, type: c.emiSettled === 'online_paid' ? 'Online App' : 'Received' });
+                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                    }
+                    if (c.advancePaid > 0) { 
+                        c.outstanding = (c.outstanding || 0) - c.advancePaid; c.lastPaymentDate = today; 
+                        c.transactions.push({ date: today, amount: c.advancePaid, type: 'Advance' }); 
+                    }
+                    if(c.outstanding <= 0 && c.status === "Active") { 
+                        c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; 
+                    }
+                    c.advancePaid = 0; c.emiSettled = null;
+                });
+
+                for (let mobileNumber of Object.keys(serverDb)) {
+                    await saveDataToCloud(mobileNumber);
+                }
+
+                alert("Ledger uploaded & Synced to Cloud!"); refreshHeadDashboardStats(); 
+                let btn = document.getElementById('upload-day-btn'); if(btn) { btn.disabled = true; btn.className = "btn-fluid w-full bg-slate-200 text-slate-400 font-black py-5 rounded-2xl text-xs uppercase cursor-not-allowed mt-4"; }
+            } catch(e) {}
+        }
+
+        // ==========================================
+        // KYC ENROLLMENT
+        // ==========================================
+        function calculateLoanMetrics() { 
+            try {
+                const s = getSafeValue('new-loan-amount')||"100-days"; const pInput = parseFloat(getSafeValue('new-loan-principal'))||5000; const r = parseFloat(getSafeValue('new-loan-roi'))||0; 
+                let p = pInput; let i = Math.round((p * r) / 100); let t = p + i; let cycleDays = s.includes('100') ? 100 : (s.includes('30') ? 30 : 36); let cycleEmi = Math.round(t / cycleDays);
+                return { principal: p, interestAmt: i, totalPayable: t, cycleType: s.includes('100') ? "daily" : "weekly", cycleEmi: cycleEmi, printPlanName: s === "100-days" ? "100 Days Plan" : "Weekly System", typedRoi: r }; 
+            } catch(e) { return { principal: 0, interestAmt: 0, totalPayable: 0, cycleType: "daily", cycleEmi: 0, printPlanName: "Plan", typedRoi: 0 }; }
+        }
+
+        function runLiveLoanMath() { 
+            try {
+                const m = calculateLoanMetrics(); setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); setHtmlSafe('math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
+            } catch(e) {}
+        }
+
+        function goToKycStageB() { 
+            try {
+                const p = getSafeValue('new-cust-phone').trim();
+                if(!p || p.length < 10) { alert("Enter proper 10-digit number!"); return; }
+                if(serverDb[p] && serverDb[p].status !== 'Requested') { alert("Duplicate Error! Number active."); return; } 
+                document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
+            } catch(e) {}
+        }
+        
+        function backToKycStageA() { 
+            try { document.getElementById('kyc-stage-b')?.classList.add('hidden'); document.getElementById('kyc-stage-a')?.classList.remove('hidden'); } catch(e) {}
+        }
+
+        async function processKycAndDisburse() {
+            try {
+                const n = getSafeValue('new-cust-name').trim()||"N/A"; const p = getSafeValue('new-cust-phone').trim()||"N/A"; const b = getSafeValue('new-cust-branch')||""; const c = getSafeValue('new-cust-center')||""; const a = getSafeValue('new-cust-address').trim()||"";
+                if (!b || !c || !a) { alert("Branch, Centre, Address madatory!"); return; }
+                const m = calculateLoanMetrics(); let id = (m.cycleType === "daily" ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
+                
+                const rVal = getSafeValue('new-cust-religion')||"N/A"; const spVal = getSafeValue('new-cust-spouse').trim()||"N/A"; const nmVal = getSafeValue('new-cust-nominee').trim()||"N/A"; const nrVal = getSafeValue('new-cust-nominee-relation')||"N/A"; const csVal = getSafeValue('new-cust-caste')||"N/A"; const ldVal = getSafeValue('new-cust-land')||"N/A"; const atVal = getSafeValue('new-cust-attendance')||"N/A"; const puVal = getSafeValue('new-cust-purpose')||"N/A"; const hsVal = getSafeValue('new-cust-house')||"N/A";
+
+                serverDb[p] = { 
+                    name: n, id: id, planType: m.cycleType, planName: m.printPlanName, principal: m.principal, roi: m.typedRoi, interestAmt: m.interestAmt, totalPayable: m.totalPayable, outstanding: m.totalPayable, overdue: 0, cycleEmi: m.cycleEmi, status: "Pending Approval", isApproved: false, emiSettled: null, isRenewed: false, isFirstLoan: true, advancePaid: 0, branch: b, center: c, spouse: spVal, nominee: nmVal, nomineeRelation: nrVal, caste: csVal, land: ldVal, attendance: atVal, purpose: puVal, house: hsVal, religion: rVal, address: a, ppiSummary: "Gas/TV Verified", socioSummary: "Makan Verified", transactions: [], pastLoans: [] 
+                };
+                
+                await saveDataToCloud(p); 
+                triggerPaperPrintDraft(p);
+            } catch(e) {}
+        }
+
+        function renderPendingRequestsBox() {
+            try {
+                const zone = document.getElementById('staff-requests-zone'); let h = '';
+                Object.keys(serverDb).forEach(m => {
+                    let r = serverDb[m];
+                    if(r.status === 'Requested') {
+                        let rp = r.tempPrincipal||5000;
+                        h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Req Amt: ₹${rp.toLocaleString()}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md">Complete KYC Form</button></div>`;
+                    }
+                });
+                if(zone) zone.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No pending requests.</p>`;
+                updatePendingRequestsBadge();
+            } catch(e) {}
+        }
+        function updatePendingRequestsBadge() {
+            try { let c = 0; Object.keys(serverDb).forEach(m => { if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
+        }
+        function processRequestedClientKyc(mobile) {
+            try {
+                let req = serverDb[mobile]; if(!req) return;
+                let nb = document.getElementById('new-cust-name'); if(nb) nb.value = req.name||""; 
+                let pb = document.getElementById('new-cust-phone'); if(pb) pb.value = mobile; 
+                let pl = document.getElementById('new-loan-amount'); if(pl) pl.value = req.tempPlanStr||"100-days";
+                let pa = document.getElementById('new-loan-principal'); if(pa) pa.value = req.tempPrincipal||5000;
+                runLiveLoanMath(); routePanelSection('kyc');
+            } catch(e) {}
+        }
+
+        // ==========================================
+        // SETTLEMENT & RENEWAL
+        // ==========================================
         function syncSettlementClientsDropdown() { 
             try {
                 const s = document.getElementById('settle-client-mobile-select'); let opt = `<option value="">-- Active Client --</option>`; 
@@ -646,9 +1124,12 @@
                 const m = getSafeValue('settle-client-mobile-select'); if(!m) return;
                 let out = serverDb[m].outstanding || 0;
                 if(confirm(`Lock settle amount ₹${out}?`)) { 
-                    serverDb[m].outstanding = 0; serverDb[m].overdue = 0; serverDb[m].status = "Deactive"; serverDb[m].emiSettled = 'Direct Settle'; serverDb[m].lastPaymentDate = formatSysDate(new Date()); backupSettledClientMobile = m; 
-                    await saveDataToCloud(m); // DATA SAVED TO CLOUD
-                    document.getElementById('settle-interactive-form-block')?.classList.add('hidden'); document.getElementById('settle-success-action-panel')?.classList.remove('hidden'); triggerDashboardAnalyticsRefresh(); 
+                    serverDb[m].outstanding = 0; serverDb[m].overdue = 0; serverDb[m].status = "Deactive"; serverDb[m].emiSettled = 'Direct Settle'; serverDb[m].lastPaymentDate = formatSysDate(new Date()); 
+                    serverDb[m].transactions = serverDb[m].transactions || [];
+                    serverDb[m].transactions.push({ date: formatSysDate(new Date()), amount: out, type: 'Direct Settle' });
+                    backupSettledClientMobile = m; 
+                    await saveDataToCloud(m); 
+                    document.getElementById('settle-interactive-form-block')?.classList.add('hidden'); document.getElementById('settle-success-action-panel')?.classList.remove('hidden'); refreshHeadDashboardStats(); 
                 }
             } catch(e) {}
         }
@@ -660,7 +1141,6 @@
                 if(s) s.innerHTML = opt; 
             } catch(e) {}
         }
-
         function triggerQuickRenewalFromSettlement() { 
             if(!backupSettledClientMobile) return; routePanelSection('renew'); const sel = document.getElementById('renew-client-mobile-select'); if(sel) sel.value = backupSettledClientMobile; 
         }
@@ -674,13 +1154,24 @@
                 let p = pInput; let iAmt = Math.round((p * roi) / 100); let tP = p + iAmt; let cycleDays = plan.includes('100') ? 100 : (plan.includes('30') ? 30 : 36); let cE = Math.round(tP / cycleDays);
                 let a = serverDb[m]; 
                 
+                // BACKUP OLD LOAN HISTORY
+                a.pastLoans = a.pastLoans || [];
+                a.pastLoans.push({
+                    id: a.id, planName: a.planName, principal: a.principal, totalPayable: a.totalPayable, transactions: JSON.parse(JSON.stringify(a.transactions || []))
+                });
+
+                a.id = (plan.includes('100') ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
                 a.planType = plan.includes('100') ? "daily" : "weekly"; a.planName = plan.includes('100') ? "100 Days Plan" : "Weekly Plan"; a.principal = p; a.roi = roi; a.interestAmt = iAmt; a.totalPayable = tP; a.outstanding = tP; a.cycleEmi = cE; a.status = "Active"; a.isRenewed = true; a.isFirstLoan = false; a.emiSettled = null; a.advancePaid = 0; a.approvalDate = formatSysDate(new Date()); a.endDate = calculateEndDate(plan); a.lastPaymentDate = "N/A"; a.nextEmiDate = calculateNextEmiDate(a.planType, null);
+                a.transactions = []; // RESET FOR NEW LOAN
                 
-                await saveDataToCloud(m); // DATA SAVED TO CLOUD
+                await saveDataToCloud(m); 
                 alert(`✓ Loan Renewed & Synced!`); routePanelSection('dashboard');
             } catch(e) {}
         }
 
+        // ==========================================
+        // CUSTOMER PORTAL & LOGIN
+        // ==========================================
         function toggleLoginForm(v) { 
             try {
                 const c = document.getElementById('customer-login-form'); const e = document.getElementById('employee-login-form'); 
@@ -740,82 +1231,46 @@
                 const n = getSafeValue('apply-cust-name').trim(); const p = currentlyLoggedInMobile; const pl = getSafeValue('apply-cust-plan'); const pInput = parseFloat(getSafeValue('apply-cust-principal'))||5000;
                 if(!n) { alert("Name mandatory."); return; }
                 serverDb[p] = { name: n, status: 'Requested', planType: pl.includes('100') ? 'daily' : 'weekly', tempPlanStr: pl, tempPrincipal: pInput, transactions: [] };
-                await saveDataToCloud(p); // DATA SAVED TO CLOUD
+                await saveDataToCloud(p); 
                 routePanelSection('cust-pending');
             } catch(e) {}
         }
 
-        function renderPendingRequestsBox() {
+        function renderCustomerDashboard() {
             try {
-                const zone = document.getElementById('staff-requests-zone'); let h = '';
-                Object.keys(serverDb).forEach(m => {
-                    let r = serverDb[m];
-                    if(r.status === 'Requested') {
-                        let rp = r.tempPrincipal||5000;
-                        h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Req Amt: ₹${rp.toLocaleString()}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md">Complete KYC Form</button></div>`;
+                let u = serverDb[currentlyLoggedInMobile]; if (!u) return;
+                setHtmlSafe('cust-outstanding-view', `₹${(u.outstanding||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-principal-view', `₹${(u.principal||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-interest-view', `₹${(u.interestAmt||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-total-payable-view', `₹${(u.totalPayable||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-od-view', `₹${(u.overdue||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-next-emi-view', `₹${u.cycleEmi||0}`); setHtmlSafe('cust-plan-badge', `${u.planName||'Plan'}`); setHtmlSafe('cust-name-title', u.name||'User'); setHtmlSafe('cust-avatar-letters', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); setHtmlSafe('cust-id-label', `ID: ${u.id||'NA'}`); setHtmlSafe('cust-profile-branch', u.branch||'-'); setHtmlSafe('cust-profile-center', u.center||'-'); setHtmlSafe('cust-profile-address', u.address||'-'); setHtmlSafe('cust-approval-date', u.approvalDate||"NA"); setHtmlSafe('cust-end-date', u.endDate||"NA"); setHtmlSafe('cust-last-payment-date', u.lastPaymentDate||"NA"); setHtmlSafe('cust-next-emi-date', u.nextEmiDate||"NA");
+
+                const pZ = document.getElementById('cust-self-pay-zone');
+                if (u.status === "Active" && (u.outstanding||0) > 0) {
+                    if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') { if(pZ) pZ.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[2rem] text-center shadow-inner"><p class="text-4xl mb-3">✅</p><p class="text-sm font-black text-emerald-700 uppercase tracking-widest">EMI Paid!</p></div>`; } 
+                    else { if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer">Pay EMI Online (₹${u.cycleEmi||0}) 💳</button>`; }
+                } else { if(pZ) pZ.innerHTML = ``; }
+            } catch(e) {}
+        }
+
+        async function customerSelfPayEmi() { 
+            try {
+                let u = serverDb[currentlyLoggedInMobile]; if(!u) return; let cEmi = u.cycleEmi || 0;
+                if(confirm(`Pay EMI ₹${cEmi}?`)) { 
+                    u.outstanding = (u.outstanding||0) - cEmi; u.emiSettled = 'online_paid'; u.lastPaymentDate = formatSysDate(new Date()); 
+                    await saveDataToCloud(currentlyLoggedInMobile); 
+                    alert("Payment Successful!"); renderCustomerDashboard(); 
+                } 
+            } catch(e) {}
+        }
+
+        function renderCustomerPassbook() {
+            try {
+                let u = serverDb[currentlyLoggedInMobile]; const z = document.getElementById('customer-passbook-zone'); if(!u || !z) return;
+                let html = '';
+                if(u.transactions && u.transactions.length > 0) {
+                    for(let i = u.transactions.length - 1; i >= 0; i--) { 
+                        let t = u.transactions[i]; 
+                        html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-sm font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">+ ₹${t.amount}</span></div>`; 
                     }
-                });
-                if(zone) zone.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No pending requests.</p>`;
-                updatePendingRequestsBadge();
-            } catch(e) {}
-        }
-
-        function updatePendingRequestsBadge() {
-            try { let c = 0; Object.keys(serverDb).forEach(m => { if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
-        }
-
-        function processRequestedClientKyc(mobile) {
-            try {
-                let req = serverDb[mobile]; if(!req) return;
-                let nb = document.getElementById('new-cust-name'); if(nb) nb.value = req.name||""; 
-                let pb = document.getElementById('new-cust-phone'); if(pb) pb.value = mobile; 
-                let pl = document.getElementById('new-loan-amount'); if(pl) pl.value = req.tempPlanStr||"100-days";
-                let pa = document.getElementById('new-loan-principal'); if(pa) pa.value = req.tempPrincipal||5000;
-                runLiveLoanMath(); routePanelSection('kyc');
-            } catch(e) {}
-        }
-
-        function calculateLoanMetrics() { 
-            try {
-                const s = getSafeValue('new-loan-amount')||"100-days"; const pInput = parseFloat(getSafeValue('new-loan-principal'))||5000; const r = parseFloat(getSafeValue('new-loan-roi'))||0; 
-                let p = pInput; let i = Math.round((p * r) / 100); let t = p + i; let cycleDays = s.includes('100') ? 100 : (s.includes('30') ? 30 : 36); let cycleEmi = Math.round(t / cycleDays);
-                return { principal: p, interestAmt: i, totalPayable: t, cycleType: s.includes('100') ? "daily" : "weekly", cycleEmi: cycleEmi, printPlanName: s === "100-days" ? "100 Days Plan" : "Weekly System", typedRoi: r }; 
-            } catch(e) { return { principal: 0, interestAmt: 0, totalPayable: 0, cycleType: "daily", cycleEmi: 0, printPlanName: "Plan", typedRoi: 0 }; }
-        }
-
-        function runLiveLoanMath() { 
-            try {
-                const m = calculateLoanMetrics(); setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); setHtmlSafe('math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
-            } catch(e) {}
-        }
-
-        function goToKycStageB() { 
-            try {
-                const p = getSafeValue('new-cust-phone').trim();
-                if(!p || p.length < 10) { alert("Enter proper 10-digit number!"); return; }
-                if(serverDb[p] && serverDb[p].status !== 'Requested') { alert("Duplicate Error! Number active."); return; } 
-                document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
-            } catch(e) {}
-        }
-        
-        function backToKycStageA() { 
-            try { document.getElementById('kyc-stage-b')?.classList.add('hidden'); document.getElementById('kyc-stage-a')?.classList.remove('hidden'); } catch(e) {}
-        }
-
-        async function processKycAndDisburse() {
-            try {
-                const n = getSafeValue('new-cust-name').trim()||"N/A"; const p = getSafeValue('new-cust-phone').trim()||"N/A"; const b = getSafeValue('new-cust-branch')||""; const c = getSafeValue('new-cust-center')||""; const a = getSafeValue('new-cust-address').trim()||"";
-                if (!b || !c || !a) { alert("Branch, Centre, Address madatory!"); return; }
-                const m = calculateLoanMetrics(); let id = (m.cycleType === "daily" ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
-                
-                const rVal = getSafeValue('new-cust-religion')||"N/A"; const spVal = getSafeValue('new-cust-spouse').trim()||"N/A"; const nmVal = getSafeValue('new-cust-nominee').trim()||"N/A"; const nrVal = getSafeValue('new-cust-nominee-relation')||"N/A"; const csVal = getSafeValue('new-cust-caste')||"N/A"; const ldVal = getSafeValue('new-cust-land')||"N/A"; const atVal = getSafeValue('new-cust-attendance')||"N/A"; const puVal = getSafeValue('new-cust-purpose')||"N/A"; const hsVal = getSafeValue('new-cust-house')||"N/A";
-
-                serverDb[p] = { 
-                    name: n, id: id, planType: m.cycleType, planName: m.printPlanName, principal: m.principal, roi: m.typedRoi, interestAmt: m.interestAmt, totalPayable: m.totalPayable, outstanding: m.totalPayable, overdue: 0, cycleEmi: m.cycleEmi, status: "Pending Approval", isApproved: false, emiSettled: null, isRenewed: false, isFirstLoan: true, advancePaid: 0, branch: b, center: c, spouse: spVal, nominee: nmVal, nomineeRelation: nrVal, caste: csVal, land: ldVal, attendance: atVal, purpose: puVal, house: hsVal, religion: rVal, address: a, ppiSummary: "Gas/TV Verified", socioSummary: "Makan Verified", transactions: [] 
-                };
-                
-                await saveDataToCloud(p); // DATA SAVED TO CLOUD
-                triggerPaperPrintDraft(p);
+                }
+                z.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">📭</p><p class="text-[10px] font-bold text-slate-400 uppercase">No transactions.</p></div>`;
             } catch(e) {}
         }
 
@@ -841,114 +1296,6 @@
             } catch(e) {}
         }
         function restoreFromReceiptView() { try { document.getElementById('print-receipt-template')?.classList.add('hidden'); showDashboard(currentLoggedInRole); } catch(e) {} }
-
-        function switchStaffTab(t) { 
-            try {
-                currentActiveStaffTab = t; 
-                let d = document.getElementById('tab-daily'); let w = document.getElementById('tab-weekly');
-                if(d) { d.className = t==='daily' ? 'text-[10px] px-5 py-2.5 rounded-lg font-black bg-white text-blue-600 shadow-sm' : 'text-[10px] px-5 py-2.5 rounded-lg font-bold text-slate-400 hover:text-slate-600'; }
-                if(w) { w.className = t==='weekly' ? 'text-[10px] px-5 py-2.5 rounded-lg font-black bg-white text-blue-600 shadow-sm' : 'text-[10px] px-5 py-2.5 rounded-lg font-bold text-slate-400 hover:text-slate-600'; }
-                renderStaffLedgerSheets(); 
-            } catch(e) {}
-        }
-
-        function renderStaffLedgerSheets() {
-            try {
-                const con = document.getElementById('staff-cycle-list-zone'); const bf = getSafeValue('ledger-active-branch-select'); 
-                if(!con) return; con.innerHTML = ''; let h = '';
-                
-                Object.keys(serverDb).forEach(m => {
-                    let a = serverDb[m];
-                    if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active") {
-                        let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
-                        if(a.emiSettled==='received') { bc = 'bg-emerald-100 text-emerald-800'; bt = 'Received'; }
-                        if(a.emiSettled==='bounce') { bc = 'bg-rose-100 text-rose-800'; bt = 'Bounced'; }
-                        if(a.emiSettled==='online_paid') { bc = 'bg-blue-100 text-blue-800'; bt = 'ONLINE PAID'; }
-
-                        let aB = '';
-                        if(a.emiSettled === 'online_paid') { aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; } 
-                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl">Bounced</button>`; }
-
-                        h += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-4 animate-fade"><div class="flex justify-between items-start"><div><p class="text-[10px] font-mono text-blue-500 font-bold tracking-widest">${a.id}</p><p class="font-black text-slate-900 text-base mt-1">${a.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centre: ${a.center}</p></div><span class="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest ${bc}">${bt}</span></div><div class="flex justify-between items-center py-3 border-y border-slate-50"><div class="flex flex-col"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Rem Balance</span><span class="font-black text-slate-800 text-lg">₹${(a.outstanding||0).toLocaleString()}</span></div><div class="flex flex-col text-right"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Cycle EMI</span><span class="font-black text-blue-600 text-lg">₹${a.cycleEmi||0}</span></div></div><div class="flex gap-2">${aB}</div><div class="pt-2 flex items-center gap-2"><input type="number" id="adv-input-${m}" placeholder="Advance Pay" class="w-2/3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none" ${a.emiSettled==='online_paid'?'disabled':''}><button onclick="submitAdvanceSettlementAmount('${m}')" class="btn-fluid w-1/3 py-4 bg-slate-900 text-white font-black text-[11px] uppercase rounded-xl shadow-lg shadow-slate-900/20" ${a.emiSettled==='online_paid'?'disabled':''}>Settle</button></div></div>`;
-                    }
-                });
-                con.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-8 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No accounts found.</p>`;
-            } catch(e) {}
-        }
-
-        function setEmiStatus(m, s) { 
-            try { if(!serverDb[m]) return; serverDb[m].emiSettled = s; renderStaffLedgerSheets(); let btn = document.getElementById('upload-day-btn'); if(btn) { btn.removeAttribute('disabled'); btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20"; } } catch(e) {}
-        }
-        
-        function submitAdvanceSettlementAmount(m) { 
-            try {
-                const v = parseInt(getSafeValue(`adv-input-${m}`)) || 0; if(!serverDb[m]) return;
-                if (v <= 0 || v > serverDb[m].outstanding) { alert("Invalid Amount."); return; } 
-                serverDb[m].advancePaid = v; alert(`₹${v} Advance locked for Upload!`); 
-                let btn = document.getElementById('upload-day-btn'); if(btn) { btn.removeAttribute('disabled'); btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase mt-4 shadow-lg"; }
-            } catch(e) {}
-        }
-
-        async function uploadDayEndReport() {
-            try {
-                // Pehle saari calculations kar lo locally
-                Object.keys(serverDb).forEach(m => {
-                    let c = serverDb[m]; if(!c) return; if(!c.transactions) c.transactions = []; 
-                    if (c.emiSettled === 'bounce') { c.overdue = (c.overdue || 0) + c.cycleEmi; c.outstanding = (c.outstanding || 0) + 200; } 
-                    else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
-                        c.outstanding = (c.outstanding || 0) - (c.cycleEmi || 0); c.overdue = 0; c.lastPaymentDate = formatSysDate(new Date()); 
-                        c.transactions.push({ date: c.lastPaymentDate, amount: c.cycleEmi, type: c.emiSettled === 'online_paid' ? 'Online App' : 'Cash' });
-                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
-                    }
-                    if (c.advancePaid > 0) { c.outstanding = (c.outstanding || 0) - c.advancePaid; c.lastPaymentDate = formatSysDate(new Date()); c.transactions.push({ date: c.lastPaymentDate, amount: c.advancePaid, type: 'Advance' }); }
-                    if(c.outstanding <= 0 && c.status === "Active") { c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; }
-                    c.advancePaid = 0; c.emiSettled = null;
-                });
-
-                // Phir ek-ek karke saare changes Cloud par bhej do
-                for (let mobileNumber of Object.keys(serverDb)) {
-                    await saveDataToCloud(mobileNumber);
-                }
-
-                alert("Ledger uploaded & Synced to Cloud!"); triggerDashboardAnalyticsRefresh(); 
-                let btn = document.getElementById('upload-day-btn'); if(btn) { btn.disabled = true; btn.className = "btn-fluid w-full bg-slate-200 text-slate-400 font-black py-5 rounded-2xl text-xs uppercase cursor-not-allowed mt-4"; }
-            } catch(e) {}
-        }
-
-        function renderCustomerDashboard() {
-            try {
-                let u = serverDb[currentlyLoggedInMobile]; if (!u) return;
-                setHtmlSafe('cust-outstanding-view', `₹${(u.outstanding||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-principal-view', `₹${(u.principal||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-interest-view', `₹${(u.interestAmt||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-total-payable-view', `₹${(u.totalPayable||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-od-view', `₹${(u.overdue||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-next-emi-view', `₹${u.cycleEmi||0}`); setHtmlSafe('cust-plan-badge', `${u.planName||'Plan'}`); setHtmlSafe('cust-name-title', u.name||'User'); setHtmlSafe('cust-avatar-letters', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); setHtmlSafe('cust-id-label', `ID: ${u.id||'NA'}`); setHtmlSafe('cust-profile-branch', u.branch||'-'); setHtmlSafe('cust-profile-center', u.center||'-'); setHtmlSafe('cust-profile-address', u.address||'-'); setHtmlSafe('cust-approval-date', u.approvalDate||"NA"); setHtmlSafe('cust-end-date', u.endDate||"NA"); setHtmlSafe('cust-last-payment-date', u.lastPaymentDate||"NA"); setHtmlSafe('cust-next-emi-date', u.nextEmiDate||"NA");
-
-                const pZ = document.getElementById('cust-self-pay-zone');
-                if (u.status === "Active" && (u.outstanding||0) > 0) {
-                    if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') { if(pZ) pZ.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[2rem] text-center shadow-inner"><p class="text-4xl mb-3">✅</p><p class="text-sm font-black text-emerald-700 uppercase tracking-widest">EMI Paid!</p></div>`; } 
-                    else { if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer">Pay EMI Online (₹${u.cycleEmi||0}) 💳</button>`; }
-                } else { if(pZ) pZ.innerHTML = ``; }
-            } catch(e) {}
-        }
-
-        async function customerSelfPayEmi() { 
-            try {
-                let u = serverDb[currentlyLoggedInMobile]; if(!u) return; let cEmi = u.cycleEmi || 0;
-                if(confirm(`Pay EMI ₹${cEmi}?`)) { 
-                    u.outstanding = (u.outstanding||0) - cEmi; u.emiSettled = 'online_paid'; u.lastPaymentDate = formatSysDate(new Date()); 
-                    await saveDataToCloud(currentlyLoggedInMobile); // DATA SAVED TO CLOUD
-                    alert("Payment Successful!"); renderCustomerDashboard(); 
-                } 
-            } catch(e) {}
-        }
-
-        function renderCustomerPassbook() {
-            try {
-                let u = serverDb[currentlyLoggedInMobile]; const z = document.getElementById('customer-passbook-zone'); if(!u || !z) return;
-                let html = '';
-                if(u.transactions && u.transactions.length > 0) {
-                    for(let i = u.transactions.length - 1; i >= 0; i--) { let t = u.transactions[i]; html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-sm font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">+ ₹${t.amount}</span></div>`; }
-                }
-                z.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">📭</p><p class="text-[10px] font-bold text-slate-400 uppercase">No transactions.</p></div>`;
-            } catch(e) {}
-        }
 
         function showDashboard(role) { 
             try {
@@ -985,6 +1332,7 @@
                 const w = ['cust-name-title', 'cust-outstanding-view', 'cust-principal-view', 'cust-interest-view', 'cust-total-payable-view', 'cust-od-view', 'cust-next-emi-view', 'cust-plan-badge', 'cust-avatar-letters', 'cust-id-label', 'cust-profile-branch', 'cust-profile-center', 'cust-profile-address', 'cust-approval-date', 'cust-end-date', 'cust-last-payment-date', 'cust-next-emi-date'];
                 w.forEach(id => { let el = document.getElementById(id); if(el) el.innerText = (id.includes('view') ? '₹0' : '-'); });
                 const pz = document.getElementById('cust-self-pay-zone'); if(pz) pz.innerHTML = ''; const pzb = document.getElementById('customer-passbook-zone'); if(pzb) pzb.innerHTML = '';
+                closeGlobalModal();
             } catch(e) {}
         }
     </script>
