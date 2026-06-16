@@ -6,26 +6,39 @@
     --glass-bg: rgba(255, 255, 255, 0.95);
     --glass-border: rgba(255, 255, 255, 0.6);
 }
+
+/* Pull-to-refresh aur scroll issue rokne ke liye fix */
+html, body {
+    overscroll-behavior-y: contain;
+}
+
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: var(--app-bg-start);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     margin: 0; padding: 0;
-    overscroll-behavior-y: none; /* Prevents pull-to-refresh in APK */
 }
+
 .app-container {
     width: 100%; max-width: 480px; margin: 0 auto; position: relative;
     background: linear-gradient(135deg, var(--app-bg-start) 0%, var(--app-bg-end) 100%);
     min-height: 100vh; min-height: 100dvh; box-shadow: 0 0 50px rgba(0,0,0,0.2);
     overflow-x: hidden; display: flex; flex-direction: column;
 }
+
 .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); filter: blur(4px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+
 .btn-fluid { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); min-height: 52px; display: flex; align-items: center; justify-content: center; text-align: center; }
+
 .btn-fluid:active { transform: translateY(2px) scale(0.97); }
+
 .glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05); }
+
 .sidebar-menu { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 9999; }
+
 ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
 @media print {
