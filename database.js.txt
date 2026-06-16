@@ -1,0 +1,33 @@
+// database.js
+
+let currentActiveStaffTab = 'daily'; 
+let currentlyLoggedInMobile = ''; 
+let currentLoggedInRole = ''; 
+let backupSettledClientMobile = ''; 
+let otpRequested = false;
+
+// Infrastructure Arrays
+let branchList = ["हिनौता", "मिर्ज़ापुर"];
+let centreList = [
+    { id: "c1", branch: "हिनौता", name: "Dhadta Core Centre" }, 
+    { id: "c2", branch: "हिनौता", name: "Rampur Central Area" }
+];
+
+// Admin Assigned Staff
+let staffDb = { 
+    "staff01": { pass: "staff123", name: "Vikas Kumar", empId: "EMP-VK09", branch: "हिनौता", role: "Field Officer" } 
+};
+
+// Main Customer Database
+let serverDb = {
+    "9999999999": {
+        name: "Adarsh Patel", id: "OPAS-DL-88392", planType: "daily", planName: "100 Days Plan",
+        principal: 15000, roi: 12, interestAmt: 1800, totalPayable: 16800, outstanding: 16800, overdue: 0, cycleEmi: 168,
+        status: "Active", isApproved: true, emiSettled: null, isRenewed: false, isFirstLoan: true, advancePaid: 0,
+        branch: "हिनौता", center: "Dhadta Core Centre", spouse: "N/A", voter: "N/A", nominee: "N/A", nomineeRelation: "Son",
+        caste: "OBC", land: "1 Bigha", attendance: "98%", purpose: "Sukshm Udyog", house: "Apna", religion: "Hindu",
+        address: "Mirzapur Branch Core Office, Uttar Pradesh", ppiSummary: "Gas Chulha, TV", socioSummary: "Makan Verified",
+        approvalDate: "10-06-2026", endDate: "18-09-2026", lastPaymentDate: "N/A", nextEmiDate: "11-06-2026",
+        transactions: []
+    }
+};
