@@ -32,6 +32,7 @@
 <body>
     <div class="app-container">
         
+        <!-- Auth Container -->
         <div id="auth-container" class="absolute inset-0 bg-white z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
             <div class="text-center mb-8 mt-4">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl mx-auto mb-5 shadow-xl flex items-center justify-center transform rotate-3"><span class="text-4xl text-white font-black">₹</span></div>
@@ -40,6 +41,7 @@
                 <p id="cloud-status" class="text-[9px] font-bold text-emerald-500 mt-2">☁️ Cloud Syncing...</p>
             </div>
 
+            <!-- Customer Login -->
             <div id="customer-login-form" class="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
                 <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">Customer Portal</span></div>
                 <input type="tel" id="cust-mobile" placeholder="Registered 10-digit number" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-blue-500 shadow-sm">
@@ -48,6 +50,7 @@
                 <div class="text-center pt-4 border-t border-slate-200"><button onclick="toggleLoginForm('employee')" class="text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">💼 Enterprise Staff Login →</button></div>
             </div>
 
+            <!-- Employee Login -->
             <div id="employee-login-form" class="space-y-4 hidden bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
                 <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200">Enterprise Portal</span></div>
                 <input type="text" id="emp-username" placeholder="Employee ID (staff01/head01)" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none shadow-sm">
@@ -58,6 +61,7 @@
             <div class="text-center mt-auto pt-6 pb-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest">Protected by OPAS Security</div>
         </div>
 
+        <!-- App Header -->
         <header id="app-header" class="bg-white/95 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center py-3 px-4 shadow-sm border-b border-slate-200 hidden">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebarMenu(true)" id="sidebar-toggle-btn" class="p-2 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 btn-fluid"><span class="text-lg">☰</span></button>
@@ -66,12 +70,14 @@
             <button onclick="logout()" class="w-10 h-10 flex items-center justify-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-500 hover:text-white btn-fluid"><span class="text-lg">⏻</span></button>
         </header>
 
+        <!-- Sidebar Menu -->
         <div id="app-sidebar-menu" class="bg-slate-950 text-white p-5 shadow-2xl transform -translate-x-full sidebar-menu flex flex-col w-[80%] max-w-[300px]">
             <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                 <div><span class="text-xs font-black uppercase">Menu</span><span class="text-[8px] text-blue-400 font-bold uppercase tracking-widest block">System Console</span></div>
                 <button onclick="toggleSidebarMenu(false)" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 btn-fluid font-bold text-sm">✕</button>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 space-y-2 pr-1" id="sidebar-navigation-nodes">
+                <!-- Staff & Head -->
                 <button onclick="routePanelSection('dashboard')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">📊</span> Dashboard</button>
                 <button onclick="routePanelSection('requests')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-indigo-300 flex items-center justify-between hidden"><div><span class="text-lg mr-2">📥</span> Requests</div><span class="bg-indigo-600 text-white rounded-md px-2 py-0.5 text-[9px]" id="req-count-badge">0</span></button>
                 <button onclick="routePanelSection('clients')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">👥</span> Client Directory</button>
@@ -80,10 +86,12 @@
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-amber-400 mt-4 hidden"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">🔄</span> Renew Client</button>
                 
+                <!-- Head Only -->
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 text-rose-400 border border-rose-900/30 mt-4 hidden"><span class="text-lg mr-2">✏️</span> Edit/Delete Data</button>
                 <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 text-blue-400 border border-blue-900/30 hidden"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
                 <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 text-emerald-400 border border-emerald-900/30 hidden"><span class="text-lg mr-2">⚙️</span> Setup Nodes</button>
                 
+                <!-- Customer Only -->
                 <button onclick="routePanelSection('cust-apply')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 text-white shadow-md hidden"><span class="text-lg mr-2">📝</span> Apply For Loan</button>
                 <button onclick="routePanelSection('cust-portal')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">🏠</span> My Dashboard</button>
                 <button onclick="routePanelSection('cust-passbook')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">📘</span> Digital Passbook</button>
@@ -93,9 +101,12 @@
             <div class="pt-4 border-t border-slate-800 mt-auto"><div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white" id="sidebar-avatar">VK</div><div><h4 class="text-xs font-black text-white" id="sidebar-name">Name</h4><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="sidebar-role">Role</p></div></div></div>
         </div>
 
+        <!-- Main Body -->
         <div class="app-body px-4 pt-4 hidden" id="main-views-container">
 
+            <!-- 1. DASHBOARD PANEL -->
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
+                <!-- Month & Branch Filter (Visible to all staff/head) -->
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Time Filter:</label>
@@ -107,6 +118,7 @@
                     </div>
                 </div>
 
+                <!-- Head Exclusive Top Stats -->
                 <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4 space-y-4">
                     <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
@@ -117,34 +129,33 @@
                             
                             <div class="grid grid-cols-2 gap-4 pt-5 border-t border-white/10 mt-4 text-xs">
                                 <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Total Active Clients</p><p class="text-xl font-black text-emerald-400" id="head-total-clients">0</p></div>
-                                <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Monthly Profit Generable</p><p class="text-xl font-black text-white" id="head-profit-view">₹0</p></div>
+                                <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1" id="lbl-dash-profit">Monthly Profit Generable</p><p class="text-xl font-black text-white" id="head-profit-view">₹0</p></div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
-                            <p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv">Today's Advance</p>
-                            <p class="text-xl font-black text-blue-700 mt-1" id="head-today-advance">₹0</p>
-                        </div>
-                        <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl">
-                            <p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle">Today's Settle</p>
-                            <p class="text-xl font-black text-amber-700 mt-1" id="head-today-settle">₹0</p>
-                        </div>
-                    </div>
-
+                    
                     <div class="mt-2 border-t border-slate-100 pt-4">
                         <h3 class="text-[10px] font-black text-slate-500 uppercase mb-3">Approval Verification Queue</h3>
                         <div id="head-approval-zone" class="space-y-3"></div>
                     </div>
                 </div>
 
+                <!-- Staff Regular Stats (Also visible to Head, fully synced) -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="glass-card p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-2xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
-                    <div class="glass-card p-5 rounded-[1.5rem] border-blue-200"><p class="text-[9px] font-black text-blue-500 uppercase">Monthly Disbursal</p><p class="text-2xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
-                    <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-today">Today's Collection</p><p class="text-2xl font-black text-emerald-600 mt-2" id="m-collection-today">₹0</p></div>
-                    <div class="bg-rose-50 border border-rose-100 p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-rose-500 uppercase">Total Overdue (Risk)</p><p class="text-2xl font-black text-rose-600 mt-2" id="m-od-today">₹0</p></div>
+                    <div class="glass-card p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
+                    <div class="glass-card p-5 rounded-[1.5rem] border-blue-200"><p class="text-[9px] font-black text-blue-500 uppercase" id="lbl-disburse-month">Month's Disbursal</p><p class="text-xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
                     
+                    <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-today">Today's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-today">₹0</p></div>
+                    <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-month">Month's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-month">₹0</p></div>
+
+                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv">Today's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-today-advance">₹0</p></div>
+                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv-m">Month's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-month-advance">₹0</p></div>
+
+                    <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle">Today's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-today-settle">₹0</p></div>
+                    <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle-m">Month's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-month-settle">₹0</p></div>
+
+                    <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
+
                     <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 role-staff hidden"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
                     <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 role-staff hidden"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
                     
@@ -153,6 +164,7 @@
                 </div>
             </div>
 
+            <!-- 2. REQUESTS PANEL -->
             <div id="view-node-requests" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">📥</div><h3 class="text-xs font-black text-indigo-600 uppercase">Loan Requests</h3></div>
@@ -160,6 +172,7 @@
                 </div>
             </div>
 
+            <!-- 3. CLIENT DIRECTORY PANEL -->
             <div id="view-node-clients" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
@@ -172,6 +185,7 @@
                 </div>
             </div>
 
+            <!-- 4. LEDGER PANEL -->
             <div id="view-node-ledger" class="view-panel hidden space-y-4 animate-fade">
                 <div class="glass-card p-5 rounded-[2rem] space-y-5">
                     <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
@@ -181,6 +195,7 @@
                 </div>
             </div>
 
+            <!-- 5. KYC PANEL -->
             <div id="view-node-kyc" class="view-panel hidden animate-fade">
                 <div class="glass-card rounded-[2rem] p-5">
                     <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-5 text-center border-b border-slate-100 pb-4">New KYC Enrollment</h3>
@@ -215,6 +230,7 @@
                 </div>
             </div>
 
+            <!-- 6. SETTLEMENT PANEL -->
             <div id="view-node-settlement" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold">💰</div><h3 class="text-sm font-black text-slate-900 uppercase">Direct Settlement</h3></div>
@@ -236,6 +252,7 @@
                 </div>
             </div>
 
+            <!-- 7. RENEW PANEL -->
             <div id="view-node-renew" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold">🔄</div><h3 class="text-sm font-black text-slate-900 uppercase">Loan Renewal</h3></div>
@@ -253,6 +270,7 @@
                 </div>
             </div>
 
+            <!-- 8. ADMIN EDIT DATA PANEL -->
             <div id="view-node-admin-edit" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
@@ -276,6 +294,7 @@
                 </div>
             </div>
 
+            <!-- 9. STAFF MANAGE PANEL -->
             <div id="view-node-staff-manage" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👨‍💼</div><h3 class="text-xs font-black text-blue-600 uppercase">Staff Management</h3></div>
@@ -295,16 +314,19 @@
                 </div>
             </div>
 
+            <!-- 10. SETUP NODES PANEL -->
             <div id="view-node-setup" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
                     
+                    <!-- Branch Mgmt -->
                     <div class="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 space-y-3">
                         <p class="text-[9px] font-black uppercase text-emerald-600">Create New Branch</p>
                         <div class="flex gap-2"><input type="text" id="setup-branch-name" placeholder="Branch Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewBranch()" class="bg-emerald-600 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
                         <div id="setup-branch-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
                     </div>
 
+                    <!-- Centre Mgmt -->
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                         <p class="text-[9px] font-black uppercase text-slate-600">Create New Centre Cluster</p>
                         <select id="setup-centre-parent" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></select>
@@ -314,6 +336,7 @@
                 </div>
             </div>
 
+            <!-- CUSTOMER SPECIFIC PANELS -->
             <div id="view-node-cust-apply" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl">📝</div><h3 class="text-sm font-black text-blue-600 uppercase">Apply For New Loan</h3></div>
@@ -396,6 +419,7 @@
 
         </div>
 
+        <!-- GLOBAL MODAL OVERLAY -->
         <div id="global-modal-overlay" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex items-end justify-center sm:items-center">
             <div id="modal-content" class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-6 relative modal-zoom shadow-2xl">
                 <button onclick="closeGlobalModal()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full font-black flex items-center justify-center z-50">✕</button>
@@ -405,6 +429,7 @@
 
     </div> 
     
+    <!-- PRINT TEMPLATES -->
     <div id="print-paper-template" class="hidden bg-white max-w-4xl mx-auto text-black font-serif">
         <div class="print-page-break p-8 border-2 border-slate-900 rounded-xl bg-white">
             <div class="text-center space-y-1 border-b-2 border-slate-900 pb-3">
@@ -499,7 +524,6 @@
 
         // INIT
         window.addEventListener('DOMContentLoaded', async () => { 
-            // Set Default Month Filter to current month
             let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
             let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
             
@@ -517,25 +541,25 @@
             let d = dateObj.getDate().toString().padStart(2,'0'); let m = (dateObj.getMonth()+1).toString().padStart(2,'0'); let y = dateObj.getFullYear(); return `${d}-${m}-${y}`;
         }
         function parseSysDate(str) {
-            if(!str || str === 'N/A' || str === 'Completed') return new Date(9999, 11, 31); // Push to far future if no valid date
+            if(!str || str === 'N/A' || str === 'Completed') return new Date(9999, 11, 31);
             let p = str.split('-');
             if(p.length !== 3) return new Date(9999, 11, 31);
-            return new Date(p[2], p[1]-1, p[0]);
+            return new Date(p[2], p[1]-1, p[0], 0, 0, 0, 0); 
         }
         function calculateEndDate(planStr) {
             if(!planStr) return "N/A"; let days = planStr.includes('100') ? 100 : (planStr.includes('30') ? 210 : 252);
             let d = new Date(); d.setDate(d.getDate() + days); return formatSysDate(d);
         }
-        // Agli EMI ki Date nikalne ka Engine (Very Important logic interlinked)
+        // EMI Calendar strict math (Daily = +1 Day, Weekly = +7 Days)
         function calculateNextEmiDate(planType, fromDateStr) {
             let d;
             if(fromDateStr && fromDateStr !== "N/A" && fromDateStr !== "Completed") { 
                 let parts = fromDateStr.split('-'); 
-                d = new Date(parts[2], parseInt(parts[1])-1, parts[0]); 
+                d = new Date(parts[2], parseInt(parts[1])-1, parts[0], 0, 0, 0, 0); 
             } else {
-                d = new Date(); // If new loan, start from today
+                d = new Date(); 
+                d.setHours(0,0,0,0);
             }
-            // Agla din (Daily) ya 7 din baad (Weekly)
             d.setDate(d.getDate() + (planType === 'daily' ? 1 : 7)); 
             return formatSysDate(d);
         }
@@ -567,7 +591,7 @@
                 if(panelId === 'ledger') renderStaffLedgerSheets();
                 if(panelId === 'clients') { syncReportDropdowns(); renderClientDirectory(); }
                 if(panelId === 'renew') syncRenewalClientsDropdown();
-                if(panelId === 'settlement') syncSettlementClientsDropdown();
+                if(panelId === 'settlement') syncSettleCentreFilter();
                 if(panelId === 'requests') renderPendingRequestsBox();
                 if(panelId === 'cust-portal') renderCustomerDashboard();
                 if(panelId === 'cust-passbook') renderCustomerPassbook();
@@ -697,22 +721,20 @@
                 const staffSelector = getSafeValue('dashboard-active-branch-select');
                 const activeFilter = currentLoggedInRole === 'head' ? headSelector : staffSelector;
 
-                let selectedMonthVal = getSafeValue('dashboard-month-filter'); // Format: YYYY-MM
+                let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
                 let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
                 if(!selectedMonthVal) { selectedMonthVal = currentYYYYMM; }
                 let isCurrentMonth = (selectedMonthVal === currentYYYYMM);
 
-                // Change Dynamic Labels
                 setHtmlSafe('lbl-disburse-today', isCurrentMonth ? "Today's Disbursal" : "Month's Disbursal");
                 setHtmlSafe('lbl-collect-today', isCurrentMonth ? "Today's Collection" : "Month's Collection");
                 setHtmlSafe('lbl-dash-adv', isCurrentMonth ? "Today's Advance" : "Month's Advance");
                 setHtmlSafe('lbl-dash-settle', isCurrentMonth ? "Today's Settle" : "Month's Settle");
 
                 let cp = 0, csp = 0, cac = 0; 
-                let dT = 0, dM = 0, cT = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
-                let todayAdv = 0, todaySettle = 0;
+                let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
+                let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayStr = formatSysDate(new Date());
-                
                 let pKey = null; 
                 
                 Object.keys(serverDb).forEach(k => {
@@ -722,58 +744,64 @@
                     if(match) {
                         if(!f.isApproved && !pKey && f.status === 'Pending Approval') pKey = k;
                         
-                        // Extract Disbursal Month (Approval Date YYYY-MM)
                         let appDateMonth = "";
                         if(f.approvalDate && f.approvalDate !== "N/A" && f.approvalDate !== "Completed") {
-                            let pts = f.approvalDate.split('-'); // DD-MM-YYYY
+                            let pts = f.approvalDate.split('-');
                             if(pts.length === 3) appDateMonth = `${pts[2]}-${pts[1]}`;
                         }
 
                         if(f.isApproved) { 
                             cac++; 
                             
-                            // Monthly Profit Generable (Sirf select kiye gaye mahine mein jo loan paas hue unka interest)
-                            if(appDateMonth === selectedMonthVal) {
-                                cp += (f.interestAmt||0); 
-                            }
+                            // Month Profit Calculation
+                            if(appDateMonth === selectedMonthVal) { cp += (f.interestAmt||0); }
                             
-                            // Disbursal Logic (Today vs Month)
+                            // Disbursal Match
                             if (isCurrentMonth) {
-                                if (f.approvalDate === todayStr) dT += (f.principal||0); // Aaj ka
-                                if (appDateMonth === selectedMonthVal) dM += (f.principal||0); // Pure Mahine ka
+                                if (f.approvalDate === todayStr) dT += (f.principal||0); 
+                                if (appDateMonth === selectedMonthVal) dM += (f.principal||0); 
                             } else {
-                                // Agar past mahina dekh rahe hain, to dono box mein wahi dikhega
                                 if (appDateMonth === selectedMonthVal) { dT += (f.principal||0); dM += (f.principal||0); }
                             }
 
-                            // Transaction Parsing for (Collection, Advance, Settle)
+                            // Transaction Mining
                             if(f.transactions) {
                                 f.transactions.forEach(tx => {
-                                    let txMY = "";
-                                    if(tx.date && tx.date.length === 10) txMY = `${tx.date.substring(6, 10)}-${tx.date.substring(3, 5)}`; // YYYY-MM
-                                    
+                                    let txMY = tx.date.substring(6,10) + "-" + tx.date.substring(3,5);
                                     let matchMY = (txMY === selectedMonthVal);
                                     let matchToday = (tx.date === todayStr);
 
-                                    if (isCurrentMonth && matchToday) {
-                                        if(tx.type === 'Advance') todayAdv += tx.amount;
-                                        if(tx.type === 'Direct Settle') todaySettle += tx.amount;
-                                        if(tx.type === 'Received' || tx.type === 'Online App') cT += tx.amount;
-                                    } 
-                                    else if (!isCurrentMonth && matchMY) { // Past Month View
-                                        if(tx.type === 'Advance') todayAdv += tx.amount;
-                                        if(tx.type === 'Direct Settle') todaySettle += tx.amount;
-                                        if(tx.type === 'Received' || tx.type === 'Online App') cT += tx.amount;
+                                    if(tx.type === 'Received' || tx.type === 'Online App') {
+                                        if (isCurrentMonth && matchToday) cT += tx.amount;
+                                        if (matchMY) cM += tx.amount;
+                                    }
+                                    if(tx.type === 'Advance') {
+                                        if (isCurrentMonth && matchToday) todayAdv += tx.amount;
+                                        if (matchMY) monthAdv += tx.amount;
+                                    }
+                                    if(tx.type === 'Direct Settle') {
+                                        if (isCurrentMonth && matchToday) todaySettle += tx.amount;
+                                        if (matchMY) monthSettle += tx.amount;
                                     }
                                 });
                             }
+
+                            // Pending Un-uploaded Collection Math (So it instantly reflects in Dash before end-day upload)
+                            if(f.emiSettled === 'received' || f.emiSettled === 'online_paid') {
+                                cT += (f.cycleEmi||0);
+                                if (isCurrentMonth) cM += (f.cycleEmi||0);
+                            }
+                            if(f.advancePaid > 0) {
+                                todayAdv += f.advancePaid;
+                                if(isCurrentMonth) monthAdv += f.advancePaid;
+                            }
                         }
 
-                        // Always current snapshot for Overdue, Active Accounts
+                        // Overdue and Acc Status
                         if (f.status === "Active") { aC++; oT += (f.overdue||0); }
                         if (f.status === "Deactive") deC++; 
                         
-                        // New/Renew accounts in selected month
+                        // New/Renew monthly count
                         if (appDateMonth === selectedMonthVal) {
                             if (f.isFirstLoan && f.isApproved) nC++; 
                             if (f.isRenewed) rC++;
@@ -781,7 +809,6 @@
                     }
                 });
 
-                // Update Head Blocks
                 if(currentLoggedInRole === 'head') {
                     let totalOut = 0;
                     Object.keys(serverDb).forEach(k => {
@@ -792,10 +819,7 @@
                     setHtmlSafe('head-total-outstanding', `₹${totalOut.toLocaleString('en-IN')}`);
                     setHtmlSafe('head-total-clients', cac);
                     setHtmlSafe('head-profit-view', `₹${cp.toLocaleString('en-IN')}`);
-                    setHtmlSafe('head-today-advance', `₹${todayAdv.toLocaleString('en-IN')}`);
-                    setHtmlSafe('head-today-settle', `₹${todaySettle.toLocaleString('en-IN')}`);
 
-                    // Approval Box
                     const z = document.getElementById('head-approval-zone');
                     if (!pKey) { if(z) z.innerHTML = `<p class="text-xs text-slate-400 font-bold uppercase text-center py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed">All flawless.</p>`; } 
                     else {
@@ -804,10 +828,15 @@
                     }
                 }
 
-                // Update Staff Blocks
+                // Push values to Staff/Shared Dashboard
                 setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-disburse-month', `₹${dM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-collection-today', `₹${cT.toLocaleString('en-IN')}`); 
+                setHtmlSafe('m-collection-month', `₹${cM.toLocaleString('en-IN')}`); 
+                setHtmlSafe('head-today-advance', `₹${todayAdv.toLocaleString('en-IN')}`);
+                setHtmlSafe('head-month-advance', `₹${monthAdv.toLocaleString('en-IN')}`);
+                setHtmlSafe('head-today-settle', `₹${todaySettle.toLocaleString('en-IN')}`);
+                setHtmlSafe('head-month-settle', `₹${monthSettle.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
                 setHtmlSafe('m-deactive-count', deC); 
@@ -823,8 +852,10 @@
                 serverDb[mobile].approvalDate = formatSysDate(new Date()); 
                 serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].planName); 
                 serverDb[mobile].lastPaymentDate = "N/A"; 
-                // Ye loan ko strictly agle din se ya week se challu karega
+                
+                // Magic Line: Daily is set to Next Day, Weekly is set to +7 Days
                 serverDb[mobile].nextEmiDate = calculateNextEmiDate(serverDb[mobile].planType, serverDb[mobile].approvalDate); 
+                
                 await saveDataToCloud(mobile); 
                 alert("Approved & Synced!"); refreshHeadDashboardStats(); 
             } catch(e) {}
@@ -878,7 +909,6 @@
             } catch(e) {}
         }
 
-        // FULL INFO & EMI CALENDAR
         function showClientFullInfo(mobile) {
             const c = serverDb[mobile]; if(!c) return;
             
@@ -967,7 +997,7 @@
         }
 
         // ==========================================
-        // STAFF LEDGER (Interlinked with Real Date Logic)
+        // STAFF LEDGER (Perfect Date Interlocking)
         // ==========================================
         function syncKycCentreDropdown() {
             try {
@@ -994,16 +1024,20 @@
                 const con = document.getElementById('staff-cycle-list-zone'); const bf = getSafeValue('ledger-active-branch-select'); 
                 if(!con) return; con.innerHTML = ''; let h = '';
                 
-                let todayDateObj = parseSysDate(formatSysDate(new Date()));
+                // Create Today's Midnight Date Object for flawless comparison
+                let todayDateObj = new Date();
+                todayDateObj.setHours(0,0,0,0);
 
                 Object.keys(serverDb).forEach(m => {
                     let a = serverDb[m];
                     
-                    // Ye master logic check karegi ki client aaj ke liye due hai ya overdue hai!
+                    // Ledger Auto-Filter Engine
                     let isClientDue = false;
                     if(a.nextEmiDate && a.nextEmiDate !== "Completed" && a.nextEmiDate !== "N/A") {
                         let emiDateObj = parseSysDate(a.nextEmiDate);
                         if(todayDateObj >= emiDateObj) isClientDue = true;
+                    } else if (!a.nextEmiDate || a.nextEmiDate === "N/A") {
+                        isClientDue = true; // Safety Fallback
                     }
 
                     if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && isClientDue) {
@@ -1043,13 +1077,18 @@
                     if(btn) { btn.disabled = true; btn.className = "btn-fluid w-full bg-slate-200 text-slate-400 font-black py-4 rounded-xl text-[11px] uppercase tracking-widest cursor-not-allowed mt-2 border border-slate-300"; }
                 } else {
                     con.innerHTML = h;
-                    // If clients are visible, keep button standard. It becomes active blue when an entry is touched.
+                    if(btn) { btn.disabled = false; btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20"; }
                 }
             } catch(e) {}
         }
 
         function setEmiStatus(m, s) { 
-            try { if(!serverDb[m]) return; serverDb[m].emiSettled = s; renderStaffLedgerSheets(); let btn = document.getElementById('upload-day-btn'); if(btn) { btn.removeAttribute('disabled'); btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20"; } } catch(e) {}
+            try { 
+                if(!serverDb[m]) return; 
+                serverDb[m].emiSettled = s; 
+                renderStaffLedgerSheets(); 
+                refreshHeadDashboardStats(); // Instantly update dashboard UI!
+            } catch(e) {}
         }
         
         function submitAdvanceSettlementAmount(m) { 
@@ -1057,7 +1096,7 @@
                 const v = parseInt(getSafeValue(`adv-input-${m}`)) || 0; if(!serverDb[m]) return;
                 if (v <= 0 || v > serverDb[m].outstanding) { alert("Invalid Amount."); return; } 
                 serverDb[m].advancePaid = v; alert(`₹${v} Advance locked for Upload!`); 
-                let btn = document.getElementById('upload-day-btn'); if(btn) { btn.removeAttribute('disabled'); btn.className = "btn-fluid w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xs uppercase mt-4 shadow-lg"; }
+                renderStaffLedgerSheets(); refreshHeadDashboardStats();
             } catch(e) {}
         }
 
@@ -1067,18 +1106,16 @@
                     let c = serverDb[m]; if(!c) return; if(!c.transactions) c.transactions = []; 
                     let today = formatSysDate(new Date());
 
-                    // Sirf wahi account update honge jismein staff ne koi action liya hai aaj
+                    // Sirf active items process honge jo aaj ke liye touch kiye gaye the
                     if (c.emiSettled === 'bounce') { 
                         c.overdue = (c.overdue || 0) + c.cycleEmi; 
                         c.transactions.push({ date: today, amount: c.cycleEmi, type: 'Bounced' });
-                        // Next EMI date badh jayegi, to ab ye agle due date tak show nahi hoga.
-                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); // Push due date 1/7 days later
                     } 
                     else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
                         c.outstanding = (c.outstanding || 0) - (c.cycleEmi || 0); c.overdue = 0; c.lastPaymentDate = today; 
                         c.transactions.push({ date: today, amount: c.cycleEmi, type: c.emiSettled === 'online_paid' ? 'Online App' : 'Received' });
-                        // Push EMI date forward safely
-                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); // Push due date 1/7 days later
                     }
                     if (c.advancePaid > 0) { 
                         c.outstanding = (c.outstanding || 0) - c.advancePaid; c.lastPaymentDate = today; 
@@ -1097,18 +1134,18 @@
                 }
 
                 alert("Ledger uploaded & Synced to Cloud!"); refreshHeadDashboardStats(); renderStaffLedgerSheets();
-                let btn = document.getElementById('upload-day-btn'); if(btn) { btn.disabled = true; btn.className = "btn-fluid w-full bg-slate-200 text-slate-400 font-black py-5 rounded-2xl text-xs uppercase cursor-not-allowed mt-4"; }
             } catch(e) {}
         }
 
         // ==========================================
-        // KYC ENROLLMENT & AUTO CLEAR
+        // KYC ENROLLMENT (With Auto Clear Function)
         // ==========================================
         function clearKycForm() {
             try {
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch', 'new-cust-center'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-principal').value = 5000;
                 document.getElementById('new-loan-roi').value = 12;
+                ['ppi-tv', 'ppi-fridge', 'ppi-bike', 'ppi-almirah'].forEach(id => { let el=document.getElementById(id); if(el) el.checked = false; });
             } catch(e){}
         }
 
@@ -1154,7 +1191,7 @@
                 await saveDataToCloud(p); 
                 triggerPaperPrintDraft(p);
                 
-                // Form completely reset for next entry
+                // Fully Clear Data Form For Next Entry
                 clearKycForm();
                 backToKycStageA();
             } catch(e) {}
