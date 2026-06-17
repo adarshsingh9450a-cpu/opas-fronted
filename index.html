@@ -98,7 +98,7 @@
                 <button onclick="routePanelSection('cust-profile')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">⚙️</span> Profile Settings</button>
                 <button onclick="routePanelSection('cust-support')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-rose-400 mt-4 hidden"><span class="text-lg mr-2">🎧</span> Help & Support</button>
             </nav>
-            <div class="pt-4 border-t border-slate-800 mt-auto"><div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white" id="sidebar-avatar">VK</div><div><h4 class="text-xs font-black text-white" id="sidebar-name">Name</h4><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="sidebar-role">Role</p></div></div></div>
+            <div class="pt-4 border-t border-slate-800 mt-auto"><div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white" id="sidebar-avatar">HD</div><div><h4 class="text-xs font-black text-white" id="sidebar-name">Name</h4><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="sidebar-role">Role</p></div></div></div>
         </div>
 
         <!-- Main Body -->
@@ -112,7 +112,7 @@
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Time Filter:</label>
                         <input type="month" id="dashboard-month-filter" onchange="refreshHeadDashboardStats()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none">
                     </div>
-                    <div class="flex justify-between items-center role-staff role-head hidden" id="dash-branch-filter-zone">
+                    <div class="flex justify-between items-center hidden" id="dash-branch-filter-zone">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch View:</label>
                         <select id="dashboard-active-branch-select" onchange="refreshHeadDashboardStats()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none"></select>
                     </div>
@@ -123,7 +123,7 @@
                     <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
                         <div class="relative z-10">
-                            <p class="text-[9px] text-purple-300 font-black uppercase mb-1">Global Target View</p>
+                            <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Global Target View</p>
                             <h3 class="text-4xl font-black mt-1" id="head-total-outstanding">₹0</h3>
                             <p class="text-[9px] text-purple-300 font-bold uppercase mt-1">Total Loan Outstanding (Market)</p>
                             
@@ -133,14 +133,13 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mt-2 border-t border-slate-100 pt-4">
                         <h3 class="text-[10px] font-black text-slate-500 uppercase mb-3">Approval Verification Queue</h3>
                         <div id="head-approval-zone" class="space-y-3"></div>
                     </div>
                 </div>
 
-                <!-- Staff Regular Stats (Also visible to Head, fully synced) -->
+                <!-- Metrics Grids (Visible to Head & Staff) -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="glass-card p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
                     <div class="glass-card p-5 rounded-[1.5rem] border-blue-200"><p class="text-[9px] font-black text-blue-500 uppercase" id="lbl-disburse-month">Month's Disbursal</p><p class="text-xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
@@ -156,8 +155,8 @@
 
                     <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
 
-                    <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 role-staff hidden"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
-                    <div class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 role-staff hidden"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
+                    <div id="dash-active-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
+                    <div id="dash-closed-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
                     
                     <div class="glass-card p-5 rounded-[1.5rem] text-center bg-purple-50/40 border-purple-100"><p class="text-[9px] font-black text-purple-600 uppercase">New Loans (Month)</p><p class="text-2xl font-black text-purple-700 mt-2" id="m-new-clients">0</p></div>
                     <div class="glass-card p-5 rounded-[1.5rem] text-center bg-amber-50/40 border-amber-100"><p class="text-[9px] font-black text-amber-600 uppercase">Renewed (Month)</p><p class="text-2xl font-black text-amber-700 mt-2" id="m-renew-clients">0</p></div>
@@ -223,7 +222,7 @@
                         <div class="grid grid-cols-3 gap-2 pt-2"><select id="new-cust-caste" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Samanya">Gen</option><option value="OBC">OBC</option><option value="SC">SC</option></select><select id="new-cust-religion" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Hindu">Hindu</option><option value="Muslim">Muslim</option></select><input type="text" id="new-cust-land" placeholder="Krishi Bhumi" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-semibold focus:outline-none"></div>
                         <div class="grid grid-cols-2 gap-3"><input type="text" id="new-cust-attendance" placeholder="Upasthiti (95%)" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"><select id="new-cust-purpose" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"><option value="Krishi">Krishi</option><option value="Footkar Vyapar">Retail</option></select></div>
                         <div class="grid grid-cols-1"><select id="new-cust-house" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"><option value="Apna">House: Own</option><option value="Kiraya">Rented</option></select></div>
-                        <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100"><label class="block text-[9px] font-black text-indigo-700 uppercase tracking-widest mb-3">PPI Assets</label><div class="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-700"><label class="flex items-center gap-2"><input type="checkbox" id="ppi-tv" checked class="w-4 h-4 accent-indigo-600 rounded"> Gas/TV</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-fridge" class="w-4 h-4 accent-indigo-600 rounded"> Fridge</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-bike" class="w-4 h-4 accent-indigo-600 rounded"> MotorCycle</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-almirah" checked class="w-4 h-4 accent-indigo-600 rounded"> Almirah</label></div></div>
+                        <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100"><label class="block text-[9px] font-black text-indigo-700 uppercase tracking-widest mb-3">PPI Assets</label><div class="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-700"><label class="flex items-center gap-2"><input type="checkbox" id="ppi-tv" class="w-4 h-4 accent-indigo-600 rounded"> Gas/TV</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-fridge" class="w-4 h-4 accent-indigo-600 rounded"> Fridge</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-bike" class="w-4 h-4 accent-indigo-600 rounded"> MotorCycle</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-almirah" class="w-4 h-4 accent-indigo-600 rounded"> Almirah</label></div></div>
                         <textarea id="new-cust-address" placeholder="Full Address" rows="3" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold resize-none focus:outline-none"></textarea>
                         <div class="flex gap-3 pt-4 border-t border-slate-100"><button onclick="backToKycStageA()" class="btn-fluid w-1/3 bg-white border border-slate-200 text-slate-600 font-bold py-4 rounded-xl text-[10px] uppercase">Back</button><button onclick="processKycAndDisburse()" class="btn-fluid w-2/3 bg-blue-600 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-lg">Submit & Print 🖨️</button></div>
                     </div>
@@ -483,7 +482,7 @@
 
     <script>
         // ==========================================
-        // 🚀 DATABASE & CLOUD SYNC LOGIC
+        // 🚀 DATABASE & MASTER CLOUD SYNC LOGIC
         // ==========================================
         const API_URL = "https://opas-backend-z1iz.onrender.com/api/clients"; 
         
@@ -493,24 +492,30 @@
         let backupSettledClientMobile = ''; 
         let otpRequested = false;
 
-        let branchList = ["हिनौता", "मिर्ज़ापुर"];
-        let centreList = [{ id: "c1", branch: "हिनौता", name: "Dhadta Core Centre" }, { id: "c2", branch: "हिनौता", name: "Rampur Central Area" }];
-        let staffDb = { "staff01": { pass: "staff123", name: "Vikas Kumar", empId: "EMP-VK09", branch: "हिनौता", role: "Field Officer" } };
+        // Clean Slate Variables
+        let branchList = [];
+        let centreList = [];
+        let staffDb = {};
 
         let serverDb = {}; 
 
-        // 1. DATA LOAD 
         async function loadDataFromCloud() {
             try {
                 const response = await fetch(API_URL);
                 if (response.ok) {
                     serverDb = await response.json();
+                    
+                    if (serverDb["SYSTEM_SETTINGS"]) {
+                        branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
+                        centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
+                        staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
+                    }
+
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
                 } else { document.getElementById('cloud-status').innerText = "⚠️ Cloud Error"; }
             } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Backend Offline"; }
         }
 
-        // 2. DATA SAVE
         async function saveDataToCloud(mobileNumber) {
             try {
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
@@ -522,7 +527,11 @@
             } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Save Failed"; }
         }
 
-        // INIT
+        async function saveSystemSettings() {
+            serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb };
+            await saveDataToCloud("SYSTEM_SETTINGS");
+        }
+
         window.addEventListener('DOMContentLoaded', async () => { 
             let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
             let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
@@ -544,22 +553,21 @@
             if(!str || str === 'N/A' || str === 'Completed') return new Date(9999, 11, 31);
             let p = str.split('-');
             if(p.length !== 3) return new Date(9999, 11, 31);
-            return new Date(p[2], p[1]-1, p[0], 0, 0, 0, 0); 
+            return new Date(parseInt(p[2], 10), parseInt(p[1], 10)-1, parseInt(p[0], 10), 0, 0, 0, 0); 
         }
         function calculateEndDate(planStr) {
             if(!planStr) return "N/A"; let days = planStr.includes('100') ? 100 : (planStr.includes('30') ? 210 : 252);
             let d = new Date(); d.setDate(d.getDate() + days); return formatSysDate(d);
         }
-        // EMI Calendar strict math (Daily = +1 Day, Weekly = +7 Days)
         function calculateNextEmiDate(planType, fromDateStr) {
             let d;
             if(fromDateStr && fromDateStr !== "N/A" && fromDateStr !== "Completed") { 
                 let parts = fromDateStr.split('-'); 
-                d = new Date(parts[2], parseInt(parts[1])-1, parts[0], 0, 0, 0, 0); 
+                d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10)-1, parseInt(parts[0], 10), 0, 0, 0, 0); 
             } else {
                 d = new Date(); 
-                d.setHours(0,0,0,0);
             }
+            d.setHours(0,0,0,0);
             d.setDate(d.getDate() + (planType === 'daily' ? 1 : 7)); 
             return formatSysDate(d);
         }
@@ -605,7 +613,7 @@
         }
 
         // ==========================================
-        // SETUP NODES (Branch & Centre) - HEAD
+        // SYSTEM CONFIGURATION NODES
         // ==========================================
         function syncSetupDropdowns() {
             try {
@@ -639,35 +647,37 @@
             } catch(e) {}
         }
 
-        function createNewBranch() { 
+        async function createNewBranch() { 
             const n = getSafeValue('setup-branch-name').trim(); if(!n) { alert("Branch name empty."); return; } 
             if(branchList.includes(n)) { alert("Branch already exists."); return; }
-            branchList.push(n); alert(`Branch ${n} Created!`); document.getElementById('setup-branch-name').value = ''; syncSetupDropdowns(); 
+            branchList.push(n); alert(`Branch ${n} Created & Synced!`); document.getElementById('setup-branch-name').value = ''; 
+            await saveSystemSettings(); syncSetupDropdowns(); 
         }
-        function deleteBranch(name) {
-            if(confirm(`Delete branch ${name}?`)) { branchList = branchList.filter(b => b !== name); centreList = centreList.filter(c => c.branch !== name); syncSetupDropdowns(); }
+        async function deleteBranch(name) {
+            if(confirm(`Delete branch ${name}?`)) { branchList = branchList.filter(b => b !== name); centreList = centreList.filter(c => c.branch !== name); await saveSystemSettings(); syncSetupDropdowns(); }
         }
 
-        function createNewCentre() { 
+        async function createNewCentre() { 
             const pb = getSafeValue('setup-centre-parent'); const cn = getSafeValue('setup-centre-name').trim(); 
             if(!pb || !cn) { alert("Select branch & enter centre."); return; } 
-            centreList.push({ id: "c" + Date.now(), branch: pb, name: cn }); alert(`Centre ${cn} Saved!`); document.getElementById('setup-centre-name').value = ''; syncSetupDropdowns(); 
+            centreList.push({ id: "c" + Date.now(), branch: pb, name: cn }); alert(`Centre ${cn} Saved & Synced!`); document.getElementById('setup-centre-name').value = ''; 
+            await saveSystemSettings(); syncSetupDropdowns(); 
         }
-        function deleteCentre(id) {
-            if(confirm("Delete this Centre?")) { centreList = centreList.filter(c => c.id !== id); syncSetupDropdowns(); }
+        async function deleteCentre(id) {
+            if(confirm("Delete this Centre?")) { centreList = centreList.filter(c => c.id !== id); await saveSystemSettings(); syncSetupDropdowns(); }
         }
 
         // ==========================================
         // STAFF MANAGEMENT - HEAD
         // ==========================================
-        function createNewStaffAccount() {
+        async function createNewStaffAccount() {
             const n = getSafeValue('new-staff-name').trim(); const u = getSafeValue('new-staff-username').trim(); const p = getSafeValue('new-staff-pass').trim(); const b = getSafeValue('new-staff-branch');
             if(!n || !u || !p || !b) { alert("Fill all fields."); return; } 
             if(staffDb[u] || u === 'head01') { alert("Username taken!"); return; }
             staffDb[u] = { pass: p, name: n, empId: "EMP-" + n.substring(0, 2).toUpperCase() + Math.floor(10 + Math.random() * 90), branch: b, role: "Field Officer" };
-            alert(`Staff Account created!`); 
+            alert(`Staff Account created & Synced to Cloud!`); 
             document.getElementById('new-staff-name').value = ''; document.getElementById('new-staff-username').value = ''; document.getElementById('new-staff-pass').value = ''; 
-            renderStaffList();
+            await saveSystemSettings(); renderStaffList();
         }
         function renderStaffList() {
             try {
@@ -679,7 +689,7 @@
                 if(zone) zone.innerHTML = html || `<p class="text-[10px] text-center text-slate-400">No staff found.</p>`;
             } catch(e) {}
         }
-        function deleteStaff(u) { if(confirm("Delete this staff account?")) { delete staffDb[u]; renderStaffList(); } }
+        async function deleteStaff(u) { if(confirm("Delete this staff account?")) { delete staffDb[u]; await saveSystemSettings(); renderStaffList(); } }
 
         // ==========================================
         // ADMIN DATA EDIT - HEAD
@@ -687,7 +697,10 @@
         function syncAdminEditDropdown() {
             try {
                 const sel = document.getElementById('admin-edit-client-select'); let opts = `<option value="">-- Select Client --</option>`;
-                Object.keys(serverDb).forEach(m => { let c = serverDb[m]; opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; });
+                Object.keys(serverDb).forEach(m => { 
+                    if(m === "SYSTEM_SETTINGS") return;
+                    let c = serverDb[m]; opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
+                });
                 if(sel) sel.innerHTML = opts; document.getElementById('admin-edit-form-block')?.classList.add('hidden');
             } catch(e) {}
         }
@@ -707,13 +720,19 @@
                  alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats(); 
              } catch(e) { alert("Error saving data."); }
         }
-        function deleteClientRecord() {
+        async function deleteClientRecord() {
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-             if(confirm("⚠ PERMANENTLY DELETE client?")) { try { delete serverDb[m]; alert("Client permanently removed."); syncAdminEditDropdown(); refreshHeadDashboardStats(); } catch(e) {} }
+             if(confirm("⚠ PERMANENTLY DELETE client?")) { 
+                try { 
+                    delete serverDb[m]; 
+                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) });
+                    alert("Client permanently removed."); syncAdminEditDropdown(); refreshHeadDashboardStats(); 
+                } catch(e) {} 
+             }
         }
 
         // ==========================================
-        // DASHBOARD MASTER ANALYTICS (MONTH-WISE & REALTIME)
+        // CORE ANALYTICS (REALTIME GRAPH SYNC ENGINE)
         // ==========================================
         function refreshHeadDashboardStats() {
             try {
@@ -738,6 +757,7 @@
                 let pKey = null; 
                 
                 Object.keys(serverDb).forEach(k => {
+                    if (k === "SYSTEM_SETTINGS") return;
                     let f = serverDb[k]; 
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
@@ -752,11 +772,8 @@
 
                         if(f.isApproved) { 
                             cac++; 
-                            
-                            // Month Profit Calculation
                             if(appDateMonth === selectedMonthVal) { cp += (f.interestAmt||0); }
                             
-                            // Disbursal Match
                             if (isCurrentMonth) {
                                 if (f.approvalDate === todayStr) dT += (f.principal||0); 
                                 if (appDateMonth === selectedMonthVal) dM += (f.principal||0); 
@@ -764,7 +781,6 @@
                                 if (appDateMonth === selectedMonthVal) { dT += (f.principal||0); dM += (f.principal||0); }
                             }
 
-                            // Transaction Mining
                             if(f.transactions) {
                                 f.transactions.forEach(tx => {
                                     let txMY = tx.date.substring(6,10) + "-" + tx.date.substring(3,5);
@@ -786,7 +802,6 @@
                                 });
                             }
 
-                            // Pending Un-uploaded Collection Math (So it instantly reflects in Dash before end-day upload)
                             if(f.emiSettled === 'received' || f.emiSettled === 'online_paid') {
                                 cT += (f.cycleEmi||0);
                                 if (isCurrentMonth) cM += (f.cycleEmi||0);
@@ -797,11 +812,9 @@
                             }
                         }
 
-                        // Overdue and Acc Status
                         if (f.status === "Active") { aC++; oT += (f.overdue||0); }
                         if (f.status === "Deactive") deC++; 
                         
-                        // New/Renew monthly count
                         if (appDateMonth === selectedMonthVal) {
                             if (f.isFirstLoan && f.isApproved) nC++; 
                             if (f.isRenewed) rC++;
@@ -812,6 +825,7 @@
                 if(currentLoggedInRole === 'head') {
                     let totalOut = 0;
                     Object.keys(serverDb).forEach(k => {
+                        if (k === "SYSTEM_SETTINGS") return;
                         if(activeFilter === "ALL" || serverDb[k].branch === activeFilter) {
                             if(serverDb[k].status === "Active") totalOut += (serverDb[k].outstanding || 0);
                         }
@@ -828,7 +842,6 @@
                     }
                 }
 
-                // Push values to Staff/Shared Dashboard
                 setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-disburse-month', `₹${dM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-collection-today', `₹${cT.toLocaleString('en-IN')}`); 
@@ -852,10 +865,7 @@
                 serverDb[mobile].approvalDate = formatSysDate(new Date()); 
                 serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].planName); 
                 serverDb[mobile].lastPaymentDate = "N/A"; 
-                
-                // Magic Line: Daily is set to Next Day, Weekly is set to +7 Days
                 serverDb[mobile].nextEmiDate = calculateNextEmiDate(serverDb[mobile].planType, serverDb[mobile].approvalDate); 
-                
                 await saveDataToCloud(mobile); 
                 alert("Approved & Synced!"); refreshHeadDashboardStats(); 
             } catch(e) {}
@@ -879,6 +889,7 @@
                 let html = ''; let count = 0; const sc = cf ? cf.value : "";
 
                 Object.keys(serverDb).forEach(mobile => {
+                    if (mobile === "SYSTEM_SETTINGS") return;
                     let c = serverDb[mobile]; 
                     let match = false;
                     if (rt === 'total' && c.status === "Active") match = true; 
@@ -911,7 +922,6 @@
 
         function showClientFullInfo(mobile) {
             const c = serverDb[mobile]; if(!c) return;
-            
             let editBtn = '';
             if(currentLoggedInRole === 'head') {
                 editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-client-select').value='${mobile}'; loadClientForEdit();" class="btn-fluid w-full bg-rose-100 text-rose-600 font-black py-4 rounded-xl text-[10px] uppercase mt-4">✏️ Edit Profile</button>`;
@@ -999,16 +1009,6 @@
         // ==========================================
         // STAFF LEDGER (Perfect Date Interlocking)
         // ==========================================
-        function syncKycCentreDropdown() {
-            try {
-                const sb = getSafeValue('new-cust-branch'); const cd = document.getElementById('new-cust-center');
-                if(!sb) { if(cd) { cd.innerHTML = `<option value="">Select Branch First</option>`; cd.disabled = true; } return; }
-                let mc = centreList.filter(c => c.branch === sb); let opts = `<option value="">-- Select Centre --</option>`;
-                mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
-                if(cd) { cd.innerHTML = opts; cd.disabled = false; }
-            } catch(e) {}
-        }
-
         function switchStaffTab(t) { 
             try {
                 currentActiveStaffTab = t; 
@@ -1024,20 +1024,19 @@
                 const con = document.getElementById('staff-cycle-list-zone'); const bf = getSafeValue('ledger-active-branch-select'); 
                 if(!con) return; con.innerHTML = ''; let h = '';
                 
-                // Create Today's Midnight Date Object for flawless comparison
                 let todayDateObj = new Date();
                 todayDateObj.setHours(0,0,0,0);
 
                 Object.keys(serverDb).forEach(m => {
+                    if (m === "SYSTEM_SETTINGS") return;
                     let a = serverDb[m];
                     
-                    // Ledger Auto-Filter Engine
                     let isClientDue = false;
                     if(a.nextEmiDate && a.nextEmiDate !== "Completed" && a.nextEmiDate !== "N/A") {
                         let emiDateObj = parseSysDate(a.nextEmiDate);
                         if(todayDateObj >= emiDateObj) isClientDue = true;
                     } else if (!a.nextEmiDate || a.nextEmiDate === "N/A") {
-                        isClientDue = true; // Safety Fallback
+                        isClientDue = true; 
                     }
 
                     if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && isClientDue) {
@@ -1087,13 +1086,13 @@
                 if(!serverDb[m]) return; 
                 serverDb[m].emiSettled = s; 
                 renderStaffLedgerSheets(); 
-                refreshHeadDashboardStats(); // Instantly update dashboard UI!
+                refreshHeadDashboardStats(); 
             } catch(e) {}
         }
         
         function submitAdvanceSettlementAmount(m) { 
             try {
-                const v = parseInt(getSafeValue(`adv-input-${m}`)) || 0; if(!serverDb[m]) return;
+                const v = parseInt(getSafeValue(`adv-input-${m}`), 10) || 0; if(!serverDb[m]) return;
                 if (v <= 0 || v > serverDb[m].outstanding) { alert("Invalid Amount."); return; } 
                 serverDb[m].advancePaid = v; alert(`₹${v} Advance locked for Upload!`); 
                 renderStaffLedgerSheets(); refreshHeadDashboardStats();
@@ -1103,19 +1102,19 @@
         async function uploadDayEndReport() {
             try {
                 Object.keys(serverDb).forEach(m => {
+                    if (m === "SYSTEM_SETTINGS") return;
                     let c = serverDb[m]; if(!c) return; if(!c.transactions) c.transactions = []; 
                     let today = formatSysDate(new Date());
 
-                    // Sirf active items process honge jo aaj ke liye touch kiye gaye the
                     if (c.emiSettled === 'bounce') { 
                         c.overdue = (c.overdue || 0) + c.cycleEmi; 
                         c.transactions.push({ date: today, amount: c.cycleEmi, type: 'Bounced' });
-                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); // Push due date 1/7 days later
+                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
                     } 
                     else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
                         c.outstanding = (c.outstanding || 0) - (c.cycleEmi || 0); c.overdue = 0; c.lastPaymentDate = today; 
                         c.transactions.push({ date: today, amount: c.cycleEmi, type: c.emiSettled === 'online_paid' ? 'Online App' : 'Received' });
-                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); // Push due date 1/7 days later
+                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
                     }
                     if (c.advancePaid > 0) { 
                         c.outstanding = (c.outstanding || 0) - c.advancePaid; c.lastPaymentDate = today; 
@@ -1138,14 +1137,25 @@
         }
 
         // ==========================================
-        // KYC ENROLLMENT (With Auto Clear Function)
+        // KYC ENROLLMENT (AUTO CLEAR ENGINE)
         // ==========================================
         function clearKycForm() {
             try {
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch', 'new-cust-center'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-principal').value = 5000;
                 document.getElementById('new-loan-roi').value = 12;
+                document.getElementById('new-loan-amount').value = '100-days';
+                
+                let cd = document.getElementById('new-cust-center');
+                if(cd) { cd.innerHTML = `<option value="">Select Branch First</option>`; cd.disabled = true; }
+                
+                document.getElementById('new-cust-nominee-relation').value = 'Husband';
+                document.getElementById('new-cust-caste').value = 'Samanya';
+                document.getElementById('new-cust-religion').value = 'Hindu';
+                document.getElementById('new-cust-purpose').value = 'Krishi';
+                document.getElementById('new-cust-house').value = 'Apna';
                 ['ppi-tv', 'ppi-fridge', 'ppi-bike', 'ppi-almirah'].forEach(id => { let el=document.getElementById(id); if(el) el.checked = false; });
+                runLiveLoanMath();
             } catch(e){}
         }
 
@@ -1171,15 +1181,12 @@
                 document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
             } catch(e) {}
         }
-        
-        function backToKycStageA() { 
-            try { document.getElementById('kyc-stage-b')?.classList.add('hidden'); document.getElementById('kyc-stage-a')?.classList.remove('hidden'); } catch(e) {}
-        }
+        function backToKycStageA() { try { document.getElementById('kyc-stage-b')?.classList.add('hidden'); document.getElementById('kyc-stage-a')?.classList.remove('hidden'); } catch(e) {} }
 
         async function processKycAndDisburse() {
             try {
                 const n = getSafeValue('new-cust-name').trim()||"N/A"; const p = getSafeValue('new-cust-phone').trim()||"N/A"; const b = getSafeValue('new-cust-branch')||""; const c = getSafeValue('new-cust-center')||""; const a = getSafeValue('new-cust-address').trim()||"";
-                if (!b || !c || !a) { alert("Branch, Centre, Address madatory!"); return; }
+                if (!b || !c || !a) { alert("Branch, Centre, Address mandatory!"); return; }
                 const m = calculateLoanMetrics(); let id = (m.cycleType === "daily" ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
                 
                 const rVal = getSafeValue('new-cust-religion')||"N/A"; const spVal = getSafeValue('new-cust-spouse').trim()||"N/A"; const nmVal = getSafeValue('new-cust-nominee').trim()||"N/A"; const nrVal = getSafeValue('new-cust-nominee-relation')||"N/A"; const csVal = getSafeValue('new-cust-caste')||"N/A"; const ldVal = getSafeValue('new-cust-land')||"N/A"; const atVal = getSafeValue('new-cust-attendance')||"N/A"; const puVal = getSafeValue('new-cust-purpose')||"N/A"; const hsVal = getSafeValue('new-cust-house')||"N/A";
@@ -1190,10 +1197,7 @@
                 
                 await saveDataToCloud(p); 
                 triggerPaperPrintDraft(p);
-                
-                // Fully Clear Data Form For Next Entry
                 clearKycForm();
-                backToKycStageA();
             } catch(e) {}
         }
 
@@ -1201,6 +1205,7 @@
             try {
                 const zone = document.getElementById('staff-requests-zone'); let h = '';
                 Object.keys(serverDb).forEach(m => {
+                    if (m === "SYSTEM_SETTINGS") return;
                     let r = serverDb[m];
                     if(r.status === 'Requested') {
                         let rp = r.tempPrincipal||5000;
@@ -1212,15 +1217,13 @@
             } catch(e) {}
         }
         function updatePendingRequestsBadge() {
-            try { let c = 0; Object.keys(serverDb).forEach(m => { if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
+            try { let c = 0; Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
         }
         function processRequestedClientKyc(mobile) {
             try {
                 let req = serverDb[mobile]; if(!req) return;
-                let nb = document.getElementById('new-cust-name'); if(nb) nb.value = req.name||""; 
-                let pb = document.getElementById('new-cust-phone'); if(pb) pb.value = mobile; 
-                let pl = document.getElementById('new-loan-amount'); if(pl) pl.value = req.tempPlanStr||"100-days";
-                let pa = document.getElementById('new-loan-principal'); if(pa) pa.value = req.tempPrincipal||5000;
+                document.getElementById('new-cust-name').value = req.name||""; document.getElementById('new-cust-phone').value = mobile; 
+                document.getElementById('new-loan-amount').value = req.tempPlanStr||"100-days"; document.getElementById('new-loan-principal').value = req.tempPrincipal||5000;
                 runLiveLoanMath(); routePanelSection('kyc');
             } catch(e) {}
         }
@@ -1241,12 +1244,10 @@
 
         function syncSettlementClientsDropdown() { 
             try {
-                const sB = getSafeValue('settle-branch-filter');
-                const sC = getSafeValue('settle-center-filter');
-                const s = document.getElementById('settle-client-mobile-select'); 
+                const sB = getSafeValue('settle-branch-filter'); const sC = getSafeValue('settle-center-filter'); const s = document.getElementById('settle-client-mobile-select'); 
                 let opt = `<option value="">-- Search Active Client --</option>`; 
-                
                 Object.keys(serverDb).forEach(m => { 
+                    if (m === "SYSTEM_SETTINGS") return;
                     let c = serverDb[m];
                     if (c.status === "Active" && c.outstanding > 0) { 
                         let match = true;
@@ -1256,7 +1257,7 @@
                     } 
                 }); 
                 if(s) s.innerHTML = opt; 
-                document.getElementById('settle-math-receipt-box')?.classList.add('hidden'); document.getElementById('settle-interactive-form-block')?.classList.remove('hidden'); document.getElementById('settle-success-action-panel')?.classList.add('hidden'); 
+                document.getElementById('settle-math-receipt-box')?.classList.add('hidden');
             } catch(e) {}
         }
 
@@ -1264,7 +1265,7 @@
             try {
                 const m = getSafeValue('settle-client-mobile-select'); const box = document.getElementById('settle-math-receipt-box'); 
                 if(!m) { box?.classList.add('hidden'); return; } 
-                let c = serverDb[m]; setHtmlSafe('lbl-s-id', c.id); setHtmlSafe('lbl-s-plan', c.planName); let out = c.outstanding||0; setHtmlSafe('lbl-s-outstanding', `₹${out.toLocaleString('en-IN')}`); box?.classList.remove('hidden'); 
+                let c = serverDb[m]; setHtmlSafe('lbl-s-id', c.id); setHtmlSafe('lbl-s-plan', c.planName); setHtmlSafe('lbl-s-outstanding', `₹${(c.outstanding||0).toLocaleString('en-IN')}`); box?.classList.remove('hidden'); 
             } catch(e) {}
         }
 
@@ -1286,7 +1287,7 @@
         function syncRenewalClientsDropdown() { 
             try {
                 const s = document.getElementById('renew-client-mobile-select'); let opt = `<option value="">-- Select Account --</option>`; 
-                Object.keys(serverDb).forEach(m => { if (serverDb[m].status === "Deactive") { opt += `<option value="${m}">${serverDb[m].name||'Unk'} (${m})</option>`; } }); 
+                Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if (serverDb[m].status === "Deactive") { opt += `<option value="${m}">${serverDb[m].name||'Unk'} (${m})</option>`; } }); 
                 if(s) s.innerHTML = opt; 
             } catch(e) {}
         }
@@ -1354,9 +1355,6 @@
                 
                 if (u === 'head01' && p === 'head123') { 
                     currentLoggedInRole = 'head'; 
-                    document.querySelectorAll('.role-head').forEach(el => el.classList.remove('hidden'));
-                    document.querySelectorAll('.role-cust').forEach(el => el.classList.add('hidden'));
-                    setHtmlSafe('sidebar-name', "System Admin"); setHtmlSafe('sidebar-role', "Main Head"); setHtmlSafe('sidebar-avatar', "HD");
                     showDashboard('head'); 
                 } 
                 else if (staffDb[u] && staffDb[u].pass === p) { 
@@ -1364,15 +1362,8 @@
                     const df = document.getElementById('dashboard-active-branch-select'); const lf = document.getElementById('ledger-active-branch-select');
                     if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; if(lf) lf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`;
                     
-                    document.querySelectorAll('.role-head').forEach(el => el.classList.add('hidden')); 
-                    document.querySelectorAll('.role-staff').forEach(el => el.classList.remove('hidden')); 
-                    document.querySelectorAll('.role-cust').forEach(el => el.classList.add('hidden')); 
-                    
                     setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
                     let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
-                    
-                    // Show staff filters
-                    document.getElementById('dash-branch-filter-zone')?.classList.remove('hidden');
                     
                     showDashboard('staff'); updatePendingRequestsBadge();
                 } else { alert('Galat Credentials!'); }
@@ -1456,19 +1447,20 @@
                 document.getElementById('main-views-container')?.classList.remove('hidden'); 
                 document.getElementById('app-header')?.classList.remove('hidden');
 
-                const cM = document.querySelectorAll('.role-cust'); const sM = document.querySelectorAll('.role-staff'); const hM = document.querySelectorAll('.role-head');
+                document.querySelectorAll('.role-cust, .role-staff, .role-head, #dash-active-acc-block, #dash-closed-acc-block, #dash-branch-filter-zone').forEach(el => el.classList.add('hidden'));
                 
                 if(role === 'customer') { 
-                    hM.forEach(el => el.classList.add('hidden')); sM.forEach(el => el.classList.add('hidden')); cM.forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.role-cust').forEach(el => el.classList.remove('hidden'));
                     let u = serverDb[currentlyLoggedInMobile]; if(u) { setHtmlSafe('sidebar-name', u.name); setHtmlSafe('sidebar-role', "Client Account"); setHtmlSafe('sidebar-avatar', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); }
                     routePanelSection('cust-portal'); 
                 } 
                 else if (role === 'head') { 
-                    cM.forEach(el => el.classList.add('hidden')); sM.forEach(el => el.classList.add('hidden')); hM.forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.role-head, #dash-branch-filter-zone').forEach(el => el.classList.remove('hidden'));
+                    setHtmlSafe('sidebar-name', "System Admin"); setHtmlSafe('sidebar-role', "Main Head"); setHtmlSafe('sidebar-avatar', "HD");
                     routePanelSection('dashboard'); 
                 }
                 else if (role === 'staff') {
-                    cM.forEach(el => el.classList.add('hidden')); hM.forEach(el => el.classList.add('hidden')); sM.forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.role-staff, #dash-active-acc-block, #dash-closed-acc-block').forEach(el => el.classList.remove('hidden'));
                     routePanelSection('dashboard'); 
                 }
             } catch(e) { console.error("Error showing dashboard:", e); }
@@ -1476,16 +1468,7 @@
 
         function logout() { 
             try {
-                document.getElementById('main-views-container')?.classList.add('hidden'); 
-                document.getElementById('app-header')?.classList.add('hidden'); 
-                document.getElementById('auth-container')?.classList.remove('hidden'); 
-                toggleLoginForm('customer'); otpRequested = false; document.getElementById('cust-otp')?.classList.add('hidden'); let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify & Access"; 
-                ['cust-mobile', 'cust-otp', 'emp-username', 'emp-password', 'apply-cust-name', 'apply-cust-phone'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; });
-                currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = '';
-                const w = ['cust-name-title', 'cust-outstanding-view', 'cust-principal-view', 'cust-interest-view', 'cust-total-payable-view', 'cust-od-view', 'cust-next-emi-view', 'cust-plan-badge', 'cust-avatar-letters', 'cust-id-label', 'cust-profile-branch', 'cust-profile-center', 'cust-profile-address', 'cust-approval-date', 'cust-end-date', 'cust-last-payment-date', 'cust-next-emi-date'];
-                w.forEach(id => { let el = document.getElementById(id); if(el) el.innerText = (id.includes('view') ? '₹0' : '-'); });
-                const pz = document.getElementById('cust-self-pay-zone'); if(pz) pz.innerHTML = ''; const pzb = document.getElementById('customer-passbook-zone'); if(pzb) pzb.innerHTML = '';
-                closeGlobalModal();
+                document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('auth-container')?.classList.remove('hidden'); toggleLoginForm('customer'); otpRequested = false; document.getElementById('cust-otp')?.classList.add('hidden'); let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify & Access"; ['cust-mobile', 'cust-otp', 'emp-username', 'emp-password', 'apply-cust-name', 'apply-cust-phone'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; }); currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; closeGlobalModal();
             } catch(e) {}
         }
     </script>
