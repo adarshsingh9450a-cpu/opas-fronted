@@ -45,7 +45,6 @@
 <body>
     <div class="app-container">
         
-        <!-- LOGIN PORTAL -->
         <div id="auth-container" class="absolute inset-0 bg-white z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
             <div class="text-center mb-8 mt-4 animate-slide-up">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl mx-auto mb-5 shadow-xl shadow-indigo-500/30 flex items-center justify-center transform rotate-3 hover-scale"><span class="text-4xl text-white font-black">₹</span></div>
@@ -72,7 +71,6 @@
             <div class="text-center mt-auto pt-6 pb-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest">Protected by OPAS Security</div>
         </div>
 
-        <!-- APP HEADER -->
         <header id="app-header" class="bg-white/95 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center py-3 px-4 shadow-sm border-b border-slate-200 hidden">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebarMenu(true)" id="sidebar-toggle-btn" class="p-2 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 btn-fluid"><span class="text-lg">☰</span></button>
@@ -84,7 +82,6 @@
             </div>
         </header>
 
-        <!-- SIDEBAR -->
         <div id="app-sidebar-menu" class="bg-slate-950 text-white p-5 shadow-2xl transform -translate-x-full sidebar-menu flex flex-col w-[80%] max-w-[300px]">
             <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                 <div><span class="text-xs font-black uppercase">Menu</span><span class="text-[8px] text-blue-400 font-bold uppercase tracking-widest block">System Console</span></div>
@@ -112,10 +109,8 @@
             <div class="pt-4 border-t border-slate-800 mt-auto"><div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white shadow-inner" id="sidebar-avatar">HD</div><div><h4 class="text-xs font-black text-white" id="sidebar-name">Name</h4><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="sidebar-role">Role</p></div></div></div>
         </div>
 
-        <!-- MAIN VIEWS -->
         <div class="app-body px-4 pt-4 hidden" id="main-views-container">
 
-            <!-- DASHBOARD VIEW -->
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200 hover-scale">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -128,7 +123,6 @@
                     </div>
                 </div>
 
-                <!-- HEAD EXCLUSIVE STATS -->
                 <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up">
                     <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl animate-pulse"></div>
@@ -148,7 +142,6 @@
                     </div>
                 </div>
 
-                <!-- SHARED APPROVAL QUEUE -->
                 <div id="shared-approval-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-purple-200 bg-purple-50/20">
                     <h3 class="text-[10px] font-black text-purple-800 uppercase flex items-center justify-between">
                         Approval Verification Queue 
@@ -180,7 +173,6 @@
                 </div>
             </div>
 
-            <!-- REQUESTS VIEW -->
             <div id="view-node-requests" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">📥</div><h3 class="text-xs font-black text-indigo-600 uppercase">Loan Requests</h3></div>
@@ -188,7 +180,6 @@
                 </div>
             </div>
 
-            <!-- CLIENT DIRECTORY VIEW -->
             <div id="view-node-clients" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
@@ -201,7 +192,6 @@
                 </div>
             </div>
 
-            <!-- LEDGER VIEW -->
             <div id="view-node-ledger" class="view-panel hidden space-y-4 animate-slide-up">
                 <div class="glass-card p-5 rounded-[2rem] space-y-5">
                     <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
@@ -211,10 +201,10 @@
                 </div>
             </div>
 
-            <!-- KYC VIEW -->
             <div id="view-node-kyc" class="view-panel hidden animate-slide-up">
                 <div class="glass-card rounded-[2rem] p-5">
                     <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-5 text-center border-b border-slate-100 pb-4">New KYC Enrollment</h3>
+                    
                     <div id="kyc-stage-a" class="space-y-4 animate-fade">
                         <input type="text" id="new-cust-name" placeholder="Applicant Full Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300">
                         <input type="tel" id="new-cust-phone" placeholder="Mobile Number (Unique ID)" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300">
@@ -246,16 +236,17 @@
                 </div>
             </div>
 
-            <!-- DIRECT SETTLEMENT VIEW -->
             <div id="view-node-settlement" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold hover-scale">💰</div><h3 class="text-sm font-black text-slate-900 uppercase">Direct Settlement</h3></div>
+                    
                     <div id="settle-interactive-form-block" class="space-y-3">
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <select id="settle-branch-filter" onchange="syncSettleCentreFilter()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none"><option value="">-- Branch --</option></select>
                             <select id="settle-center-filter" onchange="syncSettlementClientsDropdown()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none" disabled><option value="">-- Centre --</option></select>
                         </div>
                         <select id="settle-client-mobile-select" onchange="syncDirectSettlementViewLabels()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                        
                         <div id="settle-math-receipt-box" class="hidden bg-slate-900 p-5 rounded-2xl space-y-3 text-xs font-medium text-slate-300 animate-fade relative overflow-hidden"><div class="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-xl"></div><div class="flex justify-between relative z-10"><span>ID:</span><span class="font-bold text-white font-mono" id="lbl-s-id">-</span></div><div class="flex justify-between relative z-10"><span>Plan:</span><span class="text-blue-400 font-bold" id="lbl-s-plan">-</span></div><div class="border-t border-slate-700/50 pt-4 mt-2 flex justify-between font-bold items-end relative z-10"><span class="text-[9px] uppercase text-slate-400">Total Payable</span><span class="text-emerald-400 font-black text-2xl" id="lbl-s-outstanding">₹0</span></div></div>
                         <button onclick="executeFullDirectLoanClosure()" class="btn-fluid w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4.5 rounded-xl text-[11px] uppercase shadow-lg shadow-emerald-500/30 mt-2">Confirm & Settle</button>
                     </div>
@@ -266,7 +257,6 @@
                 </div>
             </div>
 
-            <!-- RENEW VIEW -->
             <div id="view-node-renew" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold hover-scale">🔄</div><h3 class="text-sm font-black text-slate-900 uppercase">Loan Renewal</h3></div>
@@ -284,7 +274,6 @@
                 </div>
             </div>
 
-            <!-- ADMIN EDIT VIEW -->
             <div id="view-node-admin-edit" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
@@ -308,7 +297,6 @@
                 </div>
             </div>
 
-            <!-- STAFF MANAGE VIEW -->
             <div id="view-node-staff-manage" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👨‍💼</div><h3 class="text-xs font-black text-blue-600 uppercase">Staff Management</h3></div>
@@ -326,7 +314,6 @@
                 </div>
             </div>
 
-            <!-- SYSTEM SETUP VIEW -->
             <div id="view-node-setup" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
@@ -349,7 +336,6 @@
                 </div>
             </div>
 
-            <!-- CUSTOMER PORTAL VIEWS -->
             <div id="view-node-cust-apply" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale">📝</div><h3 class="text-sm font-black text-blue-600 uppercase">Apply For New Loan</h3></div>
@@ -431,7 +417,6 @@
 
         </div>
 
-        <!-- GLOBAL MODAL OVERLAY -->
         <div id="global-modal-overlay" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex items-end justify-center sm:items-center">
             <div id="modal-content" class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-6 relative modal-zoom shadow-2xl">
                 <button onclick="closeGlobalModal()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full font-black flex items-center justify-center z-50 transition-colors">✕</button>
@@ -440,7 +425,6 @@
         </div>
     </div> 
     
-    <!-- PRINT TEMPLATES -->
     <div id="print-paper-template" class="hidden bg-white max-w-4xl mx-auto text-black font-serif">
         <div class="print-page-break p-8 border-2 border-slate-900 rounded-xl bg-white">
             <div class="text-center space-y-1 border-b-2 border-slate-900 pb-3">
@@ -506,39 +490,74 @@
         let staffDb = {};
         let serverDb = {}; 
 
+        // =========================================================================
+        // 🚀 THE NEW DUAL SAVING ENGINE (LOCAL + CLOUD MERGE)
+        // =========================================================================
         async function loadDataFromCloud() {
             try {
                 document.getElementById('cloud-status').innerText = "☁️ Fetching Data...";
+                
+                // STEP 1: FAST LOCAL LOAD (Prevents Data Loss on Reload/Print Bypass)
+                let localDbStr = localStorage.getItem('opas_local_db');
+                let localData = {};
+                if (localDbStr) {
+                    try {
+                        localData = JSON.parse(localDbStr);
+                        serverDb = { ...localData, ...serverDb }; // Merge local data instantly
+                        if (serverDb["SYSTEM_SETTINGS"]) {
+                            branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
+                            centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
+                            staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
+                        }
+                    } catch(e) {}
+                }
+
+                // STEP 2: CLOUD SYNC & MERGE
                 const response = await fetch(API_URL);
                 if (response.ok) {
-                    serverDb = await response.json();
+                    let cloudData = await response.json();
+                    
+                    // Priority Merge: Cloud data + any unsynced Local Data
+                    serverDb = { ...serverDb, ...cloudData };
+                    
+                    // Offline Recovery: Push missing local clients to cloud silently
+                    Object.keys(localData).forEach(k => {
+                        if(!cloudData[k] && k !== "SYSTEM_SETTINGS") {
+                            saveDataToCloud(k); // Auto-upload missing data
+                        }
+                    });
+
+                    // Sync merged master-database back to local storage
+                    localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+
                     if (serverDb["SYSTEM_SETTINGS"]) {
                         branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
                         centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
                         staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
                     }
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
-                } else { document.getElementById('cloud-status').innerText = "⚠️ Cloud Error"; }
-            } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Backend Offline"; }
-        }
-
-        async function forceCloudSync(event) {
-            let btn = event.currentTarget.querySelector('span');
-            btn.classList.add('spin-fast');
-            await loadDataFromCloud();
-            if(currentLoggedInRole !== 'customer') { refreshHeadDashboardStats(); }
-            setTimeout(() => { btn.classList.remove('spin-fast'); }, 500);
+                } else { 
+                    document.getElementById('cloud-status').innerText = "⚠️ Cloud Error (Using Local DB)"; 
+                }
+            } catch (error) { 
+                document.getElementById('cloud-status').innerText = "⚠️ Offline (Using Local DB)"; 
+            }
         }
 
         async function saveDataToCloud(mobileNumber) {
             try {
+                // DUAL ENGINE: INSTANT LOCAL SAVE (0ms Data Protection)
+                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
                 await fetch(API_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mobile: mobileNumber, data: serverDb[mobileNumber] })
                 });
                 document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
-            } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Save Failed"; }
+            } catch (error) { 
+                document.getElementById('cloud-status').innerText = "⚠️ Saved Locally (Pending Cloud)"; 
+            }
         }
 
         async function saveSystemSettings() {
@@ -558,17 +577,91 @@
                         }
                     }
                     serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
+                    localStorage.removeItem('opas_local_db');
+                    localStorage.removeItem('kyc_draft');
                     alert("✅ Database Completely Wiped! Ab app ekdum nayi ho gayi hai.");
                     logout(); window.location.reload();
                 } else { alert("Reset Cancelled."); }
             }
         }
 
+        // =========================================================================
+        // 💾 KYC FORM AUTO-SAVE DRAFT ENGINE
+        // =========================================================================
+        function saveKycDraft() {
+            try {
+                const draft = {
+                    name: getSafeValue('new-cust-name'), phone: getSafeValue('new-cust-phone'), idRef: getSafeValue('new-cust-id-ref'),
+                    principal: getSafeValue('new-loan-principal'), plan: getSafeValue('new-loan-amount'), roi: getSafeValue('new-loan-roi'),
+                    branch: getSafeValue('new-cust-branch'), center: getSafeValue('new-cust-center'), spouse: getSafeValue('new-cust-spouse'),
+                    voter: getSafeValue('new-cust-voter'), nominee: getSafeValue('new-cust-nominee'), relation: getSafeValue('new-cust-nominee-relation'),
+                    caste: getSafeValue('new-cust-caste'), religion: getSafeValue('new-cust-religion'), land: getSafeValue('new-cust-land'),
+                    attendance: getSafeValue('new-cust-attendance'), purpose: getSafeValue('new-cust-purpose'), house: getSafeValue('new-cust-house'),
+                    address: getSafeValue('new-cust-address'),
+                    ppi_tv: document.getElementById('ppi-tv')?.checked, ppi_fridge: document.getElementById('ppi-fridge')?.checked,
+                    ppi_bike: document.getElementById('ppi-bike')?.checked, ppi_almirah: document.getElementById('ppi-almirah')?.checked
+                };
+                localStorage.setItem('kyc_draft', JSON.stringify(draft));
+            } catch(e) {}
+        }
+
+        function restoreKycDraft() {
+            try {
+                let d = localStorage.getItem('kyc_draft');
+                if(d) {
+                    let draft = JSON.parse(d);
+                    if(draft.name) document.getElementById('new-cust-name').value = draft.name;
+                    if(draft.phone) document.getElementById('new-cust-phone').value = draft.phone;
+                    if(draft.idRef) document.getElementById('new-cust-id-ref').value = draft.idRef;
+                    if(draft.principal) document.getElementById('new-loan-principal').value = draft.principal;
+                    if(draft.plan) document.getElementById('new-loan-amount').value = draft.plan;
+                    if(draft.roi) document.getElementById('new-loan-roi').value = draft.roi;
+                    if(draft.branch) { document.getElementById('new-cust-branch').value = draft.branch; syncKycCentreDropdown(); }
+                    if(draft.center) document.getElementById('new-cust-center').value = draft.center;
+                    if(draft.spouse) document.getElementById('new-cust-spouse').value = draft.spouse;
+                    if(draft.voter) document.getElementById('new-cust-voter').value = draft.voter;
+                    if(draft.nominee) document.getElementById('new-cust-nominee').value = draft.nominee;
+                    if(draft.relation) document.getElementById('new-cust-nominee-relation').value = draft.relation;
+                    if(draft.caste) document.getElementById('new-cust-caste').value = draft.caste;
+                    if(draft.religion) document.getElementById('new-cust-religion').value = draft.religion;
+                    if(draft.land) document.getElementById('new-cust-land').value = draft.land;
+                    if(draft.attendance) document.getElementById('new-cust-attendance').value = draft.attendance;
+                    if(draft.purpose) document.getElementById('new-cust-purpose').value = draft.purpose;
+                    if(draft.house) document.getElementById('new-cust-house').value = draft.house;
+                    if(draft.address) document.getElementById('new-cust-address').value = draft.address;
+
+                    if(draft.ppi_tv !== undefined) document.getElementById('ppi-tv').checked = draft.ppi_tv;
+                    if(draft.ppi_fridge !== undefined) document.getElementById('ppi-fridge').checked = draft.ppi_fridge;
+                    if(draft.ppi_bike !== undefined) document.getElementById('ppi-bike').checked = draft.ppi_bike;
+                    if(draft.ppi_almirah !== undefined) document.getElementById('ppi-almirah').checked = draft.ppi_almirah;
+                    runLiveLoanMath();
+                }
+            } catch(e) {}
+        }
+
         window.addEventListener('DOMContentLoaded', async () => { 
             let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
             let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
-            await loadDataFromCloud(); syncSetupDropdowns(); 
+            
+            // Connect Auto-Save Draft to KYC form
+            let kycPanel = document.getElementById('view-node-kyc');
+            if(kycPanel) {
+                kycPanel.addEventListener('input', saveKycDraft);
+                kycPanel.addEventListener('change', saveKycDraft);
+            }
+
+            await loadDataFromCloud(); 
+            syncSetupDropdowns(); 
+            restoreKycDraft(); // Load draft if exists
         });
+
+        async function forceCloudSync(event) {
+            let btn = event.currentTarget.querySelector('span');
+            btn.classList.add('spin-fast');
+            await loadDataFromCloud();
+            if(currentLoggedInRole !== 'customer') { refreshHeadDashboardStats(); }
+            setTimeout(() => { btn.classList.remove('spin-fast'); }, 500);
+        }
 
         function setHtmlSafe(id, val) { try { const el = document.getElementById(id); if(el) el.innerText = (val !== undefined && val !== null && val !== "") ? val : "-"; } catch (e) {} }
         function getSafeValue(id) { try { const el = document.getElementById(id); return el ? el.value : ""; } catch (e) { return ""; } }
@@ -622,7 +715,7 @@
                 if(panelId === 'kyc' && currentLoggedInRole === 'staff') {
                     const b = document.getElementById('dashboard-active-branch-select').value;
                     const kycBranch = document.getElementById('new-cust-branch');
-                    if (kycBranch) { kycBranch.innerHTML = `<option value="${b}">${b}</option>`; kycBranch.value = b; syncKycCentreDropdown(); }
+                    if (kycBranch && !kycBranch.value) { kycBranch.innerHTML = `<option value="${b}">${b}</option>`; kycBranch.value = b; syncKycCentreDropdown(); }
                 }
 
                 if(panelId === 'ledger') renderStaffLedgerSheets();
@@ -751,7 +844,6 @@
                 const headSelector = document.getElementById('head-analytics-branch-selector')?.value || "ALL";
                 const staffSelector = document.getElementById('dashboard-active-branch-select')?.value || "";
                 
-                // Dropdown backup fallback to prevent 0 rendering bugs
                 const activeFilter = currentLoggedInRole === 'head' ? headSelector : (staffSelector || "ALL");
 
                 let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
@@ -1185,7 +1277,7 @@
 
         function clearKycForm() {
             try {
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-principal').value = 5000;
                 document.getElementById('new-loan-roi').value = 12;
                 document.getElementById('new-loan-amount').value = '100-days';
@@ -1199,6 +1291,9 @@
                 document.getElementById('new-cust-purpose').value = 'Krishi';
                 document.getElementById('new-cust-house').value = 'Apna';
                 ['ppi-tv', 'ppi-fridge', 'ppi-bike', 'ppi-almirah'].forEach(id => { let el=document.getElementById(id); if(el) el.checked = false; });
+                
+                // Clear the auto-save draft
+                localStorage.removeItem('kyc_draft');
                 runLiveLoanMath();
             } catch(e){}
         }
@@ -1239,15 +1334,19 @@
                     name: n, id: id, planType: m.cycleType, planName: m.printPlanName, principal: m.principal, roi: m.typedRoi, interestAmt: m.interestAmt, totalPayable: m.totalPayable, outstanding: m.totalPayable, overdue: 0, cycleEmi: m.cycleEmi, status: "Pending Approval", isApproved: false, emiSettled: null, isRenewed: false, isFirstLoan: true, advancePaid: 0, branch: b, center: c, spouse: spVal, nominee: nmVal, nomineeRelation: nrVal, caste: csVal, land: ldVal, attendance: atVal, purpose: puVal, house: hsVal, religion: rVal, address: a, ppiSummary: "Gas/TV Verified", socioSummary: "Makan Verified", transactions: [], pastLoans: [] 
                 };
                 
-                await saveDataToCloud(p); 
+                // DUAL ENGINE: Save to memory synchronously BEFORE opening print (Prevents refresh loss)
+                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+                localStorage.removeItem('kyc_draft'); // Wipe draft so it doesn't persist
                 
-                // CRUCIAL RE-ORDER SYSTEM (First render the state, then clear form)
                 refreshHeadDashboardStats(); 
                 
                 alert("✅ KYC Form Submitted Successfully! \nSent to Head for Approval. Form will now open for Printing.");
                 
                 triggerPaperPrintDraft(p);
                 clearKycForm();
+                
+                // Now push to cloud safely in background
+                saveDataToCloud(p);
                 
             } catch(e) { console.error("KYC Submission Error:", e); }
         }
