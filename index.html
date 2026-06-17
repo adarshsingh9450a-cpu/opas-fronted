@@ -13,16 +13,18 @@
         .app-container { width: 100%; max-width: 480px; height: 100dvh; background: #f8fafc; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.2); }
         .app-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 2rem; position: relative; }
         
-        /* --- MAST ANIMATIONS --- */
+        /* --- PREMIUM ANIMATIONS --- */
         .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
         .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .hover-scale { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s; }
         .hover-scale:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         .pulse-glow { animation: pulseGlow 2s infinite; }
+        .spin-fast { animation: spin 0.6s linear infinite; }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         
         .btn-fluid { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .btn-fluid:active { transform: scale(0.95); }
@@ -43,19 +45,20 @@
 <body>
     <div class="app-container">
         
+        <!-- LOGIN PORTAL -->
         <div id="auth-container" class="absolute inset-0 bg-white z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
             <div class="text-center mb-8 mt-4 animate-slide-up">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl mx-auto mb-5 shadow-xl shadow-indigo-500/30 flex items-center justify-center transform rotate-3 hover-scale"><span class="text-4xl text-white font-black">₹</span></div>
                 <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">OPAS MICRO FINANCE</h1>
                 <span class="text-[10px] font-black text-blue-600 tracking-[0.2em] block uppercase mt-1">Pvt Ltd</span>
-                <p id="cloud-status" class="text-[9px] font-bold text-emerald-500 mt-2 bg-emerald-50 inline-block px-3 py-1 rounded-full border border-emerald-100">☁️ Cloud Syncing...</p>
+                <p id="cloud-status" class="text-[9px] font-bold text-emerald-500 mt-2 bg-emerald-50 inline-block px-3 py-1 rounded-full border border-emerald-100 transition-all">☁️ Cloud Syncing...</p>
             </div>
 
             <div id="customer-login-form" class="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner animate-slide-up" style="animation-delay: 0.1s;">
                 <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">Customer Portal</span></div>
                 <input type="tel" id="cust-mobile" placeholder="Registered 10-digit number" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all">
                 <input type="text" id="cust-otp" placeholder="Enter OTP (1234)" class="hidden w-full px-5 py-4 bg-white border border-blue-200 rounded-2xl text-lg font-black text-center text-blue-700 focus:outline-none shadow-sm animate-fade">
-                <button onclick="handleCustomerLogin()" id="cust-action-btn" class="btn-fluid w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 pulse-glow">Verify & Access</button>
+                <button onclick="handleCustomerLogin(event)" id="cust-action-btn" class="btn-fluid w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 pulse-glow">Verify & Access</button>
                 <div class="text-center pt-4 border-t border-slate-200"><button onclick="toggleLoginForm('employee')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest py-2">💼 Enterprise Staff Login →</button></div>
             </div>
 
@@ -63,20 +66,26 @@
                 <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200">Enterprise Portal</span></div>
                 <input type="text" id="emp-username" placeholder="Employee ID (staff01/head01)" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-rose-300 shadow-sm transition-all">
                 <input type="password" id="emp-password" placeholder="Password" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-rose-300 shadow-sm transition-all">
-                <button onclick="handleEmployeeLogin()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg">Authorize Access</button>
+                <button onclick="handleEmployeeLogin(event)" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg">Authorize Access</button>
                 <div class="text-center pt-4 border-t border-slate-200"><button onclick="toggleLoginForm('customer')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest py-2">← Back to Customer</button></div>
             </div>
             <div class="text-center mt-auto pt-6 pb-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest">Protected by OPAS Security</div>
         </div>
 
+        <!-- APP HEADER -->
         <header id="app-header" class="bg-white/95 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center py-3 px-4 shadow-sm border-b border-slate-200 hidden">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebarMenu(true)" id="sidebar-toggle-btn" class="p-2 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 btn-fluid"><span class="text-lg">☰</span></button>
                 <div class="flex flex-col"><h1 class="text-xs font-black text-slate-900 uppercase">OPAS FINANCE</h1><p class="text-[8px] font-black text-blue-600 uppercase tracking-widest">Pvt Ltd Suite</p></div>
             </div>
-            <button onclick="logout()" class="w-10 h-10 flex items-center justify-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-500 hover:text-white btn-fluid transition-colors"><span class="text-lg">⏻</span></button>
+            <div class="flex items-center gap-2">
+                <!-- NAYA BUTTON: Sync Button to fetch latest data -->
+                <button onclick="forceCloudSync(event)" class="w-10 h-10 flex items-center justify-center text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white btn-fluid transition-colors shadow-sm" title="Sync Latest Data"><span class="text-lg">🔄</span></button>
+                <button onclick="logout()" class="w-10 h-10 flex items-center justify-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-500 hover:text-white btn-fluid transition-colors shadow-sm"><span class="text-lg">⏻</span></button>
+            </div>
         </header>
 
+        <!-- SIDEBAR -->
         <div id="app-sidebar-menu" class="bg-slate-950 text-white p-5 shadow-2xl transform -translate-x-full sidebar-menu flex flex-col w-[80%] max-w-[300px]">
             <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                 <div><span class="text-xs font-black uppercase">Menu</span><span class="text-[8px] text-blue-400 font-bold uppercase tracking-widest block">System Console</span></div>
@@ -104,8 +113,10 @@
             <div class="pt-4 border-t border-slate-800 mt-auto"><div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white shadow-inner" id="sidebar-avatar">HD</div><div><h4 class="text-xs font-black text-white" id="sidebar-name">Name</h4><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="sidebar-role">Role</p></div></div></div>
         </div>
 
+        <!-- MAIN VIEWS -->
         <div class="app-body px-4 pt-4 hidden" id="main-views-container">
 
+            <!-- DASHBOARD VIEW -->
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200 hover-scale">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -118,10 +129,12 @@
                     </div>
                 </div>
 
+                <!-- HEAD EXCLUSIVE STATS -->
                 <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up">
                     <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl animate-float"></div>
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl animate-pulse"></div>
                         <div class="relative z-10">
+                            <!-- Branch Filter inside Head Block -->
                             <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
                                 <label class="text-[9px] font-black text-purple-300 uppercase ml-1">Head Branch Filter:</label>
                                 <select id="head-analytics-branch-selector" onchange="refreshHeadDashboardStats()" class="py-1.5 px-2 bg-white/10 border border-white/20 rounded-lg text-xs font-bold text-white focus:outline-none"></select>
@@ -136,15 +149,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-2 border-t border-slate-100 pt-4">
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase mb-3 flex items-center gap-2">Approval Verification Queue <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px]" id="head-queue-count">0</span></h3>
-                        <div id="head-approval-zone" class="space-y-3"></div>
-                    </div>
                 </div>
 
-                <div id="dash-staff-pending-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale border-amber-200">
-                    <p class="text-[10px] font-black text-amber-600 uppercase ml-1">Awaiting Head Approval</p>
-                    <div class="bg-amber-50 text-amber-600 border border-amber-200 px-4 py-1.5 rounded-lg font-black text-lg" id="m-pending-count">0</div>
+                <!-- NEW: SHARED APPROVAL QUEUE (VISIBLE TO HEAD AND STAFF) -->
+                <div id="shared-approval-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-purple-200 bg-purple-50/20">
+                    <h3 class="text-[10px] font-black text-purple-800 uppercase flex items-center justify-between">
+                        Approval Verification Queue 
+                        <span class="bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg text-[9px] font-black shadow-sm" id="queue-count-badge">0 Pending</span>
+                    </h3>
+                    <div id="global-approval-zone" class="space-y-3"></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 animate-slide-up" style="animation-delay: 0.1s;">
@@ -170,6 +183,7 @@
                 </div>
             </div>
 
+            <!-- REQUESTS VIEW -->
             <div id="view-node-requests" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">📥</div><h3 class="text-xs font-black text-indigo-600 uppercase">Loan Requests</h3></div>
@@ -177,6 +191,7 @@
                 </div>
             </div>
 
+            <!-- CLIENT DIRECTORY VIEW -->
             <div id="view-node-clients" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
@@ -184,11 +199,12 @@
                         <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none transition-all focus:border-blue-300"><option value="total">Total Active</option><option value="pending">Pending Approvals ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
                         <select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-4 mt-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                     </div>
-                    <div class="flex justify-between items-center px-1"><span class="text-[10px] font-black uppercase text-slate-500">Results</span><span class="text-[10px] font-black bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg" id="report-count-badge">0 Found</span></div>
+                    <div class="flex justify-between items-center px-1"><span class="text-[10px] font-black uppercase text-slate-500">Results</span><span class="text-[10px] font-black bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg shadow-sm" id="report-count-badge">0 Found</span></div>
                     <div id="client-directory-list-zone" class="space-y-4 max-h-[50vh] overflow-y-auto pr-1"></div>
                 </div>
             </div>
 
+            <!-- LEDGER VIEW -->
             <div id="view-node-ledger" class="view-panel hidden space-y-4 animate-slide-up">
                 <div class="glass-card p-5 rounded-[2rem] space-y-5">
                     <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
@@ -198,6 +214,7 @@
                 </div>
             </div>
 
+            <!-- KYC VIEW -->
             <div id="view-node-kyc" class="view-panel hidden animate-slide-up">
                 <div class="glass-card rounded-[2rem] p-5">
                     <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-5 text-center border-b border-slate-100 pb-4">New KYC Enrollment</h3>
@@ -232,6 +249,7 @@
                 </div>
             </div>
 
+            <!-- OTHER STAFF/ADMIN VIEWS COMPRESSED -->
             <div id="view-node-settlement" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold hover-scale">💰</div><h3 class="text-sm font-black text-slate-900 uppercase">Direct Settlement</h3></div>
@@ -330,6 +348,7 @@
                 </div>
             </div>
 
+            <!-- CUSTOMER PORTAL VIEWS -->
             <div id="view-node-cust-apply" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale">📝</div><h3 class="text-sm font-black text-blue-600 uppercase">Apply For New Loan</h3></div>
@@ -347,7 +366,7 @@
 
             <div id="view-node-cust-pending" class="view-panel hidden animate-slide-up">
                 <div class="glass-card rounded-[2rem] p-8 text-center space-y-5">
-                    <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-4xl font-bold border-4 border-white shadow-inner animate-float">⏳</div>
+                    <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-4xl font-bold border-4 border-white shadow-inner animate-pulse">⏳</div>
                     <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Application Received</h3>
                     <p class="text-xs text-slate-500 font-medium px-2">OPAS MICRO FINANCE ki taraf se aapki request prapt ho gayi hai. Hamare staff aapse jald hi sampark karenge.</p>
                     <div class="mt-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-left text-[10px] font-bold text-slate-700"><p>Status: <span class="text-amber-600 block mt-1 text-xs uppercase">Pending Verification</span></p></div>
@@ -411,6 +430,7 @@
 
         </div>
 
+        <!-- GLOBAL MODAL OVERLAY -->
         <div id="global-modal-overlay" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex items-end justify-center sm:items-center">
             <div id="modal-content" class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-6 relative modal-zoom shadow-2xl">
                 <button onclick="closeGlobalModal()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full font-black flex items-center justify-center z-50 transition-colors">✕</button>
@@ -419,6 +439,7 @@
         </div>
     </div> 
     
+    <!-- PRINT TEMPLATES -->
     <div id="print-paper-template" class="hidden bg-white max-w-4xl mx-auto text-black font-serif">
         <div class="print-page-break p-8 border-2 border-slate-900 rounded-xl bg-white">
             <div class="text-center space-y-1 border-b-2 border-slate-900 pb-3">
@@ -486,6 +507,7 @@
 
         async function loadDataFromCloud() {
             try {
+                document.getElementById('cloud-status').innerText = "☁️ Fetching Data...";
                 const response = await fetch(API_URL);
                 if (response.ok) {
                     serverDb = await response.json();
@@ -497,6 +519,14 @@
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
                 } else { document.getElementById('cloud-status').innerText = "⚠️ Cloud Error"; }
             } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Backend Offline"; }
+        }
+
+        async function forceCloudSync(event) {
+            let btn = event.currentTarget.querySelector('span');
+            btn.classList.add('spin-fast');
+            await loadDataFromCloud();
+            if(currentLoggedInRole !== 'customer') { refreshHeadDashboardStats(); }
+            setTimeout(() => { btn.classList.remove('spin-fast'); }, 500);
         }
 
         async function saveDataToCloud(mobileNumber) {
@@ -578,16 +608,21 @@
         function routePanelSection(panelId) {
             try {
                 document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
+                
                 if (panelId === 'dashboard') {
                     document.getElementById('view-node-dashboard')?.classList.remove('hidden');
                     if (currentLoggedInRole === 'head') { document.getElementById('head-exclusive-stats')?.classList.remove('hidden'); } 
-                    else { 
-                        document.getElementById('head-exclusive-stats')?.classList.add('hidden'); 
-                        document.getElementById('dash-staff-pending-block')?.classList.remove('hidden'); 
-                    }
+                    else { document.getElementById('head-exclusive-stats')?.classList.add('hidden'); }
                     refreshHeadDashboardStats();
                 } else { document.getElementById('view-node-' + panelId)?.classList.remove('hidden'); }
+                
                 toggleSidebarMenu(false);
+
+                if(panelId === 'kyc' && currentLoggedInRole === 'staff') {
+                    const b = document.getElementById('dashboard-active-branch-select').value;
+                    const kycBranch = document.getElementById('new-cust-branch');
+                    if (kycBranch) { kycBranch.innerHTML = `<option value="${b}">${b}</option>`; kycBranch.value = b; syncKycCentreDropdown(); }
+                }
 
                 if(panelId === 'ledger') renderStaffLedgerSheets();
                 if(panelId === 'clients') { syncReportDropdowns(); renderClientDirectory(); }
@@ -730,6 +765,7 @@
                 let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayStr = formatSysDate(new Date());
+                
                 let pendingApprovalHtml = ''; 
                 
                 Object.keys(serverDb).forEach(k => {
@@ -738,10 +774,14 @@
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
                     if(match) {
-                        // Pending Approvals Check
+                        // --- NEW LOGIC: Shared Pending Queue ---
                         if(f.status === 'Pending Approval') {
                             pendingCount++;
-                            pendingApprovalHtml += `<div class="p-5 bg-purple-50/90 border border-purple-200 rounded-3xl mb-3 hover-scale"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Approval Needed</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-white p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p><button onclick="executeHeadApproval('${k}')" class="btn-fluid w-full mt-4 bg-purple-700 hover:bg-purple-600 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve Application ✓</button></div>`;
+                            let actionBtn = currentLoggedInRole === 'head' 
+                                ? `<button onclick="executeHeadApproval('${k}')" class="btn-fluid w-full mt-4 bg-purple-700 hover:bg-purple-600 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve Application ✓</button>`
+                                : `<button disabled class="btn-fluid w-full mt-4 bg-white text-slate-500 font-black py-4 rounded-xl text-[10px] uppercase border border-slate-200 shadow-sm cursor-not-allowed">Awaiting Head ⏳</button>`;
+
+                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${actionBtn}</div>`;
                         }
                         
                         let appDateMonth = "";
@@ -802,6 +842,18 @@
                     }
                 });
 
+                // Update Shared Queue Zone
+                setHtmlSafe('queue-count-badge', `${pendingCount} Pending`);
+                const qZone = document.getElementById('global-approval-zone');
+                const qBlock = document.getElementById('shared-approval-queue-block');
+                if (pendingApprovalHtml === '') { 
+                    if(qZone) qZone.innerHTML = ``; 
+                    if(qBlock) qBlock.classList.add('hidden');
+                } else { 
+                    if(qZone) qZone.innerHTML = pendingApprovalHtml; 
+                    if(qBlock) qBlock.classList.remove('hidden');
+                }
+
                 if(currentLoggedInRole === 'head') {
                     let totalOut = 0;
                     Object.keys(serverDb).forEach(k => {
@@ -813,15 +865,7 @@
                     setHtmlSafe('head-total-outstanding', `₹${totalOut.toLocaleString('en-IN')}`);
                     setHtmlSafe('head-total-clients', cac);
                     setHtmlSafe('head-profit-view', `₹${cp.toLocaleString('en-IN')}`);
-                    setHtmlSafe('head-queue-count', pendingCount);
-
-                    const z = document.getElementById('head-approval-zone');
-                    if (pendingApprovalHtml === '') { if(z) z.innerHTML = `<p class="text-xs text-slate-400 font-bold uppercase text-center py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed">All flawless.</p>`; } 
-                    else { if(z) z.innerHTML = pendingApprovalHtml; }
                 }
-
-                // Update Staff Pending View
-                setHtmlSafe('m-pending-count', pendingCount);
 
                 setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-disburse-month', `₹${dM.toLocaleString('en-IN')}`); 
@@ -873,9 +917,8 @@
                     if (mobile === "SYSTEM_SETTINGS") return;
                     let c = serverDb[mobile]; 
                     
-                    // Strict branch isolation for Staff
+                    // Strict branch isolation
                     if (currentLoggedInRole === 'staff' && c.branch !== activeStaffBranch) return;
-                    // Global Branch filter for Head
                     if (currentLoggedInRole === 'head') {
                         const hBranch = getSafeValue('head-analytics-branch-selector');
                         if (hBranch !== "ALL" && c.branch !== hBranch) return;
@@ -1054,7 +1097,7 @@
 
                         let aB = '';
                         if(a.emiSettled === 'online_paid') { aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; } 
-                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl">Bounced</button>`; }
+                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors">Bounced</button>`; }
 
                         h += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-4 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
@@ -1148,7 +1191,7 @@
         // ==========================================
         function clearKycForm() {
             try {
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-principal').value = 5000;
                 document.getElementById('new-loan-roi').value = 12;
                 document.getElementById('new-loan-amount').value = '100-days';
@@ -1219,7 +1262,7 @@
                     let r = serverDb[m];
                     if(r.status === 'Requested') {
                         let rp = r.tempPrincipal||5000;
-                        h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade hover-scale"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-sm">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Req Amt: ₹${rp.toLocaleString()}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md transition-colors">Complete KYC Form</button></div>`;
+                        h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade hover-scale"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-sm pulse-glow">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Req Amt: ₹${rp.toLocaleString()}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md transition-colors">Complete KYC Form</button></div>`;
                     }
                 });
                 if(zone) zone.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No pending requests.</p>`;
@@ -1354,30 +1397,40 @@
             } catch(e) {}
         }
         
-        function handleCustomerLogin() {
+        async function handleCustomerLogin(event) {
             try {
+                let btn = event.currentTarget;
                 const m = getSafeValue('cust-mobile').trim(); if (!m || m.length < 10) { alert("Enter 10-digit number."); return; }
                 if (!otpRequested) { 
                     document.getElementById('cust-otp')?.classList.remove('hidden'); 
-                    let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify OTP"; otpRequested = true; 
+                    if(btn) btn.innerText = "Verify OTP"; otpRequested = true; 
                 } 
                 else { 
                     const otpVal = getSafeValue('cust-otp');
                     if (otpVal === '1234') { 
+                        btn.innerText = "Syncing Cloud...";
+                        await loadDataFromCloud();
                         currentlyLoggedInMobile = m;
                         if (!serverDb[m]) { let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; showDashboard('customer'); routePanelSection('cust-apply'); } 
                         else if (serverDb[m].status === 'Requested') { showDashboard('customer'); routePanelSection('cust-pending'); } 
                         else if (serverDb[m].status === 'Pending Approval') { showDashboard('customer'); routePanelSection('cust-pending'); }
                         else { showDashboard('customer'); }
+                        btn.innerText = "Verify & Access";
                     } else { alert('Galat OTP!'); }
                 }
             } catch(e) {}
         }
 
-        function handleEmployeeLogin() {
+        async function handleEmployeeLogin(event) {
             try {
+                let btn = event.currentTarget;
                 const u = getSafeValue('emp-username').trim(); const p = getSafeValue('emp-password');
                 
+                let oldText = btn.innerText;
+                btn.innerText = "Syncing Data...";
+                await loadDataFromCloud();
+                btn.innerText = oldText;
+
                 if (u === 'head01' && p === 'head123') { 
                     currentLoggedInRole = 'head'; 
                     showDashboard('head'); 
@@ -1472,7 +1525,7 @@
                 document.getElementById('main-views-container')?.classList.remove('hidden'); 
                 document.getElementById('app-header')?.classList.remove('hidden');
 
-                document.querySelectorAll('.role-cust, .role-staff, .role-head, #dash-active-acc-block, #dash-closed-acc-block, #dash-branch-filter-zone, #dash-staff-pending-block').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.role-cust, .role-staff, .role-head, #dash-active-acc-block, #dash-closed-acc-block, #dash-branch-filter-zone').forEach(el => el.classList.add('hidden'));
                 
                 if(role === 'customer') { 
                     document.querySelectorAll('.role-cust').forEach(el => el.classList.remove('hidden'));
