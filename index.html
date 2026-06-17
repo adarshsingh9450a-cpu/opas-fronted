@@ -203,7 +203,11 @@
 
             <div id="view-node-kyc" class="view-panel hidden animate-slide-up">
                 <div class="glass-card rounded-[2rem] p-5">
-                    <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-5 text-center border-b border-slate-100 pb-4">New KYC Enrollment</h3>
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-5">
+    <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-5"></div>
+                        <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest">New KYC Enrollment</h3>
+    <button onclick="clearKycForm(); alert('Form successfully reset for new entry! 🧹')" class="text-[10px] font-black bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-sm transition-all hover:bg-rose-100 active:scale-95">Specific Code: 🧹 New Client</button>
+</div>
                     
                     <div id="kyc-stage-a" class="space-y-4 animate-fade">
                         <input type="text" id="new-cust-name" placeholder="Applicant Full Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300">
@@ -1334,23 +1338,21 @@
                     name: n, id: id, planType: m.cycleType, planName: m.printPlanName, principal: m.principal, roi: m.typedRoi, interestAmt: m.interestAmt, totalPayable: m.totalPayable, outstanding: m.totalPayable, overdue: 0, cycleEmi: m.cycleEmi, status: "Pending Approval", isApproved: false, emiSettled: null, isRenewed: false, isFirstLoan: true, advancePaid: 0, branch: b, center: c, spouse: spVal, nominee: nmVal, nomineeRelation: nrVal, caste: csVal, land: ldVal, attendance: atVal, purpose: puVal, house: hsVal, religion: rVal, address: a, ppiSummary: "Gas/TV Verified", socioSummary: "Makan Verified", transactions: [], pastLoans: [] 
                 };
                 
-                // DUAL ENGINE: Save to memory synchronously BEFORE opening print (Prevents refresh loss)
+                // DUAL ENGINE LOCK: Print se pehle hi phone ki memory mein data safe ho jayega
                 localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
-                localStorage.removeItem('kyc_draft'); // Wipe draft so it doesn't persist
                 
                 refreshHeadDashboardStats(); 
                 
                 alert("✅ KYC Form Submitted Successfully! \nSent to Head for Approval. Form will now open for Printing.");
                 
                 triggerPaperPrintDraft(p);
-                clearKycForm();
                 
-                // Now push to cloud safely in background
+                // 🔥 Automatic clear ko yaha se hamesha ke liye hata diya gaya hai!
+                
                 saveDataToCloud(p);
                 
             } catch(e) { console.error("KYC Submission Error:", e); }
         }
-
         function renderPendingRequestsBox() {
             try {
                 const zone = document.getElementById('staff-requests-zone'); let h = '';
