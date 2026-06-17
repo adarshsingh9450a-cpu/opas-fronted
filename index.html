@@ -212,7 +212,7 @@
                     </div>
 
                     <div id="kyc-stage-b" class="space-y-4 hidden animate-fade">
-                        <div class="grid grid-cols-2 gap-3"><select id="new-cust-branch" onchange="syncKycCentreDropdown()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select><select id="new-cust-center" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none" disabled><option value="">Select Branch</option></select></div>
+                        <div class="grid grid-cols-2 gap-3"><select id="new-cust-branch" onchange="syncKycCentreDropdown()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select><select id="new-cust-center" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none" disabled><option value="">-- Select Centre --</option></select></div>
                         <div class="grid grid-cols-2 gap-3"><input type="text" id="new-cust-spouse" placeholder="Spouse Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"><input type="text" id="new-cust-voter" placeholder="Voter ID Card" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"></div>
                         <div class="grid grid-cols-2 gap-3"><input type="text" id="new-cust-nominee" placeholder="Nominee Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"><select id="new-cust-nominee-relation" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="Husband">Husband</option><option value="Son">Son</option><option value="Daughter">Daughter</option></select></div>
                         <div class="grid grid-cols-3 gap-2 pt-2"><select id="new-cust-caste" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Samanya">Gen</option><option value="OBC">OBC</option><option value="SC">SC</option></select><select id="new-cust-religion" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Hindu">Hindu</option><option value="Muslim">Muslim</option></select><input type="text" id="new-cust-land" placeholder="Krishi Bhumi" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-semibold focus:outline-none"></div>
@@ -1148,7 +1148,7 @@
                 document.getElementById('new-loan-amount').value = '100-days';
                 
                 let cd = document.getElementById('new-cust-center');
-                if(cd) { cd.innerHTML = `<option value="">Select Branch First</option>`; cd.disabled = true; }
+                if(cd) { cd.innerHTML = `<option value="">-- Select Centre --</option>`; cd.disabled = true; }
                 
                 document.getElementById('new-cust-nominee-relation').value = 'Husband';
                 document.getElementById('new-cust-caste').value = 'Samanya';
