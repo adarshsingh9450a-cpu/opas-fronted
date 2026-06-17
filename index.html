@@ -79,7 +79,6 @@
                 <div class="flex flex-col"><h1 class="text-xs font-black text-slate-900 uppercase">OPAS FINANCE</h1><p class="text-[8px] font-black text-blue-600 uppercase tracking-widest">Pvt Ltd Suite</p></div>
             </div>
             <div class="flex items-center gap-2">
-                <!-- NAYA BUTTON: Sync Button to fetch latest data -->
                 <button onclick="forceCloudSync(event)" class="w-10 h-10 flex items-center justify-center text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white btn-fluid transition-colors shadow-sm" title="Sync Latest Data"><span class="text-lg">🔄</span></button>
                 <button onclick="logout()" class="w-10 h-10 flex items-center justify-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-500 hover:text-white btn-fluid transition-colors shadow-sm"><span class="text-lg">⏻</span></button>
             </div>
@@ -134,12 +133,10 @@
                     <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl animate-pulse"></div>
                         <div class="relative z-10">
-                            <!-- Branch Filter inside Head Block -->
                             <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
                                 <label class="text-[9px] font-black text-purple-300 uppercase ml-1">Head Branch Filter:</label>
                                 <select id="head-analytics-branch-selector" onchange="refreshHeadDashboardStats()" class="py-1.5 px-2 bg-white/10 border border-white/20 rounded-lg text-xs font-bold text-white focus:outline-none"></select>
                             </div>
-                            
                             <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Global Target View</p>
                             <h3 class="text-4xl font-black mt-1" id="head-total-outstanding">₹0</h3>
                             <p class="text-[9px] text-purple-300 font-bold uppercase mt-1">Total Loan Outstanding</p>
@@ -151,7 +148,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: SHARED APPROVAL QUEUE (VISIBLE TO HEAD AND STAFF) -->
+                <!-- SHARED APPROVAL QUEUE -->
                 <div id="shared-approval-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-purple-200 bg-purple-50/20">
                     <h3 class="text-[10px] font-black text-purple-800 uppercase flex items-center justify-between">
                         Approval Verification Queue 
@@ -249,7 +246,7 @@
                 </div>
             </div>
 
-            <!-- OTHER STAFF/ADMIN VIEWS COMPRESSED -->
+            <!-- DIRECT SETTLEMENT VIEW -->
             <div id="view-node-settlement" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold hover-scale">💰</div><h3 class="text-sm font-black text-slate-900 uppercase">Direct Settlement</h3></div>
@@ -269,6 +266,7 @@
                 </div>
             </div>
 
+            <!-- RENEW VIEW -->
             <div id="view-node-renew" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold hover-scale">🔄</div><h3 class="text-sm font-black text-slate-900 uppercase">Loan Renewal</h3></div>
@@ -286,6 +284,7 @@
                 </div>
             </div>
 
+            <!-- ADMIN EDIT VIEW -->
             <div id="view-node-admin-edit" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
@@ -309,6 +308,7 @@
                 </div>
             </div>
 
+            <!-- STAFF MANAGE VIEW -->
             <div id="view-node-staff-manage" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👨‍💼</div><h3 class="text-xs font-black text-blue-600 uppercase">Staff Management</h3></div>
@@ -326,6 +326,7 @@
                 </div>
             </div>
 
+            <!-- SYSTEM SETUP VIEW -->
             <div id="view-node-setup" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
@@ -747,9 +748,11 @@
 
         function refreshHeadDashboardStats() {
             try {
-                const headSelector = getSafeValue('head-analytics-branch-selector') || "ALL";
-                const staffSelector = getSafeValue('dashboard-active-branch-select');
-                const activeFilter = currentLoggedInRole === 'head' ? headSelector : staffSelector;
+                const headSelector = document.getElementById('head-analytics-branch-selector')?.value || "ALL";
+                const staffSelector = document.getElementById('dashboard-active-branch-select')?.value || "";
+                
+                // Dropdown backup fallback to prevent 0 rendering bugs
+                const activeFilter = currentLoggedInRole === 'head' ? headSelector : (staffSelector || "ALL");
 
                 let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
                 let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
@@ -774,14 +777,13 @@
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
                     if(match) {
-                        // --- NEW LOGIC: Shared Pending Queue ---
                         if(f.status === 'Pending Approval') {
                             pendingCount++;
                             let actionBtn = currentLoggedInRole === 'head' 
-                                ? `<button onclick="executeHeadApproval('${k}')" class="btn-fluid w-full mt-4 bg-purple-700 hover:bg-purple-600 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve Application ✓</button>`
+                                ? `<button onclick="executeHeadApproval('${k}')" class="btn-fluid w-full mt-4 bg-purple-700 hover:bg-purple-600 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30 transition-all">Approve Application ✓</button>`
                                 : `<button disabled class="btn-fluid w-full mt-4 bg-white text-slate-500 font-black py-4 rounded-xl text-[10px] uppercase border border-slate-200 shadow-sm cursor-not-allowed">Awaiting Head ⏳</button>`;
 
-                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${actionBtn}</div>`;
+                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${actionBtn}</div>`;
                         }
                         
                         let appDateMonth = "";
@@ -842,7 +844,6 @@
                     }
                 });
 
-                // Update Shared Queue Zone
                 setHtmlSafe('queue-count-badge', `${pendingCount} Pending`);
                 const qZone = document.getElementById('global-approval-zone');
                 const qBlock = document.getElementById('shared-approval-queue-block');
@@ -917,7 +918,6 @@
                     if (mobile === "SYSTEM_SETTINGS") return;
                     let c = serverDb[mobile]; 
                     
-                    // Strict branch isolation
                     if (currentLoggedInRole === 'staff' && c.branch !== activeStaffBranch) return;
                     if (currentLoggedInRole === 'head') {
                         const hBranch = getSafeValue('head-analytics-branch-selector');
@@ -1041,9 +1041,6 @@
             document.getElementById('modal-injection-zone').innerHTML = html;
         }
 
-        // ==========================================
-        // STAFF LEDGER
-        // ==========================================
         function syncKycCentreDropdown() {
             try {
                 const sb = getSafeValue('new-cust-branch'); 
@@ -1186,9 +1183,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // KYC FORM CONTROLLER
-        // ==========================================
         function clearKycForm() {
             try {
                 ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
@@ -1246,10 +1240,14 @@
                 };
                 
                 await saveDataToCloud(p); 
+                
+                // CRUCIAL RE-ORDER SYSTEM (First render the state, then clear form)
+                refreshHeadDashboardStats(); 
+                
                 alert("✅ KYC Form Submitted Successfully! \nSent to Head for Approval. Form will now open for Printing.");
+                
                 triggerPaperPrintDraft(p);
                 clearKycForm();
-                refreshHeadDashboardStats();
                 
             } catch(e) { console.error("KYC Submission Error:", e); }
         }
@@ -1281,9 +1279,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // SETTLEMENT & RENEWAL
-        // ==========================================
         function syncSettleCentreFilter() {
             try {
                 const branchSelect = document.getElementById('settle-branch-filter');
@@ -1387,9 +1382,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // CUSTOMER PORTAL
-        // ==========================================
         function toggleLoginForm(v) { 
             try {
                 const c = document.getElementById('customer-login-form'); const e = document.getElementById('employee-login-form'); 
