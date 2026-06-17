@@ -1177,7 +1177,11 @@
                 await saveDataToCloud(p); 
                 triggerPaperPrintDraft(p);
                 clearKycForm();
-            } catch(e) {}
+                
+                // YE HAI ASLI SIGNAL JO HEAD KE DASHBOARD KO JAGAYEGA:
+                refreshHeadDashboardStats();
+                
+            } catch(e) { console.error("KYC Submission Error:", e); }
         }
 
         function renderPendingRequestsBox() {
