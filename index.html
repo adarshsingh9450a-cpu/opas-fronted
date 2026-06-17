@@ -32,7 +32,6 @@
 <body>
     <div class="app-container">
         
-        <!-- Auth Container -->
         <div id="auth-container" class="absolute inset-0 bg-white z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
             <div class="text-center mb-8 mt-4">
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl mx-auto mb-5 shadow-xl flex items-center justify-center transform rotate-3"><span class="text-4xl text-white font-black">₹</span></div>
@@ -41,7 +40,6 @@
                 <p id="cloud-status" class="text-[9px] font-bold text-emerald-500 mt-2">☁️ Cloud Syncing...</p>
             </div>
 
-            <!-- Customer Login -->
             <div id="customer-login-form" class="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
                 <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">Customer Portal</span></div>
                 <input type="tel" id="cust-mobile" placeholder="Registered 10-digit number" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-blue-500 shadow-sm">
@@ -50,7 +48,6 @@
                 <div class="text-center pt-4 border-t border-slate-200"><button onclick="toggleLoginForm('employee')" class="text-[10px] font-black text-slate-500 uppercase tracking-widest py-2">💼 Enterprise Staff Login →</button></div>
             </div>
 
-            <!-- Employee Login -->
             <div id="employee-login-form" class="space-y-4 hidden bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
                 <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200">Enterprise Portal</span></div>
                 <input type="text" id="emp-username" placeholder="Employee ID (staff01/head01)" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none shadow-sm">
@@ -61,7 +58,6 @@
             <div class="text-center mt-auto pt-6 pb-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest">Protected by OPAS Security</div>
         </div>
 
-        <!-- App Header -->
         <header id="app-header" class="bg-white/95 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center py-3 px-4 shadow-sm border-b border-slate-200 hidden">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebarMenu(true)" id="sidebar-toggle-btn" class="p-2 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 btn-fluid"><span class="text-lg">☰</span></button>
@@ -70,14 +66,12 @@
             <button onclick="logout()" class="w-10 h-10 flex items-center justify-center text-rose-500 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-500 hover:text-white btn-fluid"><span class="text-lg">⏻</span></button>
         </header>
 
-        <!-- Sidebar Menu -->
         <div id="app-sidebar-menu" class="bg-slate-950 text-white p-5 shadow-2xl transform -translate-x-full sidebar-menu flex flex-col w-[80%] max-w-[300px]">
             <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                 <div><span class="text-xs font-black uppercase">Menu</span><span class="text-[8px] text-blue-400 font-bold uppercase tracking-widest block">System Console</span></div>
                 <button onclick="toggleSidebarMenu(false)" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 btn-fluid font-bold text-sm">✕</button>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 space-y-2 pr-1" id="sidebar-navigation-nodes">
-                <!-- Staff & Head -->
                 <button onclick="routePanelSection('dashboard')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">📊</span> Dashboard</button>
                 <button onclick="routePanelSection('requests')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-indigo-300 flex items-center justify-between hidden"><div><span class="text-lg mr-2">📥</span> Requests</div><span class="bg-indigo-600 text-white rounded-md px-2 py-0.5 text-[9px]" id="req-count-badge">0</span></button>
                 <button onclick="routePanelSection('clients')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">👥</span> Client Directory</button>
@@ -86,12 +80,10 @@
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-amber-400 mt-4 hidden"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">🔄</span> Renew Client</button>
                 
-                <!-- Head Only -->
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 text-rose-400 border border-rose-900/30 mt-4 hidden"><span class="text-lg mr-2">✏️</span> Edit/Delete Data</button>
                 <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 text-blue-400 border border-blue-900/30 hidden"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
                 <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 text-emerald-400 border border-emerald-900/30 hidden"><span class="text-lg mr-2">⚙️</span> Setup Nodes</button>
                 
-                <!-- Customer Only -->
                 <button onclick="routePanelSection('cust-apply')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 text-white shadow-md hidden"><span class="text-lg mr-2">📝</span> Apply For Loan</button>
                 <button onclick="routePanelSection('cust-portal')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">🏠</span> My Dashboard</button>
                 <button onclick="routePanelSection('cust-passbook')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">📘</span> Digital Passbook</button>
@@ -101,10 +93,8 @@
             <div class="pt-4 border-t border-slate-800 mt-auto"><div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl"><div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm text-white" id="sidebar-avatar">HD</div><div><h4 class="text-xs font-black text-white" id="sidebar-name">Name</h4><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="sidebar-role">Role</p></div></div></div>
         </div>
 
-        <!-- Main Body -->
         <div class="app-body px-4 pt-4 hidden" id="main-views-container">
 
-            <!-- 1. DASHBOARD PANEL -->
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -159,7 +149,6 @@
                 </div>
             </div>
 
-            <!-- 2. REQUESTS PANEL -->
             <div id="view-node-requests" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">📥</div><h3 class="text-xs font-black text-indigo-600 uppercase">Loan Requests</h3></div>
@@ -167,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- 3. CLIENT DIRECTORY PANEL -->
             <div id="view-node-clients" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
@@ -180,7 +168,6 @@
                 </div>
             </div>
 
-            <!-- 4. LEDGER PANEL -->
             <div id="view-node-ledger" class="view-panel hidden space-y-4 animate-fade">
                 <div class="glass-card p-5 rounded-[2rem] space-y-5">
                     <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
@@ -190,7 +177,6 @@
                 </div>
             </div>
 
-            <!-- 5. KYC PANEL -->
             <div id="view-node-kyc" class="view-panel hidden animate-fade">
                 <div class="glass-card rounded-[2rem] p-5">
                     <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-5 text-center border-b border-slate-100 pb-4">New KYC Enrollment</h3>
@@ -225,7 +211,6 @@
                 </div>
             </div>
 
-            <!-- 6. SETTLEMENT PANEL -->
             <div id="view-node-settlement" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold">💰</div><h3 class="text-sm font-black text-slate-900 uppercase">Direct Settlement</h3></div>
@@ -247,7 +232,6 @@
                 </div>
             </div>
 
-            <!-- 7. RENEW PANEL -->
             <div id="view-node-renew" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold">🔄</div><h3 class="text-sm font-black text-slate-900 uppercase">Loan Renewal</h3></div>
@@ -265,7 +249,6 @@
                 </div>
             </div>
 
-            <!-- 8. ADMIN EDIT DATA PANEL -->
             <div id="view-node-admin-edit" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
@@ -289,7 +272,6 @@
                 </div>
             </div>
 
-            <!-- 9. STAFF MANAGE PANEL -->
             <div id="view-node-staff-manage" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👨‍💼</div><h3 class="text-xs font-black text-blue-600 uppercase">Staff Management</h3></div>
@@ -309,7 +291,6 @@
                 </div>
             </div>
 
-            <!-- 10. SETUP NODES PANEL -->
             <div id="view-node-setup" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
@@ -327,7 +308,6 @@
                         <div id="setup-centre-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
                     </div>
 
-                    <!-- DANGER ZONE: FACTORY RESET -->
                     <div class="bg-rose-50 p-4 rounded-2xl border border-rose-200 mt-6">
                         <h4 class="text-[10px] font-black uppercase text-rose-600 mb-2">Danger Zone</h4>
                         <p class="text-[9px] font-bold text-rose-500 mb-3">Ye button dabane se cloud ka saara purana data (Clients, Loans, Requests) hamesha ke liye delete ho jayega. (Sirf Staff aur Branch safe rahenge).</p>
@@ -336,7 +316,6 @@
                 </div>
             </div>
 
-            <!-- CUSTOMER SPECIFIC PANELS -->
             <div id="view-node-cust-apply" class="view-panel hidden animate-fade space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl">📝</div><h3 class="text-sm font-black text-blue-600 uppercase">Apply For New Loan</h3></div>
@@ -419,7 +398,6 @@
 
         </div>
 
-        <!-- GLOBAL MODAL OVERLAY -->
         <div id="global-modal-overlay" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex items-end justify-center sm:items-center">
             <div id="modal-content" class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-6 relative modal-zoom shadow-2xl">
                 <button onclick="closeGlobalModal()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full font-black flex items-center justify-center z-50">✕</button>
@@ -429,7 +407,6 @@
 
     </div> 
     
-    <!-- PRINT TEMPLATES -->
     <div id="print-paper-template" class="hidden bg-white max-w-4xl mx-auto text-black font-serif">
         <div class="print-page-break p-8 border-2 border-slate-900 rounded-xl bg-white">
             <div class="text-center space-y-1 border-b-2 border-slate-900 pb-3">
@@ -482,9 +459,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // 🚀 DATABASE & MASTER CLOUD SYNC LOGIC
-        // ==========================================
         const API_URL = "https://opas-backend-z1iz.onrender.com/api/clients"; 
         
         let currentActiveStaffTab = 'daily'; 
@@ -496,7 +470,6 @@
         let branchList = [];
         let centreList = [];
         let staffDb = {};
-
         let serverDb = {}; 
 
         async function loadDataFromCloud() {
@@ -530,7 +503,6 @@
             await saveDataToCloud("SYSTEM_SETTINGS");
         }
 
-        // 🔥 FACTORY RESET DATABASE SCRIPT
         async function factoryResetDatabase() {
             if(confirm("⚠️ DANGER: Kya aap sach mein poora Cloud Database (Sabhi Clients, Loans, Requests) delete karna chahte hain?")) {
                 let pass = prompt("Delete confirm karne ke liye type karein: DELETE");
@@ -546,25 +518,17 @@
                     }
                     serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
                     alert("✅ Database Completely Wiped! Ab app ekdum nayi ho gayi hai.");
-                    logout();
-                    window.location.reload();
-                } else {
-                    alert("Reset Cancelled.");
-                }
+                    logout(); window.location.reload();
+                } else { alert("Reset Cancelled."); }
             }
         }
 
         window.addEventListener('DOMContentLoaded', async () => { 
             let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
             let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
-            
-            await loadDataFromCloud(); 
-            syncSetupDropdowns(); 
+            await loadDataFromCloud(); syncSetupDropdowns(); 
         });
 
-        // ==========================================
-        // UI HELPERS & UTILS
-        // ==========================================
         function setHtmlSafe(id, val) { try { const el = document.getElementById(id); if(el) el.innerText = (val !== undefined && val !== null && val !== "") ? val : "-"; } catch (e) {} }
         function getSafeValue(id) { try { const el = document.getElementById(id); return el ? el.value : ""; } catch (e) { return ""; } }
 
@@ -584,19 +548,14 @@
         function calculateNextEmiDate(planType, fromDateStr) {
             let d;
             if(fromDateStr && fromDateStr !== "N/A" && fromDateStr !== "Completed") { 
-                let parts = fromDateStr.split('-'); 
-                d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10)-1, parseInt(parts[0], 10), 0, 0, 0, 0); 
-            } else {
-                d = new Date(); 
-            }
+                let parts = fromDateStr.split('-'); d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10)-1, parseInt(parts[0], 10), 0, 0, 0, 0); 
+            } else { d = new Date(); }
             d.setHours(0,0,0,0);
             d.setDate(d.getDate() + (planType === 'daily' ? 1 : 7)); 
             return formatSysDate(d);
         }
 
-        function toggleSidebarMenu(open) { 
-            try { const m = document.getElementById('app-sidebar-menu'); if(!m) return; if (open) m.classList.remove('-translate-x-full'); else m.classList.add('-translate-x-full'); } catch (e) {} 
-        }
+        function toggleSidebarMenu(open) { try { const m = document.getElementById('app-sidebar-menu'); if(!m) return; if (open) m.classList.remove('-translate-x-full'); else m.classList.add('-translate-x-full'); } catch (e) {} }
 
         function openGlobalModal(htmlContent) {
             document.getElementById('modal-injection-zone').innerHTML = htmlContent;
@@ -649,8 +608,7 @@
                 let hOpt = `<option value="ALL">Global View</option>`; branchList.forEach(b => { hOpt += `<option value="${b}">Branch: ${b}</option>`; });
                 let hb = document.getElementById('head-analytics-branch-selector'); if(hb) hb.innerHTML = hOpt;
                 
-                syncReportDropdowns();
-                renderSetupLists();
+                syncReportDropdowns(); renderSetupLists();
             } catch(e) {}
         }
 
@@ -736,11 +694,7 @@
         async function deleteClientRecord() {
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
              if(confirm("⚠ PERMANENTLY DELETE client?")) { 
-                try { 
-                    delete serverDb[m]; 
-                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) });
-                    alert("Client permanently removed."); syncAdminEditDropdown(); refreshHeadDashboardStats(); 
-                } catch(e) {} 
+                try { delete serverDb[m]; await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) }); alert("Client permanently removed."); syncAdminEditDropdown(); refreshHeadDashboardStats(); } catch(e) {} 
              }
         }
 
@@ -1013,6 +967,24 @@
             document.getElementById('modal-injection-zone').innerHTML = html;
         }
 
+        // ==========================================
+        // STAFF LEDGER
+        // ==========================================
+        function syncKycCentreDropdown() {
+            try {
+                const sb = getSafeValue('new-cust-branch'); 
+                const cd = document.getElementById('new-cust-center');
+                if(!sb || sb === "") { 
+                    if(cd) { cd.innerHTML = `<option value="">-- Select Centre --</option>`; cd.disabled = true; } 
+                    return; 
+                }
+                let mc = centreList.filter(c => c.branch === sb); 
+                let opts = `<option value="">-- Select Centre --</option>`;
+                mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
+                if(cd) { cd.innerHTML = opts; cd.disabled = false; }
+            } catch(e) { console.log(e); }
+        }
+
         function switchStaffTab(t) { 
             try {
                 currentActiveStaffTab = t; 
@@ -1140,6 +1112,9 @@
             } catch(e) {}
         }
 
+        // ==========================================
+        // KYC FORM CONTROLLER
+        // ==========================================
         function clearKycForm() {
             try {
                 ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
@@ -1229,15 +1204,34 @@
             } catch(e) {}
         }
 
+        // ==========================================
+        // SETTLEMENT & RENEWAL
+        // ==========================================
         function syncSettleCentreFilter() {
             try {
-                const sb = getSafeValue('settle-branch-filter'); const cd = document.getElementById('settle-center-filter');
-                if(!sb) { if(cd) { cd.innerHTML = `<option value="">-- Centre --</option>`; cd.disabled = true; } syncSettlementClientsDropdown(); return; }
-                let mc = centreList.filter(c => c.branch === sb); let opts = `<option value="">-- All Centres --</option>`;
+                const branchSelect = document.getElementById('settle-branch-filter');
+                const centerSelect = document.getElementById('settle-center-filter');
+                const sb = branchSelect ? branchSelect.value : "";
+                
+                if(!sb || sb === "") { 
+                    if(centerSelect) { 
+                        centerSelect.innerHTML = `<option value="">-- Centre --</option>`; 
+                        centerSelect.setAttribute('disabled', 'true'); 
+                    } 
+                    syncSettlementClientsDropdown(); 
+                    return; 
+                }
+                
+                let mc = centreList.filter(c => c.branch === sb); 
+                let opts = `<option value="">-- All Centres --</option>`;
                 mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
-                if(cd) { cd.innerHTML = opts; cd.disabled = false; }
+                
+                if(centerSelect) { 
+                    centerSelect.innerHTML = opts; 
+                    centerSelect.removeAttribute('disabled'); 
+                }
                 syncSettlementClientsDropdown();
-            } catch(e) {}
+            } catch(e) { console.log(e); }
         }
 
         function syncSettlementClientsDropdown() { 
@@ -1316,6 +1310,9 @@
             } catch(e) {}
         }
 
+        // ==========================================
+        // CUSTOMER PORTAL
+        // ==========================================
         function toggleLoginForm(v) { 
             try {
                 const c = document.getElementById('customer-login-form'); const e = document.getElementById('employee-login-form'); 
@@ -1358,6 +1355,7 @@
                     
                     setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
                     let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
+                    
                     showDashboard('staff'); updatePendingRequestsBadge();
                 } else { alert('Galat Credentials!'); }
             } catch(e) {}
