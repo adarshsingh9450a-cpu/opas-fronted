@@ -160,7 +160,7 @@
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
                     <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                        <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="total">Total Active</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
+                        <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="total">Total Active</option><option value="pending">Pending Approvals ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
                         <select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-4 mt-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                     </div>
                     <div class="flex justify-between items-center px-1"><span class="text-[10px] font-black uppercase text-slate-500">Results</span><span class="text-[10px] font-black bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg" id="report-count-badge">0 Found</span></div>
@@ -718,7 +718,7 @@
                 let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayStr = formatSysDate(new Date());
-                let pKey = null; 
+                let pendingApprovalHtml = ''; // <-- Limit break for Head Box
                 
                 Object.keys(serverDb).forEach(k => {
                     if (k === "SYSTEM_SETTINGS") return;
@@ -726,7 +726,10 @@
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
                     if(match) {
-                        if(!f.isApproved && !pKey && f.status === 'Pending Approval') pKey = k;
+                        // Naya Approval List System
+                        if(!f.isApproved && f.status === 'Pending Approval') {
+                            pendingApprovalHtml += `<div class="p-5 bg-purple-50/80 border border-purple-200 rounded-3xl mb-3"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm">Approval Needed</span></div><p class="text-[10px] text-purple-700 font-black mt-2 uppercase bg-white p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p><button onclick="executeHeadApproval('${k}')" class="btn-fluid w-full mt-4 bg-purple-700 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve</button></div>`;
+                        }
                         
                         let appDateMonth = "";
                         if(f.approvalDate && f.approvalDate !== "N/A" && f.approvalDate !== "Completed") {
@@ -799,11 +802,8 @@
                     setHtmlSafe('head-profit-view', `₹${cp.toLocaleString('en-IN')}`);
 
                     const z = document.getElementById('head-approval-zone');
-                    if (!pKey) { if(z) z.innerHTML = `<p class="text-xs text-slate-400 font-bold uppercase text-center py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed">All flawless.</p>`; } 
-                    else {
-                        let file = serverDb[pKey];
-                        if(z) z.innerHTML = `<div class="p-5 bg-purple-50/80 border border-purple-200 rounded-3xl"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${file.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${file.branch||'NA'} / ${file.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm">Approval Needed</span></div><p class="text-[10px] text-purple-700 font-black mt-2 uppercase bg-white p-2.5 rounded-lg inline-block shadow-sm">₹${(file.principal||0).toLocaleString()} | ROI: ${file.roi||0}%</p><button onclick="executeHeadApproval('${pKey}')" class="btn-fluid w-full mt-4 bg-purple-700 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-lg shadow-purple-500/30">Approve</button></div>`;
-                    }
+                    if (pendingApprovalHtml === '') { if(z) z.innerHTML = `<p class="text-xs text-slate-400 font-bold uppercase text-center py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed">All flawless.</p>`; } 
+                    else { if(z) z.innerHTML = pendingApprovalHtml; }
                 }
 
                 setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); 
@@ -853,7 +853,9 @@
                     if (mobile === "SYSTEM_SETTINGS") return;
                     let c = serverDb[mobile]; 
                     let match = false;
+                    
                     if (rt === 'total' && c.status === "Active") match = true; 
+                    else if (rt === 'pending' && c.status === "Pending Approval") match = true; // <-- NAYA FEATURE STAFF KE LIYE
                     else if (rt === 'new' && c.isFirstLoan && c.status === "Active") match = true; 
                     else if (rt === 'renewed' && c.isRenewed && c.status === "Active") match = true; 
                     else if (rt === 'centre' && c.center === sc && c.status === "Active") match = true;
@@ -861,6 +863,7 @@
 
                     if(match) {
                         count++;
+                        let statusColor = c.status === 'Active' ? 'text-emerald-500' : (c.status === 'Pending Approval' ? 'text-amber-500' : 'text-rose-500');
                         html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-3 animate-fade">
                             <div class="flex justify-between items-start">
                                 <div><p class="text-[9px] font-mono text-indigo-500 font-bold">${c.id||'NA'}</p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
@@ -868,7 +871,7 @@
                             </div>
                             <div class="grid grid-cols-2 gap-4 mt-1 pt-3 border-t border-slate-50 text-[10px]">
                                 <div><span class="text-slate-400 font-bold uppercase block mb-1">Branch/Centre</span><span class="font-black text-slate-700">${c.branch||'NA'} / ${c.center||'NA'}</span></div>
-                                <div><span class="text-slate-400 font-bold uppercase block mb-1">Status</span><span class="font-black ${c.status==='Active'?'text-emerald-500':'text-rose-500'}">${c.status}</span></div>
+                                <div><span class="text-slate-400 font-bold uppercase block mb-1">Status</span><span class="font-black ${statusColor}">${c.status}</span></div>
                             </div>
                             <button onclick="showClientFullInfo('${mobile}')" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mt-2">More Information</button>
                         </div>`;
