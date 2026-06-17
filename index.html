@@ -106,7 +106,6 @@
 
             <!-- 1. DASHBOARD PANEL -->
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
-                <!-- Month & Branch Filter (Visible to all staff/head) -->
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Time Filter:</label>
@@ -118,7 +117,6 @@
                     </div>
                 </div>
 
-                <!-- Head Exclusive Top Stats -->
                 <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4 space-y-4">
                     <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
@@ -126,7 +124,6 @@
                             <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Global Target View</p>
                             <h3 class="text-4xl font-black mt-1" id="head-total-outstanding">₹0</h3>
                             <p class="text-[9px] text-purple-300 font-bold uppercase mt-1">Total Loan Outstanding (Market)</p>
-                            
                             <div class="grid grid-cols-2 gap-4 pt-5 border-t border-white/10 mt-4 text-xs">
                                 <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Total Active Clients</p><p class="text-xl font-black text-emerald-400" id="head-total-clients">0</p></div>
                                 <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1" id="lbl-dash-profit">Monthly Profit Generable</p><p class="text-xl font-black text-white" id="head-profit-view">₹0</p></div>
@@ -139,7 +136,6 @@
                     </div>
                 </div>
 
-                <!-- Metrics Grids (Visible to Head & Staff) -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="glass-card p-5 rounded-[1.5rem]"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
                     <div class="glass-card p-5 rounded-[1.5rem] border-blue-200"><p class="text-[9px] font-black text-blue-500 uppercase" id="lbl-disburse-month">Month's Disbursal</p><p class="text-xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
@@ -318,19 +314,24 @@
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
                     
-                    <!-- Branch Mgmt -->
                     <div class="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 space-y-3">
                         <p class="text-[9px] font-black uppercase text-emerald-600">Create New Branch</p>
                         <div class="flex gap-2"><input type="text" id="setup-branch-name" placeholder="Branch Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewBranch()" class="bg-emerald-600 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
                         <div id="setup-branch-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
                     </div>
 
-                    <!-- Centre Mgmt -->
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                         <p class="text-[9px] font-black uppercase text-slate-600">Create New Centre Cluster</p>
                         <select id="setup-centre-parent" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></select>
                         <div class="flex gap-2"><input type="text" id="setup-centre-name" placeholder="Centre Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewCentre()" class="bg-slate-800 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
                         <div id="setup-centre-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
+                    </div>
+
+                    <!-- DANGER ZONE: FACTORY RESET -->
+                    <div class="bg-rose-50 p-4 rounded-2xl border border-rose-200 mt-6">
+                        <h4 class="text-[10px] font-black uppercase text-rose-600 mb-2">Danger Zone</h4>
+                        <p class="text-[9px] font-bold text-rose-500 mb-3">Ye button dabane se cloud ka saara purana data (Clients, Loans, Requests) hamesha ke liye delete ho jayega. (Sirf Staff aur Branch safe rahenge).</p>
+                        <button onclick="factoryResetDatabase()" class="btn-fluid w-full bg-rose-600 text-white font-black px-4 py-3 rounded-xl text-[10px] uppercase shadow-md shadow-rose-500/30">⚠️ Wipe Entire Database</button>
                     </div>
                 </div>
             </div>
@@ -492,7 +493,6 @@
         let backupSettledClientMobile = ''; 
         let otpRequested = false;
 
-        // Clean Slate Variables
         let branchList = [];
         let centreList = [];
         let staffDb = {};
@@ -504,13 +504,11 @@
                 const response = await fetch(API_URL);
                 if (response.ok) {
                     serverDb = await response.json();
-                    
                     if (serverDb["SYSTEM_SETTINGS"]) {
                         branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
                         centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
                         staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
                     }
-
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
                 } else { document.getElementById('cloud-status').innerText = "⚠️ Cloud Error"; }
             } catch (error) { document.getElementById('cloud-status').innerText = "⚠️ Backend Offline"; }
@@ -530,6 +528,30 @@
         async function saveSystemSettings() {
             serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb };
             await saveDataToCloud("SYSTEM_SETTINGS");
+        }
+
+        // 🔥 FACTORY RESET DATABASE SCRIPT
+        async function factoryResetDatabase() {
+            if(confirm("⚠️ DANGER: Kya aap sach mein poora Cloud Database (Sabhi Clients, Loans, Requests) delete karna chahte hain?")) {
+                let pass = prompt("Delete confirm karne ke liye type karein: DELETE");
+                if(pass === 'DELETE') {
+                    document.getElementById('cloud-status').innerText = "⚠️ WIPING CLOUD...";
+                    let keys = Object.keys(serverDb);
+                    for(let k of keys) {
+                        if(k !== "SYSTEM_SETTINGS") {
+                            try {
+                                await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: k, data: null }) });
+                            } catch(e) {}
+                        }
+                    }
+                    serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
+                    alert("✅ Database Completely Wiped! Ab app ekdum nayi ho gayi hai.");
+                    logout();
+                    window.location.reload();
+                } else {
+                    alert("Reset Cancelled.");
+                }
+            }
         }
 
         window.addEventListener('DOMContentLoaded', async () => { 
@@ -612,9 +634,6 @@
             } catch (e) { console.error(e); }
         }
 
-        // ==========================================
-        // SYSTEM CONFIGURATION NODES
-        // ==========================================
         function syncSetupDropdowns() {
             try {
                 let bOpt = `<option value="">-- Select Branch --</option>`; branchList.forEach(b => { bOpt += `<option value="${b}">${b}</option>`; });
@@ -667,9 +686,6 @@
             if(confirm("Delete this Centre?")) { centreList = centreList.filter(c => c.id !== id); await saveSystemSettings(); syncSetupDropdowns(); }
         }
 
-        // ==========================================
-        // STAFF MANAGEMENT - HEAD
-        // ==========================================
         async function createNewStaffAccount() {
             const n = getSafeValue('new-staff-name').trim(); const u = getSafeValue('new-staff-username').trim(); const p = getSafeValue('new-staff-pass').trim(); const b = getSafeValue('new-staff-branch');
             if(!n || !u || !p || !b) { alert("Fill all fields."); return; } 
@@ -691,9 +707,6 @@
         }
         async function deleteStaff(u) { if(confirm("Delete this staff account?")) { delete staffDb[u]; await saveSystemSettings(); renderStaffList(); } }
 
-        // ==========================================
-        // ADMIN DATA EDIT - HEAD
-        // ==========================================
         function syncAdminEditDropdown() {
             try {
                 const sel = document.getElementById('admin-edit-client-select'); let opts = `<option value="">-- Select Client --</option>`;
@@ -731,9 +744,6 @@
              }
         }
 
-        // ==========================================
-        // CORE ANALYTICS (REALTIME GRAPH SYNC ENGINE)
-        // ==========================================
         function refreshHeadDashboardStats() {
             try {
                 const headSelector = getSafeValue('head-analytics-branch-selector') || "ALL";
@@ -871,9 +881,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // CLIENT DIRECTORY & FULL INFO MODAL
-        // ==========================================
         function syncReportDropdowns() {
             try {
                 let opts = `<option value="">-- Target Centre --</option>`; centreList.forEach(c => { opts += `<option value="${c.name}">${c.name} (${c.branch})</option>`; });
@@ -1006,9 +1013,6 @@
             document.getElementById('modal-injection-zone').innerHTML = html;
         }
 
-        // ==========================================
-        // STAFF LEDGER (Perfect Date Interlocking)
-        // ==========================================
         function switchStaffTab(t) { 
             try {
                 currentActiveStaffTab = t; 
@@ -1136,9 +1140,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // KYC ENROLLMENT (AUTO CLEAR ENGINE)
-        // ==========================================
         function clearKycForm() {
             try {
                 ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
@@ -1228,9 +1229,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // SETTLEMENT (With Search Upgrade) & RENEWAL
-        // ==========================================
         function syncSettleCentreFilter() {
             try {
                 const sb = getSafeValue('settle-branch-filter'); const cd = document.getElementById('settle-center-filter');
@@ -1304,7 +1302,6 @@
                 let p = pInput; let iAmt = Math.round((p * roi) / 100); let tP = p + iAmt; let cycleDays = plan.includes('100') ? 100 : (plan.includes('30') ? 30 : 36); let cE = Math.round(tP / cycleDays);
                 let a = serverDb[m]; 
                 
-                // BACKUP OLD LOAN HISTORY
                 a.pastLoans = a.pastLoans || [];
                 a.pastLoans.push({
                     id: a.id, planName: a.planName, principal: a.principal, totalPayable: a.totalPayable, transactions: JSON.parse(JSON.stringify(a.transactions || []))
@@ -1319,9 +1316,6 @@
             } catch(e) {}
         }
 
-        // ==========================================
-        // CUSTOMER PORTAL & LOGIN
-        // ==========================================
         function toggleLoginForm(v) { 
             try {
                 const c = document.getElementById('customer-login-form'); const e = document.getElementById('employee-login-form'); 
@@ -1364,7 +1358,6 @@
                     
                     setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
                     let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
-                    
                     showDashboard('staff'); updatePendingRequestsBadge();
                 } else { alert('Galat Credentials!'); }
             } catch(e) {}
