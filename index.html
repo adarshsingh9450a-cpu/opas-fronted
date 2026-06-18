@@ -497,7 +497,7 @@
         // =========================================================================
         // 🚀 THE NEW DUAL SAVING ENGINE (LOCAL + CLOUD MERGE)
         // =========================================================================
-        async function loadDataFromCloud() {
+       async function loadDataFromCloud() {
             try {
                 document.getElementById('cloud-status').innerText = "☁️ Fetching Data...";
                 
@@ -524,9 +524,17 @@
                     // Priority Merge: Cloud data + any unsynced Local Data
                     serverDb = { ...serverDb, ...cloudData };
                     
+                    // 🛡️ THE NULL BOMB FIX: Cloud se aaye hue deleted (null) records ko hamesha ke liye saaf karo
+                    // 🛡️ TITANIUM SHIELD 1: Cloud ka saara kachra saaf karo (null, "null", undefined)
+                    Object.keys(serverDb).forEach(k => {
+                        if (!serverDb[k] || serverDb[k] === "null") {
+                            delete serverDb[k];
+                        }
+                    });
+                    
                     // Offline Recovery: Push missing local clients to cloud silently
                     Object.keys(localData).forEach(k => {
-                        if(!cloudData[k] && k !== "SYSTEM_SETTINGS") {
+                        if(cloudData[k] === undefined && k !== "SYSTEM_SETTINGS") {
                             saveDataToCloud(k); // Auto-upload missing data
                         }
                     });
@@ -916,8 +924,9 @@
                 let pendingApprovalHtml = ''; 
                 
                 Object.keys(serverDb).forEach(k => {
-                    if (k === "SYSTEM_SETTINGS") return;
+                   if (k === "SYSTEM_SETTINGS") return;
                     let f = serverDb[k]; 
+                    if (!f) return; // 🛡️ SAFETY NET: Agar koi ghost record bacha ho, toh app crash hone se bachao
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
                     if(match) {
@@ -1071,6 +1080,7 @@ async function rejectAndTrashApplication(mobile) {
                 Object.keys(serverDb).forEach(mobile => {
                     if (mobile === "SYSTEM_SETTINGS") return;
                     let c = serverDb[mobile]; 
+                    if (!c) return; // 🛡️ TITANIUM SHIELD 2: Ghost data block
                     
                     if (currentLoggedInRole === 'staff' && c.branch !== activeStaffBranch) return;
                     if (currentLoggedInRole === 'head') {
@@ -1231,6 +1241,7 @@ async function rejectAndTrashApplication(mobile) {
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
                     let a = serverDb[m];
+                    if (!a) return; // 🛡️ TITANIUM SHIELD 3: Ghost data block
                     
                     let isClientDue = false;
                     if(a.nextEmiDate && a.nextEmiDate !== "Completed" && a.nextEmiDate !== "N/A") {
@@ -1578,6 +1589,7 @@ async function rejectAndTrashApplication(mobile) {
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
                     let r = serverDb[m];
+                    if (!r) return; // 🛡️ TITANIUM SHIELD 4: Ghost data block
                     if(r.status === 'Requested') {
                         let rp = r.tempPrincipal||5000;
                         h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade hover-scale"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-sm pulse-glow">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Req Amt: ₹${rp.toLocaleString()}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md transition-colors">Complete KYC Form</button></div>`;
@@ -1588,7 +1600,7 @@ async function rejectAndTrashApplication(mobile) {
             } catch(e) {}
         }
         function updatePendingRequestsBadge() {
-            try { let c = 0; Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
+            try { let c = 0; Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if(!serverDb[m]) return; if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
         }
         function processRequestedClientKyc(mobile) {
             try {
@@ -1810,13 +1822,19 @@ async function rejectAndTrashApplication(mobile) {
             } catch(e) {}
         }
 
-        async function customerSelfPayEmi() { 
+       async function customerSelfPayEmi() { 
             try {
                 let u = serverDb[currentlyLoggedInMobile]; if(!u) return; let cEmi = u.cycleEmi || 0;
-                if(confirm(`Pay EMI ₹${cEmi}?`)) { 
-                    u.outstanding = (u.outstanding||0) - cEmi; u.emiSettled = 'online_paid'; u.lastPaymentDate = formatSysDate(new Date()); 
+                if(confirm(`Pay EMI ₹${cEmi} via Online Gateway?`)) { 
+                    
+                    // DANGER LINE REMOVED: Yahan outstanding turant kam nahi hoga. Day-End khud karega.
+                    u.emiSettled = 'online_paid'; 
+                    
                     await saveDataToCloud(currentlyLoggedInMobile); 
-                    alert("Payment Successful!"); renderCustomerDashboard(); 
+                    
+                    // Customer ko message denge ki payment settlement midnight/day-end me hoga
+                    alert("✅ Payment Processed Successfully!\n(Aapka Outstanding Balance shaam ko Day-End settlement ke baad update hoga)"); 
+                    renderCustomerDashboard(); 
                 } 
             } catch(e) {}
         }
