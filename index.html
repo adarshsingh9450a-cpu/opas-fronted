@@ -98,7 +98,7 @@
                 
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit/Delete Data</button>
                 <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border border-blue-900/30 hidden transition-colors"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
-                <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 hidden transition-colors"><span class="text-lg mr-2">⚙️</span> Setup Nodes</button>
+                <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 hidden transition-colors"><span class="text-lg mr-2">⚙️</span> Setup Nodes & Plans</button>
                 
                 <button onclick="routePanelSection('cust-apply')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 text-white shadow-md hidden"><span class="text-lg mr-2">📝</span> Apply For Loan</button>
                 <button onclick="routePanelSection('cust-portal')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 text-white shadow-md hidden"><span class="text-lg mr-2">🏠</span> My Dashboard</button>
@@ -204,10 +204,9 @@
             <div id="view-node-kyc" class="view-panel hidden animate-slide-up">
                 <div class="glass-card rounded-[2rem] p-5">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-5">
-    <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-5"></div>
                         <h3 class="text-xs font-black text-blue-600 uppercase tracking-widest">New KYC Enrollment</h3>
-    <button onclick="clearKycForm(); alert('Form successfully reset for new entry! 🧹')" class="text-[10px] font-black bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-sm transition-all hover:bg-rose-100 active:scale-95">Specific Code: 🧹 New Client</button>
-</div>
+                        <button onclick="clearKycForm(); alert('Form successfully reset for new entry! 🧹')" class="text-[10px] font-black bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-sm transition-all hover:bg-rose-100 active:scale-95">🧹 New Client</button>
+                    </div>
                     
                     <div id="kyc-stage-a" class="space-y-4 animate-fade">
                         <input type="text" id="new-cust-name" placeholder="Applicant Full Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300">
@@ -215,14 +214,22 @@
                         <input type="text" id="new-cust-id-ref" placeholder="12-Digit Aadhaar Reference" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300">
                         
                         <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-4 mt-2">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Principal Amount (₹)</label><input type="number" id="new-loan-principal" value="5000" oninput="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-indigo-700 focus:border-indigo-300"></div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Select Plan</label><select id="new-loan-amount" onchange="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none focus:border-indigo-300"><option value="100-days">100 Days</option><option value="30-weeks">30 Weeks</option><option value="36-weeks">36 Weeks</option></select></div>
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Interest ROI %</label><input type="number" id="new-loan-roi" value="12" oninput="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none text-center focus:border-indigo-300"></div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Select Master Plan</label>
+                                <select id="new-loan-plan-select" onchange="runLiveLoanMath()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none focus:border-indigo-300 text-indigo-700">
+                                    <option value="">-- Choose Loan Plan --</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div class="bg-slate-900 text-slate-300 p-5 rounded-2xl text-xs space-y-3 font-mono relative overflow-hidden"><div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl"></div><div class="flex justify-between relative z-10"><span>Base Principal:</span><span class="text-white font-bold" id="math-principal">₹5,000</span></div><div class="flex justify-between relative z-10"><span>Generated Interest:</span><span class="text-blue-400 font-bold" id="math-interest">₹600</span></div><div class="flex justify-between border-t border-slate-700/50 pt-3 mt-2 relative z-10"><span class="text-slate-400 font-black uppercase text-[9px]">Final Payable</span><span class="text-emerald-400 text-xl font-black" id="math-total-payable">₹5,600</span></div></div>
+                        <div class="bg-slate-900 text-slate-300 p-5 rounded-2xl text-xs space-y-3 font-mono relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl"></div>
+                            <div class="flex justify-between relative z-10"><span>Base Principal:</span><span class="text-white font-bold" id="math-principal">₹0</span></div>
+                            <div class="flex justify-between relative z-10"><span>Generated Interest:</span><span class="text-blue-400 font-bold" id="math-interest">₹0</span></div>
+                            <div class="flex justify-between border-t border-slate-700/50 pt-3 mt-2 relative z-10"><span class="text-slate-400 font-black uppercase text-[9px]">Final Payable</span><span class="text-emerald-400 text-xl font-black" id="math-total-payable">₹0</span></div>
+                            <div id="math-emi-breakdown" class="text-[9px] text-amber-300 font-bold mt-2 pt-2 border-t border-slate-700/50 relative z-10 hidden">
+                                </div>
+                        </div>
                         <button onclick="goToKycStageB()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4.5 rounded-xl text-xs uppercase mt-4 shadow-lg shadow-slate-900/20">Verify & Next Step →</button>
                     </div>
 
@@ -267,11 +274,7 @@
                     <div class="space-y-4">
                         <select id="renew-client-mobile-select" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                         <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4 mt-2">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Principal Amount (₹)</label><input type="number" id="renew-loan-principal" value="10000" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-blue-700"></div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Plan</label><select id="renew-loan-plan" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-[11px] font-bold focus:outline-none"><option value="100-days">100 Days</option><option value="30-weeks">30 Weeks</option></select></div>
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New ROI %</label><input type="number" id="renew-loan-roi" value="15" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-[11px] font-bold focus:outline-none text-slate-700 text-center"></div>
-                            </div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Master Plan</label><select id="renew-loan-plan-select" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-blue-700"><option value="">-- Choose Master Plan --</option></select></div>
                         </div>
                         <button onclick="executeLoanRenewalSubmission()" class="btn-fluid w-full bg-slate-900 text-white font-black py-4.5 rounded-xl text-xs uppercase shadow-lg shadow-slate-900/20 mt-4">Inject Renewal Profile</button>
                     </div>
@@ -290,7 +293,7 @@
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue</label><input type="number" id="edit-cust-od" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Cycle EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Active EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option></select></div>
                         </div>
                         <div class="flex gap-2 pt-4 border-t border-slate-100">
@@ -320,8 +323,31 @@
 
             <div id="view-node-setup" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
-                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup</h3></div>
-                    <div class="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 space-y-3">
+                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">⚙️</div><h3 class="text-xs font-black text-emerald-600 uppercase">System Setup & Plans</h3></div>
+                    
+                    <div class="bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100 space-y-3">
+                        <p class="text-[9px] font-black uppercase text-indigo-600">Master Loan Plans</p>
+                        <input type="text" id="plan-name" placeholder="Plan Name (e.g. 10k Hybrid)" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="plan-principal" placeholder="Principal ₹" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                            <input type="number" id="plan-roi" placeholder="ROI %" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                            <input type="number" id="plan-duration" placeholder="Total Days/Weeks" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                            <select id="plan-type" onchange="toggleHybridSetup()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                                <option value="daily">Daily (Normal)</option>
+                                <option value="daily-hybrid">Daily (Hybrid EMI)</option>
+                                <option value="weekly">Weekly (Normal)</option>
+                            </select>
+                        </div>
+                        <div id="hybrid-setup-box" class="hidden grid-cols-2 gap-2 bg-indigo-100 p-3 rounded-xl mt-2 animate-fade">
+                            <input type="number" id="plan-p1-days" placeholder="Phase 1 Days" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <input type="number" id="plan-p1-emi" placeholder="Phase 1 EMI ₹" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <p class="col-span-2 text-[8px] font-bold text-indigo-500 text-center">Phase 2 remaining EMI will auto-calculate.</p>
+                        </div>
+                        <button onclick="createNewLoanPlan()" class="btn-fluid w-full bg-indigo-600 text-white font-black py-3 rounded-lg text-[10px] uppercase shadow-md mt-2">Save Master Plan</button>
+                        <div id="setup-plan-list" class="mt-4 space-y-2 max-h-[150px] overflow-y-auto"></div>
+                    </div>
+
+                    <div class="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 space-y-3 mt-4">
                         <p class="text-[9px] font-black uppercase text-emerald-600">Create New Branch</p>
                         <div class="flex gap-2"><input type="text" id="setup-branch-name" placeholder="Branch Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewBranch()" class="bg-emerald-600 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
                         <div id="setup-branch-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
@@ -334,7 +360,7 @@
                     </div>
                     <div class="bg-rose-50 p-4 rounded-2xl border border-rose-200 mt-6">
                         <h4 class="text-[10px] font-black uppercase text-rose-600 mb-2">Danger Zone</h4>
-                        <p class="text-[9px] font-bold text-rose-500 mb-3">Ye button dabane se cloud ka saara purana data hamesha ke liye delete ho jayega. (Sirf Staff aur Branch safe rahenge).</p>
+                        <p class="text-[9px] font-bold text-rose-500 mb-3">Ye button dabane se cloud ka saara purana data hamesha ke liye delete ho jayega. (Sirf Staff, Branch, Plans safe rahenge).</p>
                         <button onclick="factoryResetDatabase()" class="btn-fluid w-full bg-rose-600 text-white font-black px-4 py-3 rounded-xl text-[10px] uppercase shadow-md shadow-rose-500/30 hover-scale">⚠️ Wipe Entire Database</button>
                     </div>
                 </div>
@@ -347,8 +373,8 @@
                         <input type="text" id="apply-cust-name" placeholder="Applicant Full Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:outline-none">
                         <input type="text" id="apply-cust-phone" disabled class="w-full p-4 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-500">
                         <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-3 mt-2">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Required Amount (₹)</label><input type="number" id="apply-cust-principal" value="5000" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-indigo-700"></div>
-                            <select id="apply-cust-plan" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="100-days">100 Days Plan (Daily)</option><option value="30-weeks">30 Weeks Plan (Weekly)</option></select>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">Select Required Plan</label>
+                            <select id="apply-cust-plan-select" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="">-- Loading Plans --</option></select>
                         </div>
                         <button onclick="submitCustomerLoanRequest()" class="btn-fluid w-full py-4 bg-blue-600 text-white font-black text-xs uppercase rounded-xl shadow-lg mt-4 hover-scale">Submit Application</button>
                     </div>
@@ -392,7 +418,7 @@
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="glass-card p-5 rounded-[1.5rem] text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Overdue</p><p class="text-2xl font-black text-rose-500 mt-2" id="cust-od-view">₹0</p></div>
-                    <div class="glass-card p-5 rounded-[1.5rem] text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Next EMI</p><p class="text-2xl font-black text-blue-600 mt-2" id="cust-next-emi-view">₹0</p></div>
+                    <div class="glass-card p-5 rounded-[1.5rem] text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Current EMI</p><p class="text-2xl font-black text-blue-600 mt-2" id="cust-next-emi-view">₹0</p></div>
                 </div>
                 <div id="cust-self-pay-zone" class="animate-fade"></div>
             </div>
@@ -447,6 +473,7 @@
                     <tr class="bg-slate-50"><th class="border border-slate-800 p-2">Lending Model</th><th class="border border-slate-800 p-2">Principal</th><th class="border border-slate-800 p-2">ROI Setup</th><th class="border border-slate-800 p-2">Interest</th><th class="border border-slate-800 p-2 font-black">Final Repayment</th></tr>
                     <tr><td class="border border-slate-800 p-2 font-semibold" id="lbl-p-plan-1">-</td><td class="border border-slate-800 p-2" id="lbl-p-principal-1">-</td><td class="border border-slate-800 p-2 font-bold" id="lbl-p-roi-1">-</td><td class="border border-slate-800 p-2 text-slate-800" id="lbl-p-interest-amt-1">-</td><td class="border border-slate-800 p-2 font-black" id="lbl-p-total-payable-1">-</td></tr>
                 </table>
+                <p id="lbl-p-hybrid-breakdown" class="text-[10px] font-sans font-bold text-center mt-2 italic hidden">-</p>
             </div>
         </div>
         <div class="print-page-break p-8 border-2 border-slate-900 rounded-xl bg-white">
@@ -492,60 +519,56 @@
         let branchList = [];
         let centreList = [];
         let staffDb = {};
+        let loanPlans = []; // 🌟 HYBRID UPGRADE: Store Master Plans
         let serverDb = {}; 
 
         // =========================================================================
-        // 🚀 THE NEW DUAL SAVING ENGINE (LOCAL + CLOUD MERGE)
+        // 🚀 DUAL SAVING ENGINE
         // =========================================================================
        async function loadDataFromCloud() {
             try {
                 document.getElementById('cloud-status').innerText = "☁️ Fetching Data...";
                 
-                // STEP 1: FAST LOCAL LOAD (Prevents Data Loss on Reload/Print Bypass)
                 let localDbStr = localStorage.getItem('opas_local_db');
                 let localData = {};
                 if (localDbStr) {
                     try {
                         localData = JSON.parse(localDbStr);
-                        serverDb = { ...localData, ...serverDb }; // Merge local data instantly
+                        serverDb = { ...localData, ...serverDb }; 
                         if (serverDb["SYSTEM_SETTINGS"]) {
                             branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
                             centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
                             staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
+                            loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans; // Load Plans
                         }
                     } catch(e) {}
                 }
 
-                // STEP 2: CLOUD SYNC & MERGE
                 const response = await fetch(API_URL);
                 if (response.ok) {
                     let cloudData = await response.json();
-                    
-                    // Priority Merge: Cloud data + any unsynced Local Data
                     serverDb = { ...serverDb, ...cloudData };
                     
-                    // 🛡️ THE NULL BOMB FIX: Cloud se aaye hue deleted (null) records ko hamesha ke liye saaf karo
-                    // 🛡️ TITANIUM SHIELD 1: Cloud ka saara kachra saaf karo (null, "null", undefined)
+                    // 🛡️ TITANIUM SHIELD 1
                     Object.keys(serverDb).forEach(k => {
                         if (!serverDb[k] || serverDb[k] === "null") {
                             delete serverDb[k];
                         }
                     });
                     
-                    // Offline Recovery: Push missing local clients to cloud silently
                     Object.keys(localData).forEach(k => {
                         if(cloudData[k] === undefined && k !== "SYSTEM_SETTINGS") {
-                            saveDataToCloud(k); // Auto-upload missing data
+                            saveDataToCloud(k); 
                         }
                     });
 
-                    // Sync merged master-database back to local storage
                     localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
 
                     if (serverDb["SYSTEM_SETTINGS"]) {
                         branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
                         centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
                         staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
+                        loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans; // Sync Plans
                     }
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
                 } else { 
@@ -558,9 +581,7 @@
 
         async function saveDataToCloud(mobileNumber) {
             try {
-                // DUAL ENGINE: INSTANT LOCAL SAVE (0ms Data Protection)
                 localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
-
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
                 await fetch(API_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -573,7 +594,7 @@
         }
 
         async function saveSystemSettings() {
-            serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb };
+            serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans };
             await saveDataToCloud("SYSTEM_SETTINGS");
         }
 
@@ -598,13 +619,13 @@
         }
 
         // =========================================================================
-        // 💾 KYC FORM AUTO-SAVE DRAFT ENGINE
+        // 💾 KYC FORM DRAFT ENGINE (Stripped out manual principal/ROI, Uses Plans)
         // =========================================================================
         function saveKycDraft() {
             try {
                 const draft = {
                     name: getSafeValue('new-cust-name'), phone: getSafeValue('new-cust-phone'), idRef: getSafeValue('new-cust-id-ref'),
-                    principal: getSafeValue('new-loan-principal'), plan: getSafeValue('new-loan-amount'), roi: getSafeValue('new-loan-roi'),
+                    planId: getSafeValue('new-loan-plan-select'), // Save Plan ID
                     branch: getSafeValue('new-cust-branch'), center: getSafeValue('new-cust-center'), spouse: getSafeValue('new-cust-spouse'),
                     voter: getSafeValue('new-cust-voter'), nominee: getSafeValue('new-cust-nominee'), relation: getSafeValue('new-cust-nominee-relation'),
                     caste: getSafeValue('new-cust-caste'), religion: getSafeValue('new-cust-religion'), land: getSafeValue('new-cust-land'),
@@ -625,9 +646,6 @@
                     if(draft.name) document.getElementById('new-cust-name').value = draft.name;
                     if(draft.phone) document.getElementById('new-cust-phone').value = draft.phone;
                     if(draft.idRef) document.getElementById('new-cust-id-ref').value = draft.idRef;
-                    if(draft.principal) document.getElementById('new-loan-principal').value = draft.principal;
-                    if(draft.plan) document.getElementById('new-loan-amount').value = draft.plan;
-                    if(draft.roi) document.getElementById('new-loan-roi').value = draft.roi;
                     if(draft.branch) { document.getElementById('new-cust-branch').value = draft.branch; syncKycCentreDropdown(); }
                     if(draft.center) document.getElementById('new-cust-center').value = draft.center;
                     if(draft.spouse) document.getElementById('new-cust-spouse').value = draft.spouse;
@@ -646,7 +664,8 @@
                     if(draft.ppi_fridge !== undefined) document.getElementById('ppi-fridge').checked = draft.ppi_fridge;
                     if(draft.ppi_bike !== undefined) document.getElementById('ppi-bike').checked = draft.ppi_bike;
                     if(draft.ppi_almirah !== undefined) document.getElementById('ppi-almirah').checked = draft.ppi_almirah;
-                    runLiveLoanMath();
+                    
+                    if(draft.planId) { document.getElementById('new-loan-plan-select').value = draft.planId; runLiveLoanMath(); }
                 }
             } catch(e) {}
         }
@@ -655,7 +674,6 @@
             let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
             let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
             
-            // Connect Auto-Save Draft to KYC form
             let kycPanel = document.getElementById('view-node-kyc');
             if(kycPanel) {
                 kycPanel.addEventListener('input', saveKycDraft);
@@ -664,7 +682,8 @@
 
             await loadDataFromCloud(); 
             syncSetupDropdowns(); 
-            restoreKycDraft(); // Load draft if exists
+            syncKycPlanDropdown(); // Load Plans into Dropdowns
+            restoreKycDraft();
         });
 
         async function forceCloudSync(event) {
@@ -687,16 +706,16 @@
             if(p.length !== 3) return new Date(9999, 11, 31);
             return new Date(parseInt(p[2], 10), parseInt(p[1], 10)-1, parseInt(p[0], 10), 0, 0, 0, 0); 
         }
-        function calculateEndDate(planStr) {
-            if(!planStr) return "N/A"; let days = planStr.includes('100') ? 100 : (planStr.includes('30') ? 210 : 252);
-            let d = new Date(); d.setDate(d.getDate() + days); return formatSysDate(d);
+        function calculateEndDate(durationDays) {
+            if(!durationDays) return "N/A"; 
+            let d = new Date(); d.setDate(d.getDate() + parseInt(durationDays)); return formatSysDate(d);
         }
-        function calculateNextEmiDate(planType, fromDateStr) {
+        function calculateNextEmiDate(planTypeStr, fromDateStr) {
             let d;
             if(fromDateStr && fromDateStr !== "N/A" && fromDateStr !== "Completed") { 
                 let parts = fromDateStr.split('-'); d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10)-1, parseInt(parts[0], 10), 0, 0, 0, 0); 
             } else { d = new Date(); }
-            d.setHours(0,0,0,0); d.setDate(d.getDate() + (planType === 'daily' ? 1 : 7)); 
+            d.setHours(0,0,0,0); d.setDate(d.getDate() + (planTypeStr.includes('daily') ? 1 : 7)); 
             return formatSysDate(d);
         }
 
@@ -732,7 +751,7 @@
 
                 if(panelId === 'ledger') renderStaffLedgerSheets();
                 if(panelId === 'clients') { syncReportDropdowns(); renderClientDirectory(); }
-                if(panelId === 'renew') syncRenewalClientsDropdown();
+                if(panelId === 'renew') { syncRenewalClientsDropdown(); syncKycPlanDropdown(); }
                 if(panelId === 'settlement') syncSettleCentreFilter();
                 if(panelId === 'requests') renderPendingRequestsBox();
                 if(panelId === 'cust-portal') renderCustomerDashboard();
@@ -745,6 +764,73 @@
                 const appBody = document.getElementById('main-views-container'); if(appBody) appBody.scrollTop = 0;
             } catch (e) { console.error(e); }
         }
+
+        // =========================================================================
+        // 🌟 HYBRID UPGRADE: PLAN MANAGER
+        // =========================================================================
+        function toggleHybridSetup() {
+            const pt = getSafeValue('plan-type');
+            const hx = document.getElementById('hybrid-setup-box');
+            if(pt === 'daily-hybrid') { hx.classList.remove('hidden'); hx.classList.add('grid'); }
+            else { hx.classList.add('hidden'); hx.classList.remove('grid'); }
+        }
+
+        async function createNewLoanPlan() {
+            const name = getSafeValue('plan-name').trim();
+            const principal = parseFloat(getSafeValue('plan-principal'));
+            const roi = parseFloat(getSafeValue('plan-roi'));
+            const duration = parseInt(getSafeValue('plan-duration'));
+            const type = getSafeValue('plan-type');
+
+            if(!name || !principal || !roi || !duration) { alert("Please fill all plan fields."); return; }
+
+            let interest = Math.round((principal * roi) / 100);
+            let total = principal + interest;
+            let p1Days = 0, p1Emi = 0, p2Days = 0, p2Emi = 0, baseEmi = 0;
+
+            if (type === 'daily-hybrid') {
+                p1Days = parseInt(getSafeValue('plan-p1-days'));
+                p1Emi = parseInt(getSafeValue('plan-p1-emi'));
+                if(!p1Days || !p1Emi || p1Days >= duration) { alert("Invalid Phase 1 setup for Hybrid Plan."); return; }
+                p2Days = duration - p1Days;
+                let remAmount = total - (p1Days * p1Emi);
+                if(remAmount <= 0) { alert("Phase 1 EMI is too high! It pays off the whole loan."); return; }
+                p2Emi = Math.round(remAmount / p2Days);
+            } else {
+                baseEmi = Math.round(total / duration);
+            }
+
+            loanPlans.push({
+                id: 'PLN' + Date.now(), name, principal, roi, duration, type, totalPayable: total, interestAmt: interest,
+                isHybrid: type === 'daily-hybrid', phase1Days: p1Days, phase1Emi: p1Emi, phase2Days: p2Days, phase2Emi: p2Emi, baseEmi
+            });
+
+            await saveSystemSettings();
+            renderSetupLists(); syncKycPlanDropdown();
+            alert("Master Plan Created Successfully!");
+        }
+
+        async function deleteLoanPlan(id) {
+            if(confirm("Delete this Master Plan? Existing loans won't be affected.")) {
+                loanPlans = loanPlans.filter(p => p.id !== id);
+                await saveSystemSettings();
+                renderSetupLists(); syncKycPlanDropdown();
+            }
+        }
+
+        function syncKycPlanDropdown() {
+            try {
+                let opt = `<option value="">-- Choose Master Plan --</option>`;
+                loanPlans.forEach(p => {
+                    let tag = p.isHybrid ? `🔥 Hybrid (${p.duration}d)` : (p.type === 'weekly' ? `📅 Weekly` : `📅 Daily`);
+                    opt += `<option value="${p.id}">${p.name} - ₹${p.principal} [${tag}]</option>`;
+                });
+                let ps = document.getElementById('new-loan-plan-select'); if(ps) ps.innerHTML = opt;
+                let rps = document.getElementById('renew-loan-plan-select'); if(rps) rps.innerHTML = opt;
+                let aps = document.getElementById('apply-cust-plan-select'); if(aps) aps.innerHTML = opt;
+            } catch(e) {}
+        }
+
 
         function syncSetupDropdowns() {
             try {
@@ -767,6 +853,14 @@
 
         function renderSetupLists() {
             try {
+                // Render Plans
+                let pHtml = '';
+                loanPlans.forEach(p => { 
+                    let desc = p.isHybrid ? `<span class="text-amber-500 block text-[8px] font-bold mt-1">Hybrid: ${p.phase1Days}d @ ₹${p.phase1Emi}, ${p.phase2Days}d @ ₹${p.phase2Emi}</span>` : `<span class="text-slate-400 block text-[8px] font-bold mt-1">Normal: ${p.duration} Cycles @ ₹${p.baseEmi}</span>`;
+                    pHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-indigo-100 animate-fade"><div><span class="text-xs font-black text-slate-800">${p.name}</span><span class="text-[9px] text-slate-500 font-bold block">₹${p.principal} | ${p.roi}%</span>${desc}</div><button onclick="deleteLoanPlan('${p.id}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Del</button></div>`; 
+                });
+                let pl = document.getElementById('setup-plan-list'); if(pl) pl.innerHTML = pHtml || `<p class="text-[9px] text-center text-slate-400 italic">No plans created.</p>`;
+
                 let bHtml = '';
                 branchList.forEach(b => { bHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-emerald-100 animate-fade"><span class="text-xs font-black text-slate-800">${b}</span><button onclick="deleteBranch('${b}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Delete</button></div>`; });
                 let bl = document.getElementById('setup-branch-list'); if(bl) bl.innerHTML = bHtml;
@@ -784,7 +878,6 @@
             await saveSystemSettings(); syncSetupDropdowns(); 
         }
         async function deleteBranch(name) {
-            // BUG FIX: Check karein ki kya is branch me koi client hai?
             let hasClients = false;
             Object.keys(serverDb).forEach(m => {
                 if (m !== "SYSTEM_SETTINGS" && serverDb[m].branch === name) {
@@ -793,8 +886,8 @@
             });
 
             if (hasClients) {
-                alert(`⚠️ Deletion Blocked! Branch '${name}' me abhi clients hain. Pehle unhe doosri branch me shift karein ya delete karein.`);
-                return; // Code yahin ruk jayega
+                alert(`⚠️ Deletion Blocked! Branch '${name}' me abhi clients hain.`);
+                return; 
             }
 
             if(confirm(`Delete branch ${name}?`)) { 
@@ -813,7 +906,6 @@
         }
 
         async function deleteCentre(id) {
-            // BUG FIX: Pehle us Centre ka naam dhundhe aur check karein ki koi client toh nahi
             let targetCentre = centreList.find(c => c.id === id);
             if (!targetCentre) return;
 
@@ -825,8 +917,8 @@
             });
 
             if (hasClients) {
-                alert(`⚠️ Deletion Blocked! Centre '${targetCentre.name}' me abhi clients hain. Pehle unka hisaab clear karein.`);
-                return; // Code yahin ruk jayega
+                alert(`⚠️ Deletion Blocked! Centre '${targetCentre.name}' me abhi clients hain.`);
+                return; 
             }
 
             if(confirm("Delete this Centre?")) { 
@@ -862,7 +954,7 @@
                 const sel = document.getElementById('admin-edit-client-select'); let opts = `<option value="">-- Select Client --</option>`;
                 Object.keys(serverDb).forEach(m => { 
                     if(m === "SYSTEM_SETTINGS") return;
-                    let c = serverDb[m]; opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
+                    let c = serverDb[m]; if(!c) return; opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
                 });
                 if(sel) sel.innerHTML = opts; document.getElementById('admin-edit-form-block')?.classList.add('hidden');
             } catch(e) {}
@@ -884,21 +976,19 @@
              } catch(e) { alert("Error saving data."); }
         }
         async function deleteClientRecord() {
-    const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-    if(confirm("⚠ PERMANENTLY DELETE client?")) { 
-        try { 
-            delete serverDb[m]; 
-            
-            // Ye ek line add karni hai (Local storage update ke liye) 👇
-            localStorage.setItem('opas_local_db', JSON.stringify(serverDb)); 
-            
-            await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) }); 
-            alert("Client permanently removed."); 
-            syncAdminEditDropdown(); 
-            refreshHeadDashboardStats(); 
-        } catch(e) {} 
-    }
-}
+            const m = getSafeValue('admin-edit-client-select'); if(!m) return;
+            if(confirm("⚠ PERMANENTLY DELETE client?")) { 
+                try { 
+                    delete serverDb[m]; 
+                    localStorage.setItem('opas_local_db', JSON.stringify(serverDb)); 
+                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) }); 
+                    alert("Client permanently removed."); 
+                    syncAdminEditDropdown(); 
+                    refreshHeadDashboardStats(); 
+                } catch(e) {} 
+            }
+        }
+
         function refreshHeadDashboardStats() {
             try {
                 const headSelector = document.getElementById('head-analytics-branch-selector')?.value || "ALL";
@@ -926,7 +1016,7 @@
                 Object.keys(serverDb).forEach(k => {
                    if (k === "SYSTEM_SETTINGS") return;
                     let f = serverDb[k]; 
-                    if (!f) return; // 🛡️ SAFETY NET: Agar koi ghost record bacha ho, toh app crash hone se bachao
+                    if (!f) return; // 🛡️ TITANIUM SHIELD
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
                     if(match) {
@@ -1012,6 +1102,7 @@
                     let totalOut = 0;
                     Object.keys(serverDb).forEach(k => {
                         if (k === "SYSTEM_SETTINGS") return;
+                        if (!serverDb[k]) return;
                         if(activeFilter === "ALL" || serverDb[k].branch === activeFilter) {
                             if(serverDb[k].status === "Active") totalOut += (serverDb[k].outstanding || 0);
                         }
@@ -1036,7 +1127,8 @@
                 setHtmlSafe('m-renew-clients', rC);
             } catch(e) {}
         }
-async function rejectAndTrashApplication(mobile) {
+        
+        async function rejectAndTrashApplication(mobile) {
             if(confirm("❌ Is application ko permanently REJECT aur Delete karna chahte hain?")) {
                 delete serverDb[mobile];
                 localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
@@ -1053,7 +1145,7 @@ async function rejectAndTrashApplication(mobile) {
                 serverDb[mobile].isApproved = true; 
                 serverDb[mobile].status = "Active"; 
                 serverDb[mobile].approvalDate = formatSysDate(new Date()); 
-                serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].planName); 
+                serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].duration); 
                 serverDb[mobile].lastPaymentDate = "N/A"; 
                 serverDb[mobile].nextEmiDate = calculateNextEmiDate(serverDb[mobile].planType, serverDb[mobile].approvalDate); 
                 await saveDataToCloud(mobile); 
@@ -1080,7 +1172,7 @@ async function rejectAndTrashApplication(mobile) {
                 Object.keys(serverDb).forEach(mobile => {
                     if (mobile === "SYSTEM_SETTINGS") return;
                     let c = serverDb[mobile]; 
-                    if (!c) return; // 🛡️ TITANIUM SHIELD 2: Ghost data block
+                    if (!c) return; // 🛡️ TITANIUM SHIELD
                     
                     if (currentLoggedInRole === 'staff' && c.branch !== activeStaffBranch) return;
                     if (currentLoggedInRole === 'head') {
@@ -1099,9 +1191,11 @@ async function rejectAndTrashApplication(mobile) {
                     if(match) {
                         count++;
                         let statusColor = c.status === 'Active' ? 'text-emerald-500' : (c.status === 'Pending Approval' ? 'text-amber-500' : 'text-rose-500');
+                        let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase">Hybrid</span>` : '';
+                        
                         html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
-                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold">${c.id||'NA'}</p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
+                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold">${c.id||'NA'} ${tag}</p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
                                 <span class="text-[9px] font-black px-3 py-1.5 rounded-xl uppercase bg-blue-50 text-blue-600 shadow-inner">${c.planName||'Plan'}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-4 mt-1 pt-3 border-t border-slate-50 text-[10px]">
@@ -1126,6 +1220,8 @@ async function rejectAndTrashApplication(mobile) {
                 editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-client-select').value='${mobile}'; loadClientForEdit();" class="btn-fluid w-full bg-rose-100 text-rose-600 hover:bg-rose-200 font-black py-4 rounded-xl text-[10px] uppercase mt-4 transition-colors">✏️ Edit Profile</button>`;
             }
 
+            let hybridInfo = c.isHybrid ? `<div class="col-span-2 mt-2 p-2 bg-amber-50 rounded-lg text-amber-700 text-[9px] font-bold">Hybrid Master: ${c.emisPaidCount}/${c.duration} Paid. Current Active EMI: ₹${c.cycleEmi}</div>` : '';
+
             let html = `
                 <div class="text-center border-b border-slate-100 pb-4 mb-4">
                     <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl font-black shadow-inner">${c.name ? c.name.substring(0,1).toUpperCase() : 'U'}</div>
@@ -1148,8 +1244,9 @@ async function rejectAndTrashApplication(mobile) {
                         <div class="grid grid-cols-2 gap-y-3">
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Principal</span><span class="font-black text-slate-800">₹${(c.principal||0).toLocaleString()}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Total Payable</span><span class="font-black text-emerald-600">₹${(c.totalPayable||0).toLocaleString()}</span></div>
-                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Cycle EMI</span><span class="font-black text-slate-800">₹${c.cycleEmi||0}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Active Cycle EMI</span><span class="font-black text-slate-800">₹${c.cycleEmi||0}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Overdue</span><span class="font-black text-rose-500">₹${c.overdue||0}</span></div>
+                            ${hybridInfo}
                         </div>
                     </div>
                 </div>
@@ -1205,21 +1302,185 @@ async function rejectAndTrashApplication(mobile) {
             document.getElementById('modal-injection-zone').innerHTML = html;
         }
 
-        function syncKycCentreDropdown() {
+        function clearKycForm() {
             try {
-                const sb = getSafeValue('new-cust-branch'); 
-                const cd = document.getElementById('new-cust-center');
-                if(!sb || sb === "") { 
-                    if(cd) { cd.innerHTML = `<option value="">-- Select Centre --</option>`; cd.disabled = true; } 
-                    return; 
-                }
-                let mc = centreList.filter(c => c.branch === sb); 
-                let opts = `<option value="">-- Select Centre --</option>`;
-                mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
-                if(cd) { cd.innerHTML = opts; cd.disabled = false; }
-            } catch(e) { console.log(e); }
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                document.getElementById('new-loan-plan-select').value = '';
+                
+                let cd = document.getElementById('new-cust-center');
+                if(cd) { cd.innerHTML = `<option value="">-- Select Centre --</option>`; cd.disabled = true; }
+                
+                document.getElementById('new-cust-nominee-relation').value = 'Husband';
+                document.getElementById('new-cust-caste').value = 'Samanya';
+                document.getElementById('new-cust-religion').value = 'Hindu';
+                document.getElementById('new-cust-purpose').value = 'Krishi';
+                document.getElementById('new-cust-house').value = 'Apna';
+                ['ppi-tv', 'ppi-fridge', 'ppi-bike', 'ppi-almirah'].forEach(id => { let el=document.getElementById(id); if(el) el.checked = false; });
+                
+                localStorage.removeItem('kyc_draft');
+                runLiveLoanMath();
+            } catch(e){}
         }
 
+        // =========================================================================
+        // 🧮 HYBRID MATH ENGINE (Dynamic rendering)
+        // =========================================================================
+        function calculateLoanMetrics() { 
+            try {
+                const planId = getSafeValue('new-loan-plan-select');
+                if(!planId) throw new Error("No Plan");
+                const plan = loanPlans.find(p => p.id === planId);
+                if(!plan) throw new Error("Plan not found");
+
+                return { 
+                    principal: plan.principal, 
+                    interestAmt: plan.interestAmt, 
+                    totalPayable: plan.totalPayable, 
+                    cycleType: plan.type.includes('daily') ? "daily" : "weekly", 
+                    cycleEmi: plan.isHybrid ? plan.phase1Emi : plan.baseEmi, // Starting EMI
+                    printPlanName: plan.name, 
+                    typedRoi: plan.roi,
+                    duration: plan.duration,
+                    isHybrid: plan.isHybrid,
+                    phase1Days: plan.phase1Days, phase1Emi: plan.phase1Emi,
+                    phase2Days: plan.phase2Days, phase2Emi: plan.phase2Emi
+                }; 
+            } catch(e) { 
+                return { principal: 0, interestAmt: 0, totalPayable: 0, cycleType: "daily", cycleEmi: 0, printPlanName: "Plan", typedRoi: 0, isHybrid: false }; 
+            }
+        }
+
+        function runLiveLoanMath() { 
+            try {
+                const m = calculateLoanMetrics(); 
+                setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); 
+                setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); 
+                setHtmlSafe('math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
+
+                const bBox = document.getElementById('math-emi-breakdown');
+                if(bBox) {
+                    if (m.isHybrid) {
+                        bBox.innerHTML = `🔥 HYBRID PLAN SETUP<br>Phase 1: ${m.phase1Days} Days @ ₹${m.phase1Emi} EMI<br>Phase 2: ${m.phase2Days} Days @ ₹${m.phase2Emi} EMI`;
+                        bBox.classList.remove('hidden');
+                    } else if (m.principal > 0) {
+                        bBox.innerHTML = `✅ STANDARD PLAN<br>EMI: ₹${m.cycleEmi} per ${m.cycleType}`;
+                        bBox.classList.remove('hidden');
+                    } else {
+                        bBox.classList.add('hidden');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function goToKycStageB() { 
+            try {
+                const p = getSafeValue('new-cust-phone').trim();
+                const plan = getSafeValue('new-loan-plan-select');
+                if(!p || p.length < 10) { alert("Enter proper 10-digit number!"); return; }
+                if(!plan) { alert("Please select a Master Plan first!"); return; }
+                if(serverDb[p] && serverDb[p].status !== 'Requested') { alert("Duplicate Error! Number active."); return; } 
+                document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
+            } catch(e) {}
+        }
+        function backToKycStageA() { try { document.getElementById('kyc-stage-b')?.classList.add('hidden'); document.getElementById('kyc-stage-a')?.classList.remove('hidden'); } catch(e) {} }
+        
+        async function processKycAndDisburse(event) {
+            try {
+                if(event) event.preventDefault();
+                let btn = event.currentTarget;
+                
+                const name = getSafeValue('new-cust-name').trim();
+                const phone = getSafeValue('new-cust-phone').trim();
+                const idRef = getSafeValue('new-cust-id-ref').trim();
+                
+                if(!name || !phone || phone.length < 10) {
+                    alert("⚠️ Name aur valid 10-digit Mobile Number zaroori hai!");
+                    return;
+                }
+
+                const metrics = calculateLoanMetrics();
+                
+                const branch = getSafeValue('new-cust-branch');
+                const center = getSafeValue('new-cust-center');
+                const spouse = getSafeValue('new-cust-spouse');
+                const voter = getSafeValue('new-cust-voter');
+                const nominee = getSafeValue('new-cust-nominee');
+                const relation = getSafeValue('new-cust-nominee-relation');
+                const caste = getSafeValue('new-cust-caste');
+                const religion = getSafeValue('new-cust-religion');
+                const land = getSafeValue('new-cust-land');
+                const attendance = getSafeValue('new-cust-attendance');
+                const purpose = getSafeValue('new-cust-purpose');
+                const house = getSafeValue('new-cust-house');
+                const address = getSafeValue('new-cust-address');
+
+                let ppi = [];
+                if(document.getElementById('ppi-tv')?.checked) ppi.push("TV/Gas");
+                if(document.getElementById('ppi-fridge')?.checked) ppi.push("Fridge");
+                if(document.getElementById('ppi-bike')?.checked) ppi.push("Motorcycle");
+                if(document.getElementById('ppi-almirah')?.checked) ppi.push("Almirah");
+                let ppiStr = ppi.length > 0 ? ppi.join(", ") : "None";
+
+                let sysId = (metrics.cycleType === 'daily' ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
+
+               let pastLoans = (serverDb[phone] && serverDb[phone].pastLoans) ? serverDb[phone].pastLoans : [];
+                if (serverDb[phone] && serverDb[phone].transactions && serverDb[phone].transactions.length > 0) {
+                    pastLoans.push({
+                        id: serverDb[phone].id, 
+                        planName: serverDb[phone].planName, 
+                        principal: serverDb[phone].principal, 
+                        totalPayable: serverDb[phone].totalPayable, 
+                        transactions: JSON.parse(JSON.stringify(serverDb[phone].transactions))
+                    });
+                }
+
+                let isFirst = pastLoans.length === 0;
+
+                // Client ka Profile Database me banayein (With Hybrid Properties)
+                serverDb[phone] = {
+                    id: sysId, name: name, branch: branch, center: center, spouse: spouse,
+                    voterRef: idRef + " / " + voter, nominee: nominee, nomineeRelation: relation,
+                    caste: caste, religion: religion, land: land, attendance: attendance,
+                    purpose: purpose, house: house, address: address, ppiSummary: ppiStr,
+                    
+                    // Financials
+                    planType: metrics.cycleType, planName: metrics.printPlanName, duration: metrics.duration,
+                    principal: metrics.principal, roi: metrics.typedRoi,
+                    interestAmt: metrics.interestAmt, totalPayable: metrics.totalPayable,
+                    outstanding: metrics.totalPayable, cycleEmi: metrics.cycleEmi, // Initial EMI
+                    overdue: 0, advancePaid: 0,
+                    
+                    // HYBRID ENGINE PROPERTIES
+                    isHybrid: metrics.isHybrid, phase1Days: metrics.phase1Days, phase1Emi: metrics.phase1Emi, 
+                    phase2Days: metrics.phase2Days, phase2Emi: metrics.phase2Emi, emisPaidCount: 0,
+                    
+                    status: "Pending Approval", isApproved: false,
+                    isFirstLoan: isFirst, isRenewed: false,
+                    approvalDate: "N/A", endDate: "N/A", lastPaymentDate: "N/A", nextEmiDate: "N/A",
+                    emiSettled: null, transactions: [], pastLoans: pastLoans
+                };
+
+                localStorage.removeItem('kyc_draft');
+                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+                
+                let oldText = btn.innerText;
+                btn.innerText = "Saving... ⏳";
+                await saveDataToCloud(phone);
+                btn.innerText = oldText;
+                
+                alert("✅ KYC Form Submitted Successfully! \nSystem Head Approval ke liye pending hai.");
+                triggerPaperPrintDraft(phone);
+                clearKycForm();
+
+            } catch (e) {
+                console.error("KYC Submit Error:", e);
+                alert("Data submit karne me error aayi! Console check karein.");
+            }
+        }
+
+        // =========================================================================
+        // 💸 HYBRID LEDGER & DAY END LOGIC
+        // =========================================================================
         function switchStaffTab(t) { 
             try {
                 currentActiveStaffTab = t; 
@@ -1241,7 +1502,7 @@ async function rejectAndTrashApplication(mobile) {
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
                     let a = serverDb[m];
-                    if (!a) return; // 🛡️ TITANIUM SHIELD 3: Ghost data block
+                    if (!a) return; 
                     
                     let isClientDue = false;
                     if(a.nextEmiDate && a.nextEmiDate !== "Completed" && a.nextEmiDate !== "N/A") {
@@ -1261,9 +1522,12 @@ async function rejectAndTrashApplication(mobile) {
                         if(a.emiSettled === 'online_paid') { aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; } 
                         else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors">Bounced</button>`; }
 
+                        // HYBRID UI BADGE
+                        let hybridBadge = a.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mt-1 inline-block">Hybrid Mode</span>` : '';
+
                         h += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-4 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
-                                <div><p class="text-[10px] font-mono text-blue-500 font-bold tracking-widest">${a.id}</p><p class="font-black text-slate-900 text-base mt-1">${a.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centre: ${a.center}</p></div>
+                                <div><p class="text-[10px] font-mono text-blue-500 font-bold tracking-widest">${a.id}</p><p class="font-black text-slate-900 text-base mt-1">${a.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centre: ${a.center}</p>${hybridBadge}</div>
                                 <div class="text-right">
                                     <span class="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest ${bc} block mb-2">${bt}</span>
                                     <p class="text-[9px] font-bold text-rose-500 uppercase bg-rose-50 px-2 py-1 rounded-md">Due: <span class="font-black">${a.nextEmiDate}</span></p>
@@ -1271,7 +1535,7 @@ async function rejectAndTrashApplication(mobile) {
                             </div>
                             <div class="flex justify-between items-center py-3 border-y border-slate-50">
                                 <div class="flex flex-col"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Rem Balance</span><span class="font-black text-slate-800 text-lg">₹${(a.outstanding||0).toLocaleString()}</span></div>
-                                <div class="flex flex-col text-right"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Cycle EMI</span><span class="font-black text-blue-600 text-lg">₹${a.cycleEmi||0}</span></div>
+                                <div class="flex flex-col text-right"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Active Cycle EMI</span><span class="font-black text-blue-600 text-lg">₹${a.cycleEmi||0}</span></div>
                             </div>
                             <div class="flex gap-2">${aB}</div>
                             <div class="pt-2 flex items-center gap-2">
@@ -1293,34 +1557,7 @@ async function rejectAndTrashApplication(mobile) {
             } catch(e) {}
         }
 
-        function setEmiStatus(m, s) { 
-            try { 
-                if(!serverDb[m]) return; 
-                serverDb[m].emiSettled = s; 
-                
-                // Turant Local Storage me save karein taaki refresh hone par data na ude
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
-                
-                renderStaffLedgerSheets(); 
-                refreshHeadDashboardStats(); 
-            } catch(e) {}
-        }
-        
-        function submitAdvanceSettlementAmount(m) { 
-            try {
-                const v = parseInt(getSafeValue(`adv-input-${m}`), 10) || 0; if(!serverDb[m]) return;
-                if (v <= 0 || v > serverDb[m].outstanding) { alert("Invalid Amount."); return; } 
-                serverDb[m].advancePaid = v; 
-                
-                // Turant Local Storage me save karein taaki advance ka data safe rahe
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
-                
-                alert(`₹${v} Advance locked for Upload!`); 
-                renderStaffLedgerSheets(); refreshHeadDashboardStats();
-            } catch(e) {}
-        }
-
-       async function uploadDayEndReport() {
+        async function uploadDayEndReport() {
             try {
                 let btn = document.getElementById('upload-day-btn');
                 if(btn) btn.innerText = "Processing Data... ⏳";
@@ -1333,7 +1570,6 @@ async function rejectAndTrashApplication(mobile) {
                     if (m === "SYSTEM_SETTINGS") return;
                     let c = serverDb[m]; if(!c) return; if(!c.transactions) c.transactions = [];
                     
-                   // Check karein ki kya client aaj due tha
                     let isClientDue = false;
                     if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
                         let emiDateObj = parseSysDate(c.nextEmiDate);
@@ -1342,20 +1578,13 @@ async function rejectAndTrashApplication(mobile) {
                         isClientDue = true; 
                     }
 
-                    // NAYA BUG FIX 1.5: Double Day-End Penalty ko rokna
                     let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.date === todayStr);
-                    if (hasTransactionToday && !c.emiSettled && !c.advancePaid) {
-                        return; // Aaj ka day-end pehle hi ho chuka hai, is client ko dobara bounce mat karo!
-                    }
+                    if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
-                    // BUG FIX 1: Agar due tha aur staff ne mark nahi kiya, toh auto-bounce karo
                     if (isClientDue && c.status === "Active" && c.outstanding > 0) {
-                        if (!c.emiSettled && !c.advancePaid) {
-                            c.emiSettled = 'bounce';
-                        }
+                        if (!c.emiSettled && !c.advancePaid) { c.emiSettled = 'bounce'; }
                     }
 
-                    // BUG FIX 2: EMI Rounding Error & OVERDUE FIX
                     if (c.emiSettled === 'bounce') { 
                         c.overdue = (c.overdue || 0) + c.cycleEmi; 
                         c.transactions.push({ date: todayStr, amount: c.cycleEmi, type: 'Bounced' });
@@ -1365,37 +1594,38 @@ async function rejectAndTrashApplication(mobile) {
                         let actualDeduction = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                         c.outstanding = (c.outstanding || 0) - actualDeduction; 
                         
-                        // YAHAN CHANGE HUA HAI: Purana overdue zero nahi hoga. 
-                        // Agar actual EMI se kuch zyada deduction hua hai tabhi overdue kam hoga.
                         let extraPaid = actualDeduction - c.cycleEmi;
-                        if (extraPaid > 0) { 
-                            c.overdue = Math.max(0, (c.overdue || 0) - extraPaid); 
-                        }
+                        if (extraPaid > 0) { c.overdue = Math.max(0, (c.overdue || 0) - extraPaid); }
 
                         c.lastPaymentDate = todayStr; 
                         c.transactions.push({ date: todayStr, amount: actualDeduction, type: c.emiSettled === 'online_paid' ? 'Online App' : 'Received' });
                         c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
+
+                        // 🔥 HYBRID UPDATE
+                        c.emisPaidCount = (c.emisPaidCount || 0) + 1;
                     }
 
-                    // BUG FIX 3: Advance Payment Date Skipping & OVERDUE ADJUSTMENT
                     if (c.advancePaid > 0) { 
                         let advDeduction = Math.min(c.outstanding || 0, c.advancePaid);
                         c.outstanding = (c.outstanding || 0) - advDeduction; 
-                        
-                        // YAHAN CHANGE HUA HAI: Advance payment sabse pehle purane overdue ko clear karegi
                         c.overdue = Math.max(0, (c.overdue || 0) - advDeduction);
-
                         c.lastPaymentDate = todayStr; 
                         c.transactions.push({ date: todayStr, amount: advDeduction, type: 'Advance' }); 
                         
-                        // Advance jitni barabar EMI ke hisaab se date aage badhayein
                         let skipEmis = Math.floor(advDeduction / (c.cycleEmi || 1));
                         for(let skip = 0; skip < skipEmis; skip++) {
                             c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
                         }
+                        
+                        // 🔥 HYBRID UPDATE
+                        c.emisPaidCount = (c.emisPaidCount || 0) + skipEmis;
+                    }
+
+                    // 🛡️🔥 THE HYBRID EMI SWITCHER
+                    if(c.isHybrid) {
+                        c.cycleEmi = (c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
                     }
                     
-                    // Account Closure Check
                     if(c.outstanding <= 0 && c.status === "Active") { 
                         c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; 
                     }
@@ -1403,17 +1633,13 @@ async function rejectAndTrashApplication(mobile) {
                     c.advancePaid = 0; c.emiSettled = null;
                 });
 
-                // Instantly Local Storage me save kar lo taaki data safe rahe
                 localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
 
-                // BUG FIX 4: API Calling Loop Optimization (App Freeze Fix)
                 let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS");
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
                 
-                // Saari API calls ek saath parallel me bhejenge (For loop ki tarah ek ke baad ek nahi)
                 let syncPromises = keys.map(k => fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mobile: k, data: serverDb[k] })
                 }).catch(e => console.error("Sync failed for", k)));
 
@@ -1432,272 +1658,17 @@ async function rejectAndTrashApplication(mobile) {
             }
         }
 
-        function clearKycForm() {
-            try {
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
-                document.getElementById('new-loan-principal').value = 5000;
-                document.getElementById('new-loan-roi').value = 12;
-                document.getElementById('new-loan-amount').value = '100-days';
-                
-                let cd = document.getElementById('new-cust-center');
-                if(cd) { cd.innerHTML = `<option value="">-- Select Centre --</option>`; cd.disabled = true; }
-                
-                document.getElementById('new-cust-nominee-relation').value = 'Husband';
-                document.getElementById('new-cust-caste').value = 'Samanya';
-                document.getElementById('new-cust-religion').value = 'Hindu';
-                document.getElementById('new-cust-purpose').value = 'Krishi';
-                document.getElementById('new-cust-house').value = 'Apna';
-                ['ppi-tv', 'ppi-fridge', 'ppi-bike', 'ppi-almirah'].forEach(id => { let el=document.getElementById(id); if(el) el.checked = false; });
-                
-                // Clear the auto-save draft
-                localStorage.removeItem('kyc_draft');
-                runLiveLoanMath();
-            } catch(e){}
-        }
-
-        function calculateLoanMetrics() { 
-            try {
-                const s = getSafeValue('new-loan-amount')||"100-days"; const pInput = parseFloat(getSafeValue('new-loan-principal'))||5000; const r = parseFloat(getSafeValue('new-loan-roi'))||0; 
-                let p = pInput; let i = Math.round((p * r) / 100); let t = p + i; let cycleDays = s.includes('100') ? 100 : (s.includes('30') ? 30 : 36); let cycleEmi = Math.round(t / cycleDays);
-                return { principal: p, interestAmt: i, totalPayable: t, cycleType: s.includes('100') ? "daily" : "weekly", cycleEmi: cycleEmi, printPlanName: s === "100-days" ? "100 Days Plan" : "Weekly System", typedRoi: r }; 
-            } catch(e) { return { principal: 0, interestAmt: 0, totalPayable: 0, cycleType: "daily", cycleEmi: 0, printPlanName: "Plan", typedRoi: 0 }; }
-        }
-
-        function runLiveLoanMath() { 
-            try {
-                const m = calculateLoanMetrics(); setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); setHtmlSafe('math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
-            } catch(e) {}
-        }
-
-        function goToKycStageB() { 
-            try {
-                const p = getSafeValue('new-cust-phone').trim();
-                if(!p || p.length < 10) { alert("Enter proper 10-digit number!"); return; }
-                if(serverDb[p] && serverDb[p].status !== 'Requested') { alert("Duplicate Error! Number active."); return; } 
-                document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
-            } catch(e) {}
-        }
-        function backToKycStageA() { try { document.getElementById('kyc-stage-b')?.classList.add('hidden'); document.getElementById('kyc-stage-a')?.classList.remove('hidden'); } catch(e) {} }
-        async function processKycAndDisburse(event) {
-            try {
-                if(event) event.preventDefault();
-                let btn = event.currentTarget;
-                
-                const name = getSafeValue('new-cust-name').trim();
-                const phone = getSafeValue('new-cust-phone').trim();
-                const idRef = getSafeValue('new-cust-id-ref').trim();
-                
-                if(!name || !phone || phone.length < 10) {
-                    alert("⚠️ Name aur valid 10-digit Mobile Number zaroori hai!");
-                    return;
-                }
-
-                // Loan Math calculate karein
-                const metrics = calculateLoanMetrics();
-                
-                // Form ke baaki fields collect karein
-                const branch = getSafeValue('new-cust-branch');
-                const center = getSafeValue('new-cust-center');
-                const spouse = getSafeValue('new-cust-spouse');
-                const voter = getSafeValue('new-cust-voter');
-                const nominee = getSafeValue('new-cust-nominee');
-                const relation = getSafeValue('new-cust-nominee-relation');
-                const caste = getSafeValue('new-cust-caste');
-                const religion = getSafeValue('new-cust-religion');
-                const land = getSafeValue('new-cust-land');
-                const attendance = getSafeValue('new-cust-attendance');
-                const purpose = getSafeValue('new-cust-purpose');
-                const house = getSafeValue('new-cust-house');
-                const address = getSafeValue('new-cust-address');
-
-                // PPI Assets (Ghar ka saaman)
-                let ppi = [];
-                if(document.getElementById('ppi-tv')?.checked) ppi.push("TV/Gas");
-                if(document.getElementById('ppi-fridge')?.checked) ppi.push("Fridge");
-                if(document.getElementById('ppi-bike')?.checked) ppi.push("Motorcycle");
-                if(document.getElementById('ppi-almirah')?.checked) ppi.push("Almirah");
-                let ppiStr = ppi.length > 0 ? ppi.join(", ") : "None";
-
-                // Unique System ID Generate karein
-                let sysId = (metrics.cycleType === 'daily' ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
-
-               let pastLoans = (serverDb[phone] && serverDb[phone].pastLoans) ? serverDb[phone].pastLoans : [];
-                
-                // FINAL BUG FIX: Agar purana customer portal se apply karke aaya hai, toh uska purana data overwrite hone se pehle history me save kar lo!
-                if (serverDb[phone] && serverDb[phone].transactions && serverDb[phone].transactions.length > 0) {
-                    pastLoans.push({
-                        id: serverDb[phone].id, 
-                        planName: serverDb[phone].planName, 
-                        principal: serverDb[phone].principal, 
-                        totalPayable: serverDb[phone].totalPayable, 
-                        transactions: JSON.parse(JSON.stringify(serverDb[phone].transactions))
-                    });
-                }
-
-                let isFirst = pastLoans.length === 0;
-
-                // Client ka Profile Database me banayein
-                serverDb[phone] = {
-                    id: sysId, name: name, branch: branch, center: center, spouse: spouse,
-                    voterRef: idRef + " / " + voter, nominee: nominee, nomineeRelation: relation,
-                    caste: caste, religion: religion, land: land, attendance: attendance,
-                    purpose: purpose, house: house, address: address, ppiSummary: ppiStr,
-                    
-                    // Financials
-                    planType: metrics.cycleType, planName: metrics.printPlanName,
-                    principal: metrics.principal, roi: metrics.typedRoi,
-                    interestAmt: metrics.interestAmt, totalPayable: metrics.totalPayable,
-                    outstanding: metrics.totalPayable, cycleEmi: metrics.cycleEmi,
-                    overdue: 0, advancePaid: 0,
-                    
-                    // Status & Dates (Approval ke liye Pending)
-                    status: "Pending Approval", isApproved: false,
-                    isFirstLoan: isFirst, isRenewed: false,
-                    approvalDate: "N/A", endDate: "N/A", lastPaymentDate: "N/A", nextEmiDate: "N/A",
-                    emiSettled: null, transactions: [], pastLoans: pastLoans
-                };
-
-                // Draft clear karein aur Local DB update karein
-                localStorage.removeItem('kyc_draft');
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
-                
-                let oldText = btn.innerText;
-                btn.innerText = "Saving... ⏳";
-                
-                // Cloud par upload karein
-                await saveDataToCloud(phone);
-                
-                btn.innerText = oldText;
-                alert("✅ KYC Form Submitted Successfully! \nSystem Head Approval ke liye pending hai.");
-                
-                // Print wala form khol dein
-                triggerPaperPrintDraft(phone);
-                
-                // Form refresh kar dein naye entry ke liye
-                clearKycForm();
-
-            } catch (e) {
-                console.error("KYC Submit Error:", e);
-                alert("Data submit karne me error aayi! Console check karein.");
-            }
-        }
-
-        
-        function renderPendingRequestsBox() {
-            try {
-                const zone = document.getElementById('staff-requests-zone'); let h = '';
-                Object.keys(serverDb).forEach(m => {
-                    if (m === "SYSTEM_SETTINGS") return;
-                    let r = serverDb[m];
-                    if (!r) return; // 🛡️ TITANIUM SHIELD 4: Ghost data block
-                    if(r.status === 'Requested') {
-                        let rp = r.tempPrincipal||5000;
-                        h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade hover-scale"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-sm pulse-glow">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Req Amt: ₹${rp.toLocaleString()}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md transition-colors">Complete KYC Form</button></div>`;
-                    }
-                });
-                if(zone) zone.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No pending requests.</p>`;
-                updatePendingRequestsBadge();
-            } catch(e) {}
-        }
-        function updatePendingRequestsBadge() {
-            try { let c = 0; Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if(!serverDb[m]) return; if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
-        }
-        function processRequestedClientKyc(mobile) {
-            try {
-                let req = serverDb[mobile]; if(!req) return;
-                document.getElementById('new-cust-name').value = req.name||""; document.getElementById('new-cust-phone').value = mobile; 
-                document.getElementById('new-loan-amount').value = req.tempPlanStr||"100-days"; document.getElementById('new-loan-principal').value = req.tempPrincipal||5000;
-                runLiveLoanMath(); routePanelSection('kyc');
-            } catch(e) {}
-        }
-
-        function syncSettleCentreFilter() {
-            try {
-                const branchSelect = document.getElementById('settle-branch-filter');
-                const centerSelect = document.getElementById('settle-center-filter');
-                const sb = branchSelect ? branchSelect.value : "";
-                
-                if(!sb || sb === "") { 
-                    if(centerSelect) { 
-                        centerSelect.innerHTML = `<option value="">-- Centre --</option>`; 
-                        centerSelect.setAttribute('disabled', 'true'); 
-                    } 
-                    syncSettlementClientsDropdown(); 
-                    return; 
-                }
-                
-                let mc = centreList.filter(c => c.branch === sb); 
-                let opts = `<option value="">-- All Centres --</option>`;
-                mc.forEach(c => { opts += `<option value="${c.name}">${c.name}</option>`; });
-                
-                if(centerSelect) { 
-                    centerSelect.innerHTML = opts; 
-                    centerSelect.removeAttribute('disabled'); 
-                }
-                syncSettlementClientsDropdown();
-            } catch(e) { console.log(e); }
-        }
-
-        function syncSettlementClientsDropdown() { 
-            try {
-                const sB = getSafeValue('settle-branch-filter'); const sC = getSafeValue('settle-center-filter'); const s = document.getElementById('settle-client-mobile-select'); 
-                let opt = `<option value="">-- Search Active Client --</option>`; 
-                Object.keys(serverDb).forEach(m => { 
-                    if (m === "SYSTEM_SETTINGS") return;
-                    let c = serverDb[m];
-                    if (c.status === "Active" && c.outstanding > 0) { 
-                        let match = true;
-                        if(sB && c.branch !== sB) match = false;
-                        if(sC && c.center !== sC) match = false;
-                        if(match) opt += `<option value="${m}">${c.name||'Unk'} (${m})</option>`; 
-                    } 
-                }); 
-                if(s) s.innerHTML = opt; 
-                document.getElementById('settle-math-receipt-box')?.classList.add('hidden');
-            } catch(e) {}
-        }
-
-        function syncDirectSettlementViewLabels() { 
-            try {
-                const m = getSafeValue('settle-client-mobile-select'); const box = document.getElementById('settle-math-receipt-box'); 
-                if(!m) { box?.classList.add('hidden'); return; } 
-                let c = serverDb[m]; setHtmlSafe('lbl-s-id', c.id); setHtmlSafe('lbl-s-plan', c.planName); setHtmlSafe('lbl-s-outstanding', `₹${(c.outstanding||0).toLocaleString('en-IN')}`); box?.classList.remove('hidden'); 
-            } catch(e) {}
-        }
-
-        async function executeFullDirectLoanClosure() {
-            try {
-                const m = getSafeValue('settle-client-mobile-select'); if(!m) return;
-                let out = serverDb[m].outstanding || 0;
-                if(confirm(`Lock settle amount ₹${out}?`)) { 
-                    serverDb[m].outstanding = 0; serverDb[m].overdue = 0; serverDb[m].status = "Deactive"; serverDb[m].emiSettled = 'Direct Settle'; serverDb[m].lastPaymentDate = formatSysDate(new Date()); 
-                    serverDb[m].transactions = serverDb[m].transactions || [];
-                    serverDb[m].transactions.push({ date: formatSysDate(new Date()), amount: out, type: 'Direct Settle' });
-                    backupSettledClientMobile = m; 
-                    await saveDataToCloud(m); 
-                    document.getElementById('settle-interactive-form-block')?.classList.add('hidden'); document.getElementById('settle-success-action-panel')?.classList.remove('hidden'); refreshHeadDashboardStats(); 
-                }
-            } catch(e) {}
-        }
-
-        function syncRenewalClientsDropdown() { 
-            try {
-                const s = document.getElementById('renew-client-mobile-select'); let opt = `<option value="">-- Select Account --</option>`; 
-                Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if (serverDb[m].status === "Deactive") { opt += `<option value="${m}">${serverDb[m].name||'Unk'} (${m})</option>`; } }); 
-                if(s) s.innerHTML = opt; 
-            } catch(e) {}
-        }
-        function triggerQuickRenewalFromSettlement() { 
-            if(!backupSettledClientMobile) return; routePanelSection('renew'); const sel = document.getElementById('renew-client-mobile-select'); if(sel) sel.value = backupSettledClientMobile; 
-        }
-
+        // =========================================================================
+        // VARIOUS OTHER FIXES
+        // =========================================================================
         async function executeLoanRenewalSubmission() {
             try {
-                const m = getSafeValue('renew-client-mobile-select'); const plan = getSafeValue('renew-loan-plan'); const roi = parseFloat(getSafeValue('renew-loan-roi'))||0; 
-                const pInput = parseFloat(getSafeValue('renew-loan-principal'))||10000; 
-                if(!m) { alert("Select client."); return; }
+                const m = getSafeValue('renew-client-mobile-select'); const planId = getSafeValue('renew-loan-plan-select'); 
+                if(!m || !planId) { alert("Select client and Master Plan."); return; }
                 
-                let p = pInput; let iAmt = Math.round((p * roi) / 100); let tP = p + iAmt; let cycleDays = plan.includes('100') ? 100 : (plan.includes('30') ? 30 : 36); let cE = Math.round(tP / cycleDays);
+                const plan = loanPlans.find(p => p.id === planId);
+                if(!plan) { alert("Invalid Plan."); return; }
+
                 let a = serverDb[m]; 
                 
                 a.pastLoans = a.pastLoans || [];
@@ -1705,205 +1676,71 @@ async function rejectAndTrashApplication(mobile) {
                     id: a.id, planName: a.planName, principal: a.principal, totalPayable: a.totalPayable, transactions: JSON.parse(JSON.stringify(a.transactions || []))
                 });
 
-                a.id = (plan.includes('100') ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
-                a.planType = plan.includes('100') ? "daily" : "weekly"; a.planName = plan.includes('100') ? "100 Days Plan" : "Weekly Plan"; a.principal = p; a.roi = roi; a.interestAmt = iAmt; a.totalPayable = tP; a.outstanding = tP; a.cycleEmi = cE; a.status = "Active"; a.isRenewed = true; a.isFirstLoan = false; a.emiSettled = null; a.advancePaid = 0; a.approvalDate = formatSysDate(new Date()); a.endDate = calculateEndDate(plan); a.lastPaymentDate = "N/A"; a.nextEmiDate = calculateNextEmiDate(a.planType, null);
+                a.id = (plan.type.includes('daily') ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
+                a.planType = plan.type.includes('daily') ? "daily" : "weekly"; 
+                a.planName = plan.name; a.duration = plan.duration;
+                a.principal = plan.principal; a.roi = plan.roi; a.interestAmt = plan.interestAmt; 
+                a.totalPayable = plan.totalPayable; a.outstanding = plan.totalPayable; 
+                a.status = "Active"; a.isRenewed = true; a.isFirstLoan = false; a.emiSettled = null; a.advancePaid = 0; 
+                a.approvalDate = formatSysDate(new Date()); a.endDate = calculateEndDate(plan.duration); 
+                a.lastPaymentDate = "N/A"; a.nextEmiDate = calculateNextEmiDate(a.planType, null);
                 a.transactions = []; 
+
+                // HYBRID UPDATE
+                a.isHybrid = plan.isHybrid; a.phase1Days = plan.phase1Days; a.phase1Emi = plan.phase1Emi; 
+                a.phase2Days = plan.phase2Days; a.phase2Emi = plan.phase2Emi; a.emisPaidCount = 0;
+                a.cycleEmi = plan.isHybrid ? plan.phase1Emi : plan.baseEmi;
                 
                 await saveDataToCloud(m); 
-                alert(`✓ Loan Renewed & Synced!`); routePanelSection('dashboard');
-            } catch(e) {}
-        }
-
-        function toggleLoginForm(v) { 
-            try {
-                const c = document.getElementById('customer-login-form'); const e = document.getElementById('employee-login-form'); 
-                if (v === 'employee') { c?.classList.add('hidden'); e?.classList.remove('hidden'); } else { e?.classList.add('hidden'); c?.classList.remove('hidden'); } 
+                alert(`✓ Loan Renewed with Plan: ${plan.name} & Synced!`); routePanelSection('dashboard');
             } catch(e) {}
         }
         
-        async function handleCustomerLogin(event) {
-            try {
-                let btn = event.currentTarget;
-                const m = getSafeValue('cust-mobile').trim(); if (!m || m.length < 10) { alert("Enter 10-digit number."); return; }
-                if (!otpRequested) { 
-                    document.getElementById('cust-otp')?.classList.remove('hidden'); 
-                    if(btn) btn.innerText = "Verify OTP"; otpRequested = true; 
-                } 
-                else { 
-                    const otpVal = getSafeValue('cust-otp');
-                    if (otpVal === '1234') { 
-                        btn.innerText = "Syncing Cloud...";
-                        await loadDataFromCloud();
-                        currentlyLoggedInMobile = m;
-                        if (!serverDb[m]) { let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; showDashboard('customer'); routePanelSection('cust-apply'); } 
-                        else if (serverDb[m].status === 'Requested') { showDashboard('customer'); routePanelSection('cust-pending'); } 
-                        else if (serverDb[m].status === 'Pending Approval') { showDashboard('customer'); routePanelSection('cust-pending'); }
-                        else { showDashboard('customer'); }
-                        btn.innerText = "Verify & Access";
-                    } else { alert('Galat OTP!'); }
-                }
-            } catch(e) {}
-        }
-
-        async function handleEmployeeLogin(event) {
-            try {
-                let btn = event.currentTarget;
-                const u = getSafeValue('emp-username').trim(); const p = getSafeValue('emp-password');
-                
-                let oldText = btn.innerText;
-                btn.innerText = "Syncing Data...";
-                await loadDataFromCloud();
-                btn.innerText = oldText;
-
-                if (u === 'head01' && p === 'head123') { 
-                    currentLoggedInRole = 'head'; 
-                    showDashboard('head'); 
-                } 
-                else if (staffDb[u] && staffDb[u].pass === p) { 
-                    currentLoggedInRole = 'staff'; let staff = staffDb[u];
-                    const df = document.getElementById('dashboard-active-branch-select'); 
-                    const lf = document.getElementById('ledger-active-branch-select');
-                    
-                    // NAYI LINE: Direct Settle branch filter ko lock karne ke liye
-                    const sf = document.getElementById('settle-branch-filter'); 
-
-                    if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; 
-                    if(lf) lf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`;
-                    if(sf) { sf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; syncSettleCentreFilter(); }
-                    
-                    setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
-                    let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
-                    
-                    showDashboard('staff'); updatePendingRequestsBadge();
-                } else { alert('Galat Credentials!'); }
-            } catch(e) {}
-        }
-
         async function submitCustomerLoanRequest() {
-    try {
-        const n = getSafeValue('apply-cust-name').trim(); const p = currentlyLoggedInMobile; const pl = getSafeValue('apply-cust-plan'); const pInput = parseFloat(getSafeValue('apply-cust-principal'))||5000;
-        if(!n) { alert("Name mandatory."); return; }
-        
-        // 🛠️ FIX: Agar purana client hai, toh uska data (pastLoans) safe rakho!
-        if (serverDb[p]) {
-            serverDb[p].status = 'Requested';
-            serverDb[p].tempPlanStr = pl;
-            serverDb[p].tempPrincipal = pInput;
-            serverDb[p].planType = pl.includes('100') ? 'daily' : 'weekly';
-        } else {
-            // Naya client hai toh fresh banayenge
-            serverDb[p] = { name: n, status: 'Requested', planType: pl.includes('100') ? 'daily' : 'weekly', tempPlanStr: pl, tempPrincipal: pInput, transactions: [], pastLoans: [] };
-        }
-        
-        await saveDataToCloud(p); 
-        routePanelSection('cust-pending');
-    } catch(e) {}
-}
-
-        function renderCustomerDashboard() {
             try {
-                let u = serverDb[currentlyLoggedInMobile]; if (!u) return;
-                setHtmlSafe('cust-outstanding-view', `₹${(u.outstanding||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-principal-view', `₹${(u.principal||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-interest-view', `₹${(u.interestAmt||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-total-payable-view', `₹${(u.totalPayable||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-od-view', `₹${(u.overdue||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-next-emi-view', `₹${u.cycleEmi||0}`); setHtmlSafe('cust-plan-badge', `${u.planName||'Plan'}`); setHtmlSafe('cust-name-title', u.name||'User'); setHtmlSafe('cust-avatar-letters', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); setHtmlSafe('cust-id-label', `ID: ${u.id||'NA'}`); setHtmlSafe('cust-profile-branch', u.branch||'-'); setHtmlSafe('cust-profile-center', u.center||'-'); setHtmlSafe('cust-profile-address', u.address||'-'); setHtmlSafe('cust-approval-date', u.approvalDate||"NA"); setHtmlSafe('cust-end-date', u.endDate||"NA"); setHtmlSafe('cust-last-payment-date', u.lastPaymentDate||"NA"); setHtmlSafe('cust-next-emi-date', u.nextEmiDate||"NA");
+                const n = getSafeValue('apply-cust-name').trim(); const p = currentlyLoggedInMobile; const planId = getSafeValue('apply-cust-plan-select'); 
+                if(!n) { alert("Name mandatory."); return; }
+                if(!planId) { alert("Please select a Master Plan."); return; }
 
-               const pZ = document.getElementById('cust-self-pay-zone');
-                if (u.status === "Active" && (u.outstanding||0) > 0) {
-                    if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') { 
-                        if(pZ) pZ.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[2rem] text-center shadow-inner hover-scale"><p class="text-4xl mb-3">✅</p><p class="text-sm font-black text-emerald-700 uppercase tracking-widest">EMI Paid!</p></div>`; 
-                    } 
-                    else { 
-                        if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer pulse-glow">Pay EMI Online (₹${u.cycleEmi||0}) 💳</button>`; 
-                    }
-                } else if (u.status === "Deactive") { 
-                    // NAYI LINE: Customer ko wapas apply karne ka rasta dena
-                    if(pZ) pZ.innerHTML = `<button onclick="routePanelSection('cust-apply')" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer hover-scale">Request New Loan 📝</button>`; 
+                if (serverDb[p]) {
+                    serverDb[p].status = 'Requested';
+                    serverDb[p].tempPlanStr = planId; // Save ID instead
                 } else {
-                    if(pZ) pZ.innerHTML = ``;
+                    serverDb[p] = { name: n, status: 'Requested', tempPlanStr: planId, transactions: [], pastLoans: [] };
                 }
-            } catch(e) {}
-        }
-
-       async function customerSelfPayEmi() { 
-            try {
-                let u = serverDb[currentlyLoggedInMobile]; if(!u) return; let cEmi = u.cycleEmi || 0;
-                if(confirm(`Pay EMI ₹${cEmi} via Online Gateway?`)) { 
-                    
-                    // DANGER LINE REMOVED: Yahan outstanding turant kam nahi hoga. Day-End khud karega.
-                    u.emiSettled = 'online_paid'; 
-                    
-                    await saveDataToCloud(currentlyLoggedInMobile); 
-                    
-                    // Customer ko message denge ki payment settlement midnight/day-end me hoga
-                    alert("✅ Payment Processed Successfully!\n(Aapka Outstanding Balance shaam ko Day-End settlement ke baad update hoga)"); 
-                    renderCustomerDashboard(); 
-                } 
-            } catch(e) {}
-        }
-
-        function renderCustomerPassbook() {
-            try {
-                let u = serverDb[currentlyLoggedInMobile]; const z = document.getElementById('customer-passbook-zone'); if(!u || !z) return;
-                let html = '';
-                if(u.transactions && u.transactions.length > 0) {
-                    for(let i = u.transactions.length - 1; i >= 0; i--) { 
-                        let t = u.transactions[i]; 
-                        html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between hover-scale"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-sm font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">+ ₹${t.amount}</span></div>`; 
-                    }
-                }
-                z.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">📭</p><p class="text-[10px] font-bold text-slate-400 uppercase">No transactions.</p></div>`;
-            } catch(e) {}
-        }
-
-        function triggerPaperPrintDraft(phone) {
-            try {
-                let r = serverDb[phone]; if(!r) return;
-                let prin = r.principal||0; let intA = r.interestAmt||0; let tot = r.totalPayable||0;
-                setHtmlSafe('lbl-p-branch-1', r.branch); setHtmlSafe('lbl-p-center-1', r.center); setHtmlSafe('lbl-p-name-1', r.name); setHtmlSafe('lbl-p-phone-1', phone); setHtmlSafe('lbl-p-spouse-1', r.spouse); setHtmlSafe('lbl-p-nominee-1', r.nominee); setHtmlSafe('lbl-p-relation-1', r.nomineeRelation); setHtmlSafe('lbl-p-plan-1', r.planName); setHtmlSafe('lbl-p-principal-1', `₹${prin.toLocaleString('en-IN')}`); setHtmlSafe('lbl-p-roi-1', `${r.roi||0}%`); setHtmlSafe('lbl-p-interest-amt-1', `₹${intA.toLocaleString('en-IN')}`); setHtmlSafe('lbl-p-total-payable-1', `₹${tot.toLocaleString('en-IN')}`); setHtmlSafe('lbl-p-sys-id-1', r.id); setHtmlSafe('lbl-p-approval-date-1', "PENDING APPROVAL"); setHtmlSafe('lbl-p-branch-2', `${r.branch||''} / ${r.center||''}`); setHtmlSafe('lbl-p-caste-2', r.caste); setHtmlSafe('lbl-p-land-2', r.land); setHtmlSafe('lbl-p-purpose-2', r.purpose); setHtmlSafe('lbl-p-ppi-assets-3', r.ppiSummary); setHtmlSafe('lbl-p-address-3', r.address);
-                document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('print-paper-template')?.classList.remove('hidden');
-                setTimeout(() => { window.print(); }, 800); 
-            } catch(e) {}
-        }
-        function restoreFromPrintView() { try { document.getElementById('print-paper-template')?.classList.add('hidden'); showDashboard(currentLoggedInRole); } catch(e) {} }
-        
-        function downloadEmiReceipt() {
-            try {
-                let u = serverDb[currentlyLoggedInMobile]; if(!u) return;
-                setHtmlSafe('lbl-r-date', u.lastPaymentDate || formatSysDate(new Date())); setHtmlSafe('lbl-r-id', u.id); setHtmlSafe('lbl-r-name', u.name);
-                let amt = u.cycleEmi || 0; if(u.transactions && u.transactions.length > 0) { amt = u.transactions[u.transactions.length - 1].amount; }
-                setHtmlSafe('lbl-r-amt', `₹${amt.toLocaleString('en-IN')}`);
-                document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('print-receipt-template')?.classList.remove('hidden');
-                setTimeout(() => { window.print(); }, 800);
-            } catch(e) {}
-        }
-        function restoreFromReceiptView() { try { document.getElementById('print-receipt-template')?.classList.add('hidden'); showDashboard(currentLoggedInRole); } catch(e) {} }
-
-        function showDashboard(role) { 
-            try {
-                document.getElementById('auth-container')?.classList.add('hidden'); 
-                document.getElementById('main-views-container')?.classList.remove('hidden'); 
-                document.getElementById('app-header')?.classList.remove('hidden');
-
-                document.querySelectorAll('.role-cust, .role-staff, .role-head, #dash-active-acc-block, #dash-closed-acc-block, #dash-branch-filter-zone').forEach(el => el.classList.add('hidden'));
                 
-                if(role === 'customer') { 
-                    document.querySelectorAll('.role-cust').forEach(el => el.classList.remove('hidden'));
-                    let u = serverDb[currentlyLoggedInMobile]; if(u) { setHtmlSafe('sidebar-name', u.name); setHtmlSafe('sidebar-role', "Client Account"); setHtmlSafe('sidebar-avatar', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); }
-                    routePanelSection('cust-portal'); 
-                } 
-                else if (role === 'head') { 
-                    document.querySelectorAll('.role-head, #dash-branch-filter-zone').forEach(el => el.classList.remove('hidden'));
-                    setHtmlSafe('sidebar-name', "System Admin"); setHtmlSafe('sidebar-role', "Main Head"); setHtmlSafe('sidebar-avatar', "HD");
-                    routePanelSection('dashboard'); 
-                }
-                else if (role === 'staff') {
-                    document.querySelectorAll('.role-staff, #dash-active-acc-block, #dash-closed-acc-block').forEach(el => el.classList.remove('hidden'));
-                    routePanelSection('dashboard'); 
-                }
-            } catch(e) { console.error("Error showing dashboard:", e); }
+                await saveDataToCloud(p); 
+                routePanelSection('cust-pending');
+            } catch(e) {}
         }
 
-        function logout() { 
+        function processRequestedClientKyc(mobile) {
             try {
-                document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('auth-container')?.classList.remove('hidden'); toggleLoginForm('customer'); otpRequested = false; document.getElementById('cust-otp')?.classList.add('hidden'); let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify & Access"; ['cust-mobile', 'cust-otp', 'emp-username', 'emp-password', 'apply-cust-name', 'apply-cust-phone'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; }); currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; closeGlobalModal();
+                let req = serverDb[mobile]; if(!req) return;
+                document.getElementById('new-cust-name').value = req.name||""; document.getElementById('new-cust-phone').value = mobile; 
+                document.getElementById('new-loan-plan-select').value = req.tempPlanStr || "";
+                runLiveLoanMath(); routePanelSection('kyc');
+            } catch(e) {}
+        }
+
+        function renderPendingRequestsBox() {
+            try {
+                const zone = document.getElementById('staff-requests-zone'); let h = '';
+                Object.keys(serverDb).forEach(m => {
+                    if (m === "SYSTEM_SETTINGS") return;
+                    let r = serverDb[m];
+                    if (!r) return; 
+                    if(r.status === 'Requested') {
+                        let planDesc = "Plan Selected";
+                        if(r.tempPlanStr) {
+                            let p = loanPlans.find(x => x.id === r.tempPlanStr);
+                            if(p) planDesc = p.name;
+                        }
+                        h += `<div class="bg-white p-5 border border-slate-200 rounded-3xl shadow-sm animate-fade hover-scale"><div class="flex justify-between items-start"><div><p class="font-black text-slate-800">${r.name||'Unk'}</p><p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${m}</p></div><span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-sm pulse-glow">New</span></div><p class="text-[10px] font-bold text-indigo-600 mt-2 uppercase">Plan: ${planDesc}</p><button onclick="processRequestedClientKyc('${m}')" class="btn-fluid w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-md transition-colors">Complete KYC Form</button></div>`;
+                    }
+                });
+                if(zone) zone.innerHTML = h || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No pending requests.</p>`;
+                updatePendingRequestsBadge();
             } catch(e) {}
         }
     </script>
