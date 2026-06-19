@@ -729,6 +729,65 @@
             document.getElementById('global-modal-overlay').classList.add('hidden');
             document.getElementById('modal-injection-zone').innerHTML = '';
         }
+        function restoreFromPrintView() {
+            document.getElementById('print-paper-template').classList.add('hidden');
+            document.getElementById('print-receipt-template').classList.add('hidden');
+            document.querySelectorAll('.app-container, .app-body').forEach(el => el.classList.remove('hidden'));
+        }
+
+        function restoreFromReceiptView() { restoreFromPrintView(); }
+
+       function triggerPaperPrintDraft(phone) {
+            let c = serverDb[phone];
+            if(!c) return;
+            document.querySelectorAll('.app-container, .app-body').forEach(el => el.classList.add('hidden'));
+            document.getElementById('print-paper-template').classList.remove('hidden');
+
+            // Form Fill Logic
+            setHtmlSafe('lbl-p-branch-1', c.branch);
+            setHtmlSafe('lbl-p-center-1', c.center);
+            setHtmlSafe('lbl-p-name-1', c.name);
+            setHtmlSafe('lbl-p-phone-1', phone);
+            setHtmlSafe('lbl-p-spouse-1', c.spouse);
+            setHtmlSafe('lbl-p-sys-id-1', c.id);
+            setHtmlSafe('lbl-p-voter-1', c.voterRef);
+            setHtmlSafe('lbl-p-approval-date-1', "Pending Approval");
+            setHtmlSafe('lbl-p-nominee-1', c.nominee);
+            setHtmlSafe('lbl-p-relation-1', c.nomineeRelation);
+            
+            setHtmlSafe('lbl-p-plan-1', c.planName);
+            setHtmlSafe('lbl-p-principal-1', `₹${c.principal}`);
+            setHtmlSafe('lbl-p-roi-1', `${c.roi}%`);
+            setHtmlSafe('lbl-p-interest-amt-1', `₹${c.interestAmt}`);
+            setHtmlSafe('lbl-p-total-payable-1', `₹${c.totalPayable}`);
+
+            setHtmlSafe('lbl-p-branch-2', `${c.branch} / ${c.center}`);
+            setHtmlSafe('lbl-p-caste-2', `${c.caste} / ${c.religion}`);
+            setHtmlSafe('lbl-p-land-2', `${c.land} | Att: ${c.attendance}`);
+            setHtmlSafe('lbl-p-purpose-2', c.purpose);
+            setHtmlSafe('lbl-p-ppi-assets-3', c.ppiSummary);
+            setHtmlSafe('lbl-p-address-3', c.address);
+
+            const hb = document.getElementById('lbl-p-hybrid-breakdown');
+            if (c.isHybrid && hb) {
+                hb.innerText = `Hybrid EMI: ${c.phase1Days} Cycle @ ₹${c.phase1Emi} | ${c.phase2Days} Cycle @ ₹${c.phase2Emi}`;
+                hb.classList.remove('hidden');
+            } else if (hb) { hb.classList.add('hidden'); }
+
+            window.print();
+        }
+
+        function downloadEmiReceipt() {
+            let u = serverDb[currentlyLoggedInMobile];
+            if(!u) return;
+            document.querySelectorAll('.app-container, .app-body').forEach(el => el.classList.add('hidden'));
+            document.getElementById('print-receipt-template').classList.remove('hidden');
+            setHtmlSafe('lbl-r-name', u.name);
+            setHtmlSafe('lbl-r-id', u.id);
+            setHtmlSafe('lbl-r-date', formatSysDate(new Date()));
+            setHtmlSafe('lbl-r-amt', `₹${u.cycleEmi || 0}`);
+            window.print();
+        }
 
         function routePanelSection(panelId) {
             try {
@@ -958,6 +1017,96 @@
                 });
                 if(sel) sel.innerHTML = opts; document.getElementById('admin-edit-form-block')?.classList.add('hidden');
             } catch(e) {}
+        }
+        function syncKycCentreDropdown() {
+            const branch = document.getElementById('new-cust-branch').value;
+            const centerDropdown = document.getElementById('new-cust-center');
+            let opts = '<option value="">-- Select Centre --</option>';
+            centreList.forEach(c => { if (c.branch === branch) opts += `<option value="${c.name}">${c.name}</option>`; });
+            centerDropdown.innerHTML = opts;
+            centerDropdown.disabled = !branch;
+        }
+
+        function syncSettleCentreFilter() {
+            const branch = document.getElementById('settle-branch-filter').value;
+            const centerDropdown = document.getElementById('settle-center-filter');
+            let opts = '<option value="">-- Centre --</option>';
+            centreList.forEach(c => { if (c.branch === branch) opts += `<option value="${c.name}">${c.name}</option>`; });
+            centerDropdown.innerHTML = opts;
+            centerDropdown.disabled = !branch;
+            syncSettlementClientsDropdown();
+        }
+
+        function syncSettlementClientsDropdown() {
+            const center = document.getElementById('settle-center-filter').value;
+            const clientSelect = document.getElementById('settle-client-mobile-select');
+            let opts = '<option value="">-- Select Client --</option>';
+            Object.keys(serverDb).forEach(m => {
+                if (m !== "SYSTEM_SETTINGS" && serverDb[m] && serverDb[m].center === center && serverDb[m].status === "Active") {
+                    opts += `<option value="${m}">${serverDb[m].name} (${m})</option>`;
+                }
+            });
+            clientSelect.innerHTML = opts;
+            document.getElementById('settle-math-receipt-box').classList.add('hidden');
+        }
+
+        function syncRenewalClientsDropdown() {
+            const clientSelect = document.getElementById('renew-client-mobile-select');
+            let opts = '<option value="">-- Select Deactive Client --</option>';
+            Object.keys(serverDb).forEach(m => {
+                if (m !== "SYSTEM_SETTINGS" && serverDb[m] && serverDb[m].status === "Deactive") {
+                    opts += `<option value="${m}">${serverDb[m].name} (${m})</option>`;
+                }
+            });
+            clientSelect.innerHTML = opts;
+        }
+
+        function syncDirectSettlementViewLabels() {
+            const m = document.getElementById('settle-client-mobile-select').value;
+            const box = document.getElementById('settle-math-receipt-box');
+            if(!m || !serverDb[m]) { box.classList.add('hidden'); return; }
+            setHtmlSafe('lbl-s-id', serverDb[m].id);
+            setHtmlSafe('lbl-s-plan', serverDb[m].planName);
+            setHtmlSafe('lbl-s-outstanding', `₹${serverDb[m].outstanding}`);
+            box.classList.remove('hidden');
+        }
+
+       async function executeFullDirectLoanClosure() {
+            const m = document.getElementById('settle-client-mobile-select').value;
+            if(!m || !serverDb[m]) return;
+            
+            let settlementAmount = serverDb[m].outstanding; 
+            
+            if(confirm(`Kya aap sach mein ${serverDb[m].name} ka bacha hua ₹${settlementAmount} lekar account close karna chahte hain?`)) {
+                serverDb[m].outstanding = 0;
+                serverDb[m].status = "Deactive";
+                serverDb[m].nextEmiDate = "Completed";
+                serverDb[m].lastPaymentDate = formatSysDate(new Date());
+                
+                // Paisa Passbook me record karne ka logic
+                if(!serverDb[m].transactions) serverDb[m].transactions = [];
+                serverDb[m].transactions.push({
+                    date: formatSysDate(new Date()),
+                    amount: settlementAmount,
+                    type: 'Direct Settle'
+                });
+
+                await saveDataToCloud(m);
+                backupSettledClientMobile = m;
+                document.getElementById('settle-interactive-form-block').classList.add('hidden');
+                document.getElementById('settle-success-action-panel').classList.remove('hidden');
+                refreshHeadDashboardStats();
+            }
+        }
+
+        function triggerQuickRenewalFromSettlement() {
+            document.getElementById('settle-interactive-form-block').classList.remove('hidden');
+            document.getElementById('settle-success-action-panel').classList.add('hidden');
+            routePanelSection('renew');
+            setTimeout(() => {
+                const renewSelect = document.getElementById('renew-client-mobile-select');
+                if(renewSelect && backupSettledClientMobile) renewSelect.value = backupSettledClientMobile;
+            }, 300);
         }
         function loadClientForEdit() {
             try {
@@ -1490,6 +1639,24 @@
                 renderStaffLedgerSheets(); 
             } catch(e) {}
         }
+        async function setEmiStatus(mobile, status) {
+            if(!serverDb[mobile]) return;
+            serverDb[mobile].emiSettled = status;
+            await saveDataToCloud(mobile);
+            renderStaffLedgerSheets();
+        }
+
+        async function submitAdvanceSettlementAmount(mobile) {
+            const input = document.getElementById(`adv-input-${mobile}`);
+            if(!input || !input.value) { alert("Enter amount!"); return; }
+            let amt = parseInt(input.value);
+            if(!serverDb[mobile]) return;
+            if(amt > serverDb[mobile].outstanding) { alert("Amount outstanding se zyada nahi ho sakta!"); return; }
+            serverDb[mobile].advancePaid = amt;
+            await saveDataToCloud(mobile);
+            alert(`Advance ₹${amt} locked for day-end settlement!`);
+            renderStaffLedgerSheets();
+        }
 
         function renderStaffLedgerSheets() {
             try {
@@ -1743,6 +1910,151 @@
                 updatePendingRequestsBadge();
             } catch(e) {}
         }
+        function updatePendingRequestsBadge() {
+            try { let c = 0; Object.keys(serverDb).forEach(m => { if (m === "SYSTEM_SETTINGS") return; if(!serverDb[m]) return; if(serverDb[m].status === 'Requested') c++; }); setHtmlSafe('req-count-badge', c); } catch(e) {}
+        }
+
+        function toggleLoginForm(v) { 
+            try {
+                const c = document.getElementById('customer-login-form'); const e = document.getElementById('employee-login-form'); 
+                if (v === 'employee') { c?.classList.add('hidden'); e?.classList.remove('hidden'); } else { e?.classList.add('hidden'); c?.classList.remove('hidden'); } 
+            } catch(e) {}
+        }
+        
+        async function handleCustomerLogin(event) {
+            try {
+                let btn = event.currentTarget;
+                const m = getSafeValue('cust-mobile').trim(); if (!m || m.length < 10) { alert("Enter 10-digit number."); return; }
+                if (!otpRequested) { 
+                    document.getElementById('cust-otp')?.classList.remove('hidden'); 
+                    if(btn) btn.innerText = "Verify OTP"; otpRequested = true; 
+                } 
+                else { 
+                    const otpVal = getSafeValue('cust-otp');
+                    if (otpVal === '1234') { 
+                        btn.innerText = "Syncing Cloud...";
+                        await loadDataFromCloud();
+                        currentlyLoggedInMobile = m;
+                        if (!serverDb[m]) { let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; showDashboard('customer'); routePanelSection('cust-apply'); } 
+                        else if (serverDb[m].status === 'Requested') { showDashboard('customer'); routePanelSection('cust-pending'); } 
+                        else if (serverDb[m].status === 'Pending Approval') { showDashboard('customer'); routePanelSection('cust-pending'); }
+                        else { showDashboard('customer'); }
+                        btn.innerText = "Verify & Access";
+                    } else { alert('Galat OTP!'); }
+                }
+            } catch(e) {}
+        }
+
+        async function handleEmployeeLogin(event) {
+            try {
+                let btn = event.currentTarget;
+                const u = getSafeValue('emp-username').trim(); const p = getSafeValue('emp-password');
+                
+                let oldText = btn.innerText;
+                btn.innerText = "Syncing Data...";
+                await loadDataFromCloud();
+                btn.innerText = oldText;
+
+                if (u === 'head01' && p === 'head123') { 
+                    currentLoggedInRole = 'head'; 
+                    showDashboard('head'); 
+                } 
+                else if (staffDb[u] && staffDb[u].pass === p) { 
+                    currentLoggedInRole = 'staff'; let staff = staffDb[u];
+                    const df = document.getElementById('dashboard-active-branch-select'); 
+                    const lf = document.getElementById('ledger-active-branch-select');
+                    const sf = document.getElementById('settle-branch-filter'); 
+
+                    if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; 
+                    if(lf) lf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`;
+                    if(sf) { sf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; syncSettleCentreFilter(); }
+                    
+                    setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
+                    let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
+                    
+                    showDashboard('staff'); updatePendingRequestsBadge();
+                } else { alert('Galat Credentials!'); }
+            } catch(e) {}
+        }
+
+        function renderCustomerDashboard() {
+            try {
+                let u = serverDb[currentlyLoggedInMobile]; if (!u) return;
+                setHtmlSafe('cust-outstanding-view', `₹${(u.outstanding||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-principal-view', `₹${(u.principal||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-interest-view', `₹${(u.interestAmt||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-total-payable-view', `₹${(u.totalPayable||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-od-view', `₹${(u.overdue||0).toLocaleString('en-IN')}`); setHtmlSafe('cust-next-emi-view', `₹${u.cycleEmi||0}`); setHtmlSafe('cust-plan-badge', `${u.planName||'Plan'}`); setHtmlSafe('cust-name-title', u.name||'User'); setHtmlSafe('cust-avatar-letters', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); setHtmlSafe('cust-id-label', `ID: ${u.id||'NA'}`); setHtmlSafe('cust-profile-branch', u.branch||'-'); setHtmlSafe('cust-profile-center', u.center||'-'); setHtmlSafe('cust-profile-address', u.address||'-'); setHtmlSafe('cust-approval-date', u.approvalDate||"NA"); setHtmlSafe('cust-end-date', u.endDate||"NA"); setHtmlSafe('cust-last-payment-date', u.lastPaymentDate||"NA"); setHtmlSafe('cust-next-emi-date', u.nextEmiDate||"NA");
+
+               const pZ = document.getElementById('cust-self-pay-zone');
+                if (u.status === "Active" && (u.outstanding||0) > 0) {
+                    if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') { 
+                        if(pZ) pZ.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[2rem] text-center shadow-inner hover-scale"><p class="text-4xl mb-3">✅</p><p class="text-sm font-black text-emerald-700 uppercase tracking-widest">EMI Paid!</p></div>`; 
+                    } 
+                    else { 
+                        if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer pulse-glow">Pay EMI Online (₹${u.cycleEmi||0}) 💳</button>`; 
+                    }
+                } else if (u.status === "Deactive") { 
+                    if(pZ) pZ.innerHTML = `<button onclick="routePanelSection('cust-apply')" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer hover-scale">Request New Loan 📝</button>`; 
+                } else {
+                    if(pZ) pZ.innerHTML = ``;
+                }
+            } catch(e) {}
+        }
+
+       async function customerSelfPayEmi() { 
+            try {
+                let u = serverDb[currentlyLoggedInMobile]; if(!u) return; let cEmi = u.cycleEmi || 0;
+                if(confirm(`Pay EMI ₹${cEmi} via Online Gateway?`)) { 
+                    u.emiSettled = 'online_paid'; 
+                    await saveDataToCloud(currentlyLoggedInMobile); 
+                    alert("✅ Payment Processed Successfully!\n(Aapka Outstanding Balance shaam ko Day-End settlement ke baad update hoga)"); 
+                    renderCustomerDashboard(); 
+                } 
+            } catch(e) {}
+        }
+
+        function renderCustomerPassbook() {
+            try {
+                let u = serverDb[currentlyLoggedInMobile]; const z = document.getElementById('customer-passbook-zone'); if(!u || !z) return;
+                let html = '';
+                if(u.transactions && u.transactions.length > 0) {
+                    for(let i = u.transactions.length - 1; i >= 0; i--) { 
+                        let t = u.transactions[i]; 
+                        html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between hover-scale"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-sm font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">+ ₹${t.amount}</span></div>`; 
+                    }
+                }
+                z.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">📭</p><p class="text-[10px] font-bold text-slate-400 uppercase">No transactions.</p></div>`;
+            } catch(e) {}
+        }
+
+        function showDashboard(role) { 
+            try {
+                document.getElementById('auth-container')?.classList.add('hidden'); 
+                document.getElementById('main-views-container')?.classList.remove('hidden'); 
+                document.getElementById('app-header')?.classList.remove('hidden');
+
+                document.querySelectorAll('.role-cust, .role-staff, .role-head, #dash-active-acc-block, #dash-closed-acc-block, #dash-branch-filter-zone').forEach(el => el.classList.add('hidden'));
+                
+                if(role === 'customer') { 
+                    document.querySelectorAll('.role-cust').forEach(el => el.classList.remove('hidden'));
+                    let u = serverDb[currentlyLoggedInMobile]; if(u) { setHtmlSafe('sidebar-name', u.name); setHtmlSafe('sidebar-role', "Client Account"); setHtmlSafe('sidebar-avatar', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); }
+                    routePanelSection('cust-portal'); 
+                } 
+                else if (role === 'head') { 
+                    document.querySelectorAll('.role-head, #dash-branch-filter-zone').forEach(el => el.classList.remove('hidden'));
+                    setHtmlSafe('sidebar-name', "System Admin"); setHtmlSafe('sidebar-role', "Main Head"); setHtmlSafe('sidebar-avatar', "HD");
+                    routePanelSection('dashboard'); 
+                }
+                else if (role === 'staff') {
+                    document.querySelectorAll('.role-staff, #dash-active-acc-block, #dash-closed-acc-block').forEach(el => el.classList.remove('hidden'));
+                    routePanelSection('dashboard'); 
+                }
+            } catch(e) { console.error("Error showing dashboard:", e); }
+        }
+
+        function logout() { 
+            try {
+                document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('auth-container')?.classList.remove('hidden'); toggleLoginForm('customer'); otpRequested = false; document.getElementById('cust-otp')?.classList.add('hidden'); let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify & Access"; ['cust-mobile', 'cust-otp', 'emp-username', 'emp-password', 'apply-cust-name', 'apply-cust-phone'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; }); currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; closeGlobalModal();
+            } catch(e) {}
+        }
+        
     </script>
 </body>
 </html>
