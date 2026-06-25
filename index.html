@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#0f172a">
     <title>OPAS MICRO FINANCE - Core Banking</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         html, body { overscroll-behavior-y: contain !important; }
@@ -157,13 +158,20 @@
                     <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem] hover-scale"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-today">Today's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-today">₹0</p></div>
                     <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem] hover-scale"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-month">Month's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-month">₹0</p></div>
 
-                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv">Today's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-today-advance">₹0</p></div>
+                    <!-- Insurance Row -->
+                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-indigo-600 uppercase" id="lbl-ins-today">Today's Insurance</p><p class="text-xl font-black text-indigo-700 mt-1" id="m-ins-today">₹0</p></div>
+                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-indigo-600 uppercase" id="lbl-ins-month">Month's Insurance</p><p class="text-xl font-black text-indigo-700 mt-1" id="m-ins-month">₹0</p></div>
+
+                    <!-- Advance & Settle (Clickable) -->
+                    <div onclick="showDashboardList('advance')" class="bg-blue-50 border border-blue-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv">Today's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-today-advance">₹0</p></div>
                     <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv-m">Month's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-month-advance">₹0</p></div>
 
-                    <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle">Today's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-today-settle">₹0</p></div>
+                    <div onclick="showDashboardList('settle')" class="bg-amber-50 border border-amber-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle">Today's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-today-settle">₹0</p></div>
                     <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle-m">Month's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-month-settle">₹0</p></div>
 
-                    <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
+                    <!-- Bounced & Overdue (Clickable) -->
+                    <div onclick="showDashboardList('today-bounce')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Today's Bounced EMI</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-bounce-today">₹0</div></div>
+                    <div onclick="showDashboardList('total-risk')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
 
                     <div id="dash-active-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
                     <div id="dash-closed-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
@@ -294,7 +302,8 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Active EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option></select></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Next Due Date (DD-MM-YYYY)</label><input type="text" id="edit-cust-due-date" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold" placeholder="e.g. 25-06-2026"></div>
+                            <div class="col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option><option value="Requested">Requested (New Form)</option><option value="Deleted">Deleted (Archived)</option></select></div>
                         </div>
                         <div class="flex gap-2 pt-4 border-t border-slate-100">
                             <button onclick="saveClientEdits()" class="btn-fluid flex-1 bg-slate-900 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md">Save Changes</button>
@@ -396,6 +405,7 @@
                     <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-2 gap-3 text-xs">
                         <div><span class="font-bold text-slate-400 uppercase text-[8px] block mb-1">Branch Node</span><span class="font-black text-slate-800 text-[11px]" id="cust-profile-branch">-</span></div>
                         <div><span class="font-bold text-slate-400 uppercase text-[8px] block mb-1">Centre Cluster</span><span class="font-black text-slate-800 text-[11px]" id="cust-profile-center">-</span></div>
+                        <div class="col-span-2"><span class="font-bold text-slate-400 uppercase text-[8px] block mb-1">Registered Address</span><span class="font-black text-slate-800 text-[11px]" id="cust-profile-address">-</span></div>
                     </div>
                 </div>
 
@@ -529,11 +539,10 @@
             try {
                 document.getElementById('cloud-status').innerText = "☁️ Fetching Data...";
                 
-                let localDbStr = localStorage.getItem('opas_local_db');
-                let localData = {};
-                if (localDbStr) {
+                let localData = await localforage.getItem('opas_local_db');
+                if (!localData) localData = {};
+                if (Object.keys(localData).length > 0) {
                     try {
-                        localData = JSON.parse(localDbStr);
                         serverDb = { ...localData, ...serverDb }; 
                         if (serverDb["SYSTEM_SETTINGS"]) {
                             branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
@@ -547,7 +556,16 @@
                 const response = await fetch(API_URL);
                 if (response.ok) {
                     let cloudData = await response.json();
-                    serverDb = { ...serverDb, ...cloudData };
+                    
+                    // Fix: Smart Timestamp Merge! Cloud wins ONLY if its data is newer. This protects offline work AND allows Head approvals to sync down to staff.
+                    Object.keys(cloudData).forEach(k => {
+                        // Fix: Null check add kiya taaki deleted records se app crash na ho
+                        if (cloudData[k] && (!serverDb[k] || !serverDb[k].lastUpdated || (cloudData[k].lastUpdated && cloudData[k].lastUpdated > serverDb[k].lastUpdated))) {
+                            serverDb[k] = cloudData[k]; 
+                        } else if (cloudData[k] === null) {
+                            delete serverDb[k]; // Agar cloud se null aaya hai, toh local se bhi delete karein
+                        }
+                    });
                     
                     // 🛡️ TITANIUM SHIELD 1
                     Object.keys(serverDb).forEach(k => {
@@ -557,12 +575,16 @@
                     });
                     
                     Object.keys(localData).forEach(k => {
-                        if(cloudData[k] === undefined && k !== "SYSTEM_SETTINGS") {
-                            saveDataToCloud(k); 
+                        if(k !== "SYSTEM_SETTINGS") {
+                            // Fix: Agar cloud me data nahi hai YA local data ka timestamp cloud se naya hai (offline edits), toh usko cloud pe bhejo
+                            // Fix: Added cloudData[k] !== null check to prevent offline loop crash
+                            if(cloudData[k] === undefined || (cloudData[k] !== null && localData[k] && localData[k].lastUpdated && (!cloudData[k].lastUpdated || localData[k].lastUpdated > cloudData[k].lastUpdated))) {
+                                saveDataToCloud(k); 
+                            }
                         }
                     });
 
-                    localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+                    await localforage.setItem('opas_local_db', serverDb);
 
                     if (serverDb["SYSTEM_SETTINGS"]) {
                         branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
@@ -581,7 +603,10 @@
 
         async function saveDataToCloud(mobileNumber) {
             try {
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+                // Issue 2 (Concurrency Fix): Add a timestamp so your Render Backend knows which update is newest
+                if (serverDb[mobileNumber]) serverDb[mobileNumber].lastUpdated = Date.now();
+                
+                await localforage.setItem('opas_local_db', serverDb);
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
                 await fetch(API_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -594,6 +619,26 @@
         }
 
         async function saveSystemSettings() {
+            try {
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    let cloudData = await response.json();
+                    if (cloudData["SYSTEM_SETTINGS"]) {
+                        // Fix: Smart merge taaki ek admin ka data dusre admin ke data ko overwrite na kare
+                        branchList = [...new Set([...(cloudData["SYSTEM_SETTINGS"].branches || []), ...branchList])];
+                        staffDb = { ...(cloudData["SYSTEM_SETTINGS"].staff || {}), ...staffDb };
+                        
+                        let cloudCentres = cloudData["SYSTEM_SETTINGS"].centres || [];
+                        centreList.forEach(localC => { if(!cloudCentres.some(c => c.id === localC.id)) cloudCentres.push(localC); });
+                        centreList = cloudCentres;
+
+                        let cloudPlans = cloudData["SYSTEM_SETTINGS"].loanPlans || [];
+                        loanPlans.forEach(localP => { if(!cloudPlans.some(p => p.id === localP.id)) cloudPlans.push(localP); });
+                        loanPlans = cloudPlans;
+                    }
+                }
+            } catch(e) { console.error("Sync merge error"); }
+            
             serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans };
             await saveDataToCloud("SYSTEM_SETTINGS");
         }
@@ -610,7 +655,7 @@
                         }
                     }
                     serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
-                    localStorage.removeItem('opas_local_db');
+                    await localforage.removeItem('opas_local_db');
                     localStorage.removeItem('kyc_draft');
                     alert("✅ Database Completely Wiped! Ab app ekdum nayi ho gayi hai.");
                     logout(); window.location.reload();
@@ -785,7 +830,15 @@
             setHtmlSafe('lbl-r-name', u.name);
             setHtmlSafe('lbl-r-id', u.id);
             setHtmlSafe('lbl-r-date', formatSysDate(new Date()));
-            setHtmlSafe('lbl-r-amt', `₹${u.cycleEmi || 0}`);
+            
+            // Fix: Print the ACTUAL amount from the customer's last transaction so advances/shortfalls print the correct legal receipt
+            let paidAmt = 0;
+            if (u.transactions && u.transactions.length > 0) {
+                paidAmt = u.transactions[u.transactions.length - 1].amount;
+            } else {
+                paidAmt = u.emiSettled === 'online_paid' ? Math.min(u.outstanding || 0, u.cycleEmi || 0) : (u.cycleEmi || 0);
+            }
+            setHtmlSafe('lbl-r-amt', `₹${paidAmt}`);
             window.print();
         }
 
@@ -939,7 +992,8 @@
         async function deleteBranch(name) {
             let hasClients = false;
             Object.keys(serverDb).forEach(m => {
-                if (m !== "SYSTEM_SETTINGS" && serverDb[m].branch === name) {
+                // Fix: Deleted (archived) clients ko ignore karein taaki khali branch delete ho sake
+                if (m !== "SYSTEM_SETTINGS" && serverDb[m].branch === name && serverDb[m].status !== "Deleted") {
                     hasClients = true;
                 }
             });
@@ -970,7 +1024,8 @@
 
             let hasClients = false;
             Object.keys(serverDb).forEach(m => {
-                if (m !== "SYSTEM_SETTINGS" && serverDb[m].center === targetCentre.name) {
+                // Fix: Deleted (archived) clients ko ignore karein taaki khali centre delete ho sake
+                if (m !== "SYSTEM_SETTINGS" && serverDb[m].center === targetCentre.name && serverDb[m].status !== "Deleted") {
                     hasClients = true;
                 }
             });
@@ -1075,13 +1130,17 @@
             const m = document.getElementById('settle-client-mobile-select').value;
             if(!m || !serverDb[m]) return;
             
-            let settlementAmount = serverDb[m].outstanding; 
+            // Fix: Direct settlement must include Overdue penalties otherwise clients escape paying them
+            let settlementAmount = (serverDb[m].outstanding || 0) + (serverDb[m].overdue || 0); 
             
-            if(confirm(`Kya aap sach mein ${serverDb[m].name} ka bacha hua ₹${settlementAmount} lekar account close karna chahte hain?`)) {
+            if(confirm(`Kya aap sach mein ${serverDb[m].name} ka total bacha hua (Outstanding + Overdue) ₹${settlementAmount} lekar account close karna chahte hain?`)) {
                 serverDb[m].outstanding = 0;
+                serverDb[m].overdue = 0; // Clear the overdue upon settlement
                 serverDb[m].status = "Deactive";
                 serverDb[m].nextEmiDate = "Completed";
                 serverDb[m].lastPaymentDate = formatSysDate(new Date());
+                serverDb[m].emiSettled = null; // Fix: Prevents Day-End ghost transactions
+                serverDb[m].advancePaid = 0;
                 
                 // Paisa Passbook me record karne ka logic
                 if(!serverDb[m].transactions) serverDb[m].transactions = [];
@@ -1112,28 +1171,61 @@
             try {
                 const m = getSafeValue('admin-edit-client-select'); const b = document.getElementById('admin-edit-form-block');
                 if(!m) { b?.classList.add('hidden'); return; } let c = serverDb[m];
-                document.getElementById('edit-cust-name').value = c.name||""; document.getElementById('edit-cust-outstanding').value = c.outstanding||0; document.getElementById('edit-cust-emi').value = c.cycleEmi||0; document.getElementById('edit-cust-od').value = c.overdue||0; document.getElementById('edit-cust-status').value = c.status||"Active";
+                document.getElementById('edit-cust-name').value = c.name||""; document.getElementById('edit-cust-outstanding').value = c.outstanding||0; document.getElementById('edit-cust-emi').value = c.cycleEmi||0; document.getElementById('edit-cust-od').value = c.overdue||0; document.getElementById('edit-cust-status').value = c.status||"Active"; document.getElementById('edit-cust-due-date').value = c.nextEmiDate||"N/A";
                 b?.classList.remove('hidden');
             } catch(e) {}
         }
         async function saveClientEdits() {
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
              try {
-                 serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = parseInt(getSafeValue('edit-cust-outstanding'))||0; serverDb[m].cycleEmi = parseInt(getSafeValue('edit-cust-emi'))||0; serverDb[m].overdue = parseInt(getSafeValue('edit-cust-od'))||0; serverDb[m].status = getSafeValue('edit-cust-status') || serverDb[m].status;
+                 let oldOut = serverDb[m].outstanding;
+                 let newOut = parseInt(getSafeValue('edit-cust-outstanding')) || 0;
+                 let oldOd = serverDb[m].overdue || 0;
+                 let newOd = parseInt(getSafeValue('edit-cust-od')) || 0;
+                 
+                 // Fix: Log a transaction if Admin modifies Outstanding OR Overdue manually
+                 if (oldOut !== newOut || oldOd !== newOd) {
+                     if (!serverDb[m].transactions) serverDb[m].transactions = [];
+                     
+                     if (oldOut !== newOut) {
+                         serverDb[m].transactions.push({
+                             date: formatSysDate(new Date()), amount: Math.abs(oldOut - newOut), type: newOut < oldOut ? 'System Reduction (Edit)' : 'System Addition (Edit)'
+                         });
+                     }
+                     if (oldOd !== newOd) {
+                         serverDb[m].transactions.push({
+                             date: formatSysDate(new Date()), amount: Math.abs(oldOd - newOd), type: newOd < oldOd ? 'Penalty Waived (Edit)' : 'Penalty Added (Edit)'
+                         });
+                     }
+                 }
+
+                 // Fix: Auto-format dates like 25/06/2026 to 25-06-2026 to prevent Ledger rendering crashes
+                 // Fix: Agar old client ki EMI date undefined hai toh "N/A" fallback use karein, taaki app crash na ho
+                 let rawDate = getSafeValue('edit-cust-due-date') || serverDb[m].nextEmiDate || "N/A";
+                 let safeDate = rawDate.replace(/\//g, '-').replace(/\./g, '-');
+                 let newStatus = getSafeValue('edit-cust-status') || serverDb[m].status;
+
+                 // Fix: If Admin forces status to Active from Pending, generate an approval date so dashboard stats don't break
+                 if (newStatus === 'Active' && (!serverDb[m].approvalDate || serverDb[m].approvalDate === 'N/A' || serverDb[m].status !== 'Active')) {
+                     serverDb[m].approvalDate = formatSysDate(new Date());
+                 }
+
+                 serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = newOut; serverDb[m].cycleEmi = parseInt(getSafeValue('edit-cust-emi'))||0; serverDb[m].overdue = newOd; serverDb[m].status = newStatus; serverDb[m].nextEmiDate = safeDate;
                  await saveDataToCloud(m); 
                  alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats(); 
              } catch(e) { alert("Error saving data."); }
         }
         async function deleteClientRecord() {
             const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-            if(confirm("⚠ PERMANENTLY DELETE client?")) { 
+            if(confirm("⚠ DELETE client? (Record will be archived for audit compliance)")) { 
                 try { 
-                    delete serverDb[m]; 
-                    localStorage.setItem('opas_local_db', JSON.stringify(serverDb)); 
-                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) }); 
-                    alert("Client permanently removed."); 
+                    serverDb[m].status = "Deleted"; // Fix: Soft delete for financial audit security
+                    await localforage.setItem('opas_local_db', serverDb); 
+                    await saveDataToCloud(m); 
+                    alert("Client removed from active records."); 
                     syncAdminEditDropdown(); 
                     refreshHeadDashboardStats(); 
+                    routePanelSection('dashboard');
                 } catch(e) {} 
             }
         }
@@ -1158,6 +1250,7 @@
                 let cp = 0, cac = 0, pendingCount = 0; 
                 let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
+                let todayBounceAmt = 0; let insT = 0, insM = 0;
                 let todayStr = formatSysDate(new Date());
                 
                 let pendingApprovalHtml = ''; 
@@ -1187,13 +1280,12 @@
                         if(f.isApproved) { 
                             cac++; 
                             if(appDateMonth === selectedMonthVal) { cp += (f.interestAmt||0); }
+                            if (isCurrentMonth && f.approvalDate === todayStr) insT += (f.insuranceAmt || 0);
+                            if (appDateMonth === selectedMonthVal) insM += (f.insuranceAmt || 0);
                             
-                            if (isCurrentMonth) {
-                                if (f.approvalDate === todayStr) dT += (f.principal||0); 
-                                if (appDateMonth === selectedMonthVal) dM += (f.principal||0); 
-                            } else {
-                                if (appDateMonth === selectedMonthVal) { dT += (f.principal||0); dM += (f.principal||0); }
-                            }
+                            // Fix: Today's disbursal shouldn't artificially inflate when viewing past months
+                            if (f.approvalDate === todayStr) dT += (f.principal||0); 
+                            if (appDateMonth === selectedMonthVal) dM += (f.principal||0);
 
                             if(f.transactions) {
                                 f.transactions.forEach(tx => {
@@ -1212,6 +1304,9 @@
                                     if(tx.type === 'Direct Settle') {
                                         if (isCurrentMonth && matchToday) todaySettle += tx.amount;
                                         if (matchMY) monthSettle += tx.amount;
+                                    }
+                                    if(tx.type === 'Bounced') {
+                                        if (isCurrentMonth && matchToday) todayBounceAmt += tx.amount;
                                     }
                                 });
                             }
@@ -1269,7 +1364,10 @@
                 setHtmlSafe('head-month-advance', `₹${monthAdv.toLocaleString('en-IN')}`);
                 setHtmlSafe('head-today-settle', `₹${todaySettle.toLocaleString('en-IN')}`);
                 setHtmlSafe('head-month-settle', `₹${monthSettle.toLocaleString('en-IN')}`);
-                setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`); 
+                setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`);
+                setHtmlSafe('m-bounce-today', `₹${todayBounceAmt.toLocaleString('en-IN')}`);
+                setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
+                setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
                 setHtmlSafe('m-deactive-count', deC); 
                 setHtmlSafe('m-new-clients', nC); 
@@ -1278,9 +1376,9 @@
         }
         
         async function rejectAndTrashApplication(mobile) {
-            if(confirm("❌ Is application ko permanently REJECT aur Delete karna chahte hain?")) {
-                delete serverDb[mobile];
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+            if(confirm("❌ Is application ko REJECT karna chahte hain? (Record will be archived)")) {
+                serverDb[mobile].status = "Rejected"; // Fix: Soft delete instead of hard delete
+                await localforage.setItem('opas_local_db', serverDb);
                 await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: mobile, data: null }) });
                 alert("Application Rejected & Removed.");
                 refreshHeadDashboardStats();
@@ -1305,7 +1403,13 @@
 
         function syncReportDropdowns() {
             try {
-                let opts = `<option value="">-- Target Centre --</option>`; centreList.forEach(c => { opts += `<option value="${c.name}">${c.name} (${c.branch})</option>`; });
+                const activeBranch = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (document.getElementById('dashboard-active-branch-select')?.value || "ALL");
+                let opts = `<option value="">-- Target Centre --</option>`; 
+                centreList.forEach(c => { 
+                    if (activeBranch === "ALL" || c.branch === activeBranch) {
+                        opts += `<option value="${c.name}">${c.name} (${c.branch})</option>`; 
+                    }
+                });
                 let cs = document.getElementById('report-centre-filter'); if(cs) cs.innerHTML = opts;
             } catch(e) {}
         }
@@ -1453,7 +1557,8 @@
 
         function clearKycForm() {
             try {
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-branch'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                // Fix: 'new-cust-branch' ko array se hata diya taaki staff ka active branch reset na ho
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-plan-select').value = '';
                 
                 let cd = document.getElementById('new-cust-center');
@@ -1527,7 +1632,8 @@
                 const plan = getSafeValue('new-loan-plan-select');
                 if(!p || p.length < 10) { alert("Enter proper 10-digit number!"); return; }
                 if(!plan) { alert("Please select a Master Plan first!"); return; }
-                if(serverDb[p] && serverDb[p].status !== 'Requested') { alert("Duplicate Error! Number active."); return; } 
+                // Fix: Allow 'Deactive' AND 'Deleted' clients to pass duplicate check
+                if(serverDb[p] && serverDb[p].status !== 'Requested' && serverDb[p].status !== 'Deactive' && serverDb[p].status !== 'Deleted') { alert("Duplicate Error! Client is already active."); return; } 
                 document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
             } catch(e) {}
         }
@@ -1546,9 +1652,26 @@
                     alert("⚠️ Name aur valid 10-digit Mobile Number zaroori hai!");
                     return;
                 }
+                // Aadhaar / ID Reference Duplicate Check
+                if (idRef && idRef.trim() !== "") {
+                    let isAadhaarDuplicate = Object.keys(serverDb).some(k => {
+                        if (k === "SYSTEM_SETTINGS") return false;
+                        let client = serverDb[k];
+                        // Fix: Ensure Soft-Deleted (archived) clients are not blocked by the Aadhaar check
+                        return client && client.voterRef && 
+                               client.voterRef.startsWith(idRef + " /") && 
+                               client.status !== 'Deactive' && client.status !== 'Requested' && client.status !== 'Deleted';
+                    });
+                    if (isAadhaarDuplicate) {
+                        alert("⚠️ Duplicate Error! Ye Aadhaar/ID Number pehle se hi kisi active account me registered hai.");
+                        return;
+                    }
+                }
 
                 const metrics = calculateLoanMetrics();
-                
+
+                let insRate = metrics.cycleType === 'daily' ? 3 : 5;
+                let insuranceAmt = Math.round((metrics.principal * insRate) / 100);
                 const branch = getSafeValue('new-cust-branch');
                 const center = getSafeValue('new-cust-center');
                 const spouse = getSafeValue('new-cust-spouse');
@@ -1570,7 +1693,9 @@
                 if(document.getElementById('ppi-almirah')?.checked) ppi.push("Almirah");
                 let ppiStr = ppi.length > 0 ? ppi.join(", ") : "None";
 
-                let sysId = (metrics.cycleType === 'daily' ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
+                // Fix: Added timestamp slice to guarantee 100% collision-free Unique IDs
+                let uniqueSuffix = Date.now().toString().slice(-4) + Math.floor(10 + Math.random() * 90);
+                let sysId = (metrics.cycleType === 'daily' ? "OPAS-DL-" : "OPAS-WK-") + uniqueSuffix;
 
                let pastLoans = (serverDb[phone] && serverDb[phone].pastLoans) ? serverDb[phone].pastLoans : [];
                 if (serverDb[phone] && serverDb[phone].transactions && serverDb[phone].transactions.length > 0) {
@@ -1597,7 +1722,7 @@
                     principal: metrics.principal, roi: metrics.typedRoi,
                     interestAmt: metrics.interestAmt, totalPayable: metrics.totalPayable,
                     outstanding: metrics.totalPayable, cycleEmi: metrics.cycleEmi, // Initial EMI
-                    overdue: 0, advancePaid: 0,
+                    overdue: 0, advancePaid: 0, insuranceAmt: insuranceAmt,
                     
                     // HYBRID ENGINE PROPERTIES
                     isHybrid: metrics.isHybrid, phase1Days: metrics.phase1Days, phase1Emi: metrics.phase1Emi, 
@@ -1610,7 +1735,7 @@
                 };
 
                 localStorage.removeItem('kyc_draft');
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+                await localforage.setItem('opas_local_db', serverDb);
                 
                 let oldText = btn.innerText;
                 btn.innerText = "Saving... ⏳";
@@ -1641,7 +1766,12 @@
         }
         async function setEmiStatus(mobile, status) {
             if(!serverDb[mobile]) return;
+            if(serverDb[mobile].status === "Deactive" || serverDb[mobile].outstanding <= 0) { 
+                alert("⚠️ Ye account settle ho chuka hai. Action blocked!"); 
+                return; 
+            }
             serverDb[mobile].emiSettled = status;
+            serverDb[mobile].advancePaid = 0; // Fix: Clear advance state if standard EMI is pressed
             await saveDataToCloud(mobile);
             renderStaffLedgerSheets();
         }
@@ -1653,6 +1783,7 @@
             if(!serverDb[mobile]) return;
             if(amt > serverDb[mobile].outstanding) { alert("Amount outstanding se zyada nahi ho sakta!"); return; }
             serverDb[mobile].advancePaid = amt;
+            serverDb[mobile].emiSettled = null; // Fix: Clear standard EMI state if advance is entered
             await saveDataToCloud(mobile);
             alert(`Advance ₹${amt} locked for day-end settlement!`);
             renderStaffLedgerSheets();
@@ -1679,15 +1810,17 @@
                         isClientDue = true; 
                     }
 
-                    if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && isClientDue) {
+                    // Fix: Clients with overdue must appear on ledger even if not their exact EMI day
+                    if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0)) {
                         let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
                         if(a.emiSettled==='received') { bc = 'bg-emerald-100 text-emerald-800'; bt = 'Received'; }
                         if(a.emiSettled==='bounce') { bc = 'bg-rose-100 text-rose-800'; bt = 'Bounced'; }
                         if(a.emiSettled==='online_paid') { bc = 'bg-blue-100 text-blue-800'; bt = 'ONLINE PAID'; }
 
                         let aB = '';
+                        let btnState = a.advancePaid > 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''; // UI Lock
                         if(a.emiSettled === 'online_paid') { aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; } 
-                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors">Bounced</button>`; }
+                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Bounced</button>`; }
 
                         // HYBRID UI BADGE
                         let hybridBadge = a.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mt-1 inline-block">Hybrid Mode</span>` : '';
@@ -1702,12 +1835,13 @@
                             </div>
                             <div class="flex justify-between items-center py-3 border-y border-slate-50">
                                 <div class="flex flex-col"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Rem Balance</span><span class="font-black text-slate-800 text-lg">₹${(a.outstanding||0).toLocaleString()}</span></div>
-                                <div class="flex flex-col text-right"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Active Cycle EMI</span><span class="font-black text-blue-600 text-lg">₹${a.cycleEmi||0}</span></div>
+                                ${a.overdue > 0 ? `<div class="flex flex-col text-center"><span class="text-rose-500 font-bold text-[9px] uppercase tracking-widest">Overdue</span><span class="font-black text-rose-600 text-lg">₹${a.overdue.toLocaleString()}</span></div>` : ''}
+                                <div class="flex flex-col text-right"><span class="text-slate-400 font-bold text-[9px] uppercase tracking-widest">Active Cycle EMI</span><span class="font-black text-blue-600 text-lg">₹${Math.min(a.outstanding || 0, a.cycleEmi || 0)}</span></div>
                             </div>
                             <div class="flex gap-2">${aB}</div>
                             <div class="pt-2 flex items-center gap-2">
-                                <input type="number" id="adv-input-${m}" placeholder="Advance Pay" class="w-2/3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-blue-300" ${a.emiSettled==='online_paid'?'disabled':''}>
-                                <button onclick="submitAdvanceSettlementAmount('${m}')" class="btn-fluid w-1/3 py-4 bg-slate-900 hover:bg-slate-800 text-white font-black text-[11px] uppercase rounded-xl shadow-lg shadow-slate-900/20 transition-all" ${a.emiSettled==='online_paid'?'disabled':''}>Settle</button>
+                                <input type="number" id="adv-input-${m}" placeholder="Pay Overdue / Advance" class="w-2/3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-blue-300" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''} ${a.advancePaid > 0 ? `value="${a.advancePaid}" readonly` : ''}>
+                                <button onclick="submitAdvanceSettlementAmount('${m}')" class="btn-fluid w-1/3 py-4 bg-slate-900 hover:bg-slate-800 text-white font-black text-[11px] uppercase rounded-xl shadow-lg shadow-slate-900/20 transition-all" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''}>${a.advancePaid > 0 ? 'Locked' : 'Settle'}</button>
                             </div>
                         </div>`;
                     }
@@ -1727,15 +1861,24 @@
         async function uploadDayEndReport() {
             try {
                 let btn = document.getElementById('upload-day-btn');
-                if(btn) btn.innerText = "Processing Data... ⏳";
+                if(btn) { 
+                    btn.innerText = "Syncing Latest Cloud Data... ☁️";
+                    btn.disabled = true; 
+                }
+                
+                // Fix: Force fetch latest data before day-end to protect customer online payments
+                await loadDataFromCloud(); 
+                if(btn) btn.innerText = "Processing Day-End... ⏳";
 
                 let todayDateObj = new Date(); 
                 todayDateObj.setHours(0,0,0,0);
                 let todayStr = formatSysDate(new Date());
 
+                const staffBranch = getSafeValue('ledger-active-branch-select'); // Staff ka active branch
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
-                    let c = serverDb[m]; if(!c) return; if(!c.transactions) c.transactions = [];
+                    let c = serverDb[m]; if(!c || c.branch !== staffBranch) return; // Fix: Dusri branch ke clients ko process hone se rokein
+                    if(!c.transactions) c.transactions = [];
                     
                     let isClientDue = false;
                     if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
@@ -1753,9 +1896,15 @@
                     }
 
                     if (c.emiSettled === 'bounce') { 
-                        c.overdue = (c.overdue || 0) + c.cycleEmi; 
-                        c.transactions.push({ date: todayStr, amount: c.cycleEmi, type: 'Bounced' });
-                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
+                        // Fix: Only penalize if they were actually due today. Don't add fake penalties on non-EMI follow-up days!
+                        if (isClientDue) {
+                            c.overdue = (c.overdue || 0) + c.cycleEmi; 
+                            c.transactions.push({ date: todayStr, amount: c.cycleEmi, type: 'Bounced' });
+                            c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
+                        } else {
+                            // Record a missed overdue follow-up without adding extra cycle penalty
+                            c.transactions.push({ date: todayStr, amount: 0, type: 'Missed Arrears' });
+                        }
                     } 
                     else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
                         let actualDeduction = Math.min(c.outstanding || 0, c.cycleEmi || 0);
@@ -1773,55 +1922,100 @@
                     }
 
                     if (c.advancePaid > 0) { 
-                        let advDeduction = Math.min(c.outstanding || 0, c.advancePaid);
-                        c.outstanding = (c.outstanding || 0) - advDeduction; 
-                        c.overdue = Math.max(0, (c.overdue || 0) - advDeduction);
+                        // Fix: Advance must look at TOTAL debt, clear overdue FIRST, then reduce outstanding
+                        let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
+                        let actualAdv = Math.min(totalDebt, c.advancePaid); // Prevent overpaying beyond total debt
+                        
+                        let overdueToClear = Math.min(c.overdue || 0, actualAdv);
+                        c.overdue = Math.max(0, (c.overdue || 0) - actualAdv);
+                        
+                        let remainingForPrincipal = actualAdv - overdueToClear;
+                        c.outstanding = Math.max(0, (c.outstanding || 0) - remainingForPrincipal);
+                        
                         c.lastPaymentDate = todayStr; 
-                        c.transactions.push({ date: todayStr, amount: advDeduction, type: 'Advance' }); 
+                        c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Advance' }); 
                         
-                        let skipEmis = Math.floor(advDeduction / (c.cycleEmi || 1));
-                        for(let skip = 0; skip < skipEmis; skip++) {
-                            c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
-                        }
-                        
-                        // 🔥 HYBRID UPDATE
-                        c.emisPaidCount = (c.emisPaidCount || 0) + skipEmis;
-                    }
+                        let remainingAdv = remainingForPrincipal; // Only excess principal payment skips EMIs
+while (remainingAdv > 0) {
+                                let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                                if (!currentPhaseEmi) break;
 
-                    // 🛡️🔥 THE HYBRID EMI SWITCHER
+                                if (remainingAdv >= currentPhaseEmi) {
+                                    remainingAdv -= currentPhaseEmi;
+                                    c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                                    c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                                } else {
+                                    break; // Partial EMI covered, baaki agle cycle mein handle hoga
+                                }
+                            }
+                            
+                            // Fix: Handle partial payments! If they are due today but didn't pay the full EMI, penalize the shortfall and move calendar forward.
+                            if (isClientDue && c.status === "Active" && c.outstanding > 0) {
+                                let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                                if (remainingAdv < currentPhaseEmi) {
+                                    let shortfall = currentPhaseEmi - remainingAdv;
+                                    c.overdue = (c.overdue || 0) + shortfall;
+                                    c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                                    c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                                    // Fix: Show the exact penalty amount in passbook so customers understand the overdue addition
+                                    c.transactions.push({ date: todayStr, amount: shortfall, type: 'Shortfall Penalty' });
+                                }
+                            }
+                        }
+
+                        // 🛡️🔥 THE HYBRID EMI SWITCHER
                     if(c.isHybrid) {
-                        c.cycleEmi = (c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
+                        // Fix: Calculate hybrid phase based on actual billed cycles passed (Total Payable - Outstanding + Overdue), not just payments made, so bad payers don't stay in Phase 1 forever.
+                        let simulatedCycles = Math.floor(((c.totalPayable || 0) - (c.outstanding || 0) + (c.overdue || 0)) / (c.phase1Emi || 1));
+                        c.cycleEmi = (simulatedCycles < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
                     }
                     
                     if(c.outstanding <= 0 && c.status === "Active") { 
-                        c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; 
+                        if (c.overdue > 0) {
+                            // Fix: Shift overdue to outstanding AND adjust cycleEmi so we don't unfairly hit them with a full EMI penalty on a small residual balance
+                            c.outstanding = c.overdue;
+                            c.cycleEmi = c.overdue; 
+                            c.overdue = 0;
+                        } else {
+                            c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; 
+                        }
                     }
                     
                     c.advancePaid = 0; c.emiSettled = null;
+                    c.lastUpdated = Date.now(); // Fix: Force update timestamp so backend accepts the Day-End changes
                 });
 
-                localStorage.setItem('opas_local_db', JSON.stringify(serverDb));
+                await localforage.setItem('opas_local_db', serverDb);
 
-                let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS");
+                // Fix: Sirf usi branch ke accounts fetch karein taaki bandwidth bache aur dusri branches ka data overwrite na ho
+                let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch);
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
                 
+                // Fix: Sabhi requests ko array me daal kar Promise.all se bhejenge taaki network crash na ho
                 let syncPromises = keys.map(k => fetch(API_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mobile: k, data: serverDb[k] })
-                }).catch(e => console.error("Sync failed for", k)));
-
-                await Promise.all(syncPromises);
+                }));
+                
+                let results = await Promise.allSettled(syncPromises);
+                let successCount = results.filter(r => r.status === 'fulfilled' && r.value.ok).length;
+                if (btn) btn.innerText = `Synced ${successCount}/${keys.length} ☁️`;
 
                 alert("Ledger uploaded & Synced to Cloud Successfully! ✅"); 
                 refreshHeadDashboardStats(); 
                 renderStaffLedgerSheets();
                 
-                if(btn) btn.innerText = "Upload Day-End 📤"; 
+                if(btn) { btn.innerText = "Upload Day-End 📤"; btn.disabled = false; } 
             } catch(e) {
                 console.error(e);
                 let btn = document.getElementById('upload-day-btn');
-                if(btn) btn.innerText = "Upload Failed ⚠️";
-                alert("Upload mein error aaya! Console check karein.");
+                if(btn) { 
+                    btn.innerText = "Retry Upload ⚠️"; 
+                    btn.disabled = false; 
+                    // Fix: Error aane par button ka color wapas normal (active) state me laane ke liye class add ki gayi
+                    btn.className = "btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20 transition-all pulse-glow";
+                }
+                alert("Upload mein error aaya! Network check karke dobara try karein.");
             }
         }
 
@@ -1843,15 +2037,20 @@
                     id: a.id, planName: a.planName, principal: a.principal, totalPayable: a.totalPayable, transactions: JSON.parse(JSON.stringify(a.transactions || []))
                 });
 
-                a.id = (plan.type.includes('daily') ? "OPAS-DL-" : "OPAS-WK-") + Math.floor(10000 + Math.random() * 90000);
+                // Fix: Added timestamp slice to guarantee 100% collision-free Unique IDs for renewals
+                let renewUniqueSuffix = Date.now().toString().slice(-4) + Math.floor(10 + Math.random() * 90);
+                a.id = (plan.type.includes('daily') ? "OPAS-DL-" : "OPAS-WK-") + renewUniqueSuffix;
                 a.planType = plan.type.includes('daily') ? "daily" : "weekly"; 
                 a.planName = plan.name; a.duration = plan.duration;
                 a.principal = plan.principal; a.roi = plan.roi; a.interestAmt = plan.interestAmt; 
                 a.totalPayable = plan.totalPayable; a.outstanding = plan.totalPayable; 
                 a.status = "Active"; a.isRenewed = true; a.isFirstLoan = false; a.emiSettled = null; a.advancePaid = 0; 
+                a.overdue = 0; // Fix: Prevent old penalties from haunting the new renewed loan
                 a.approvalDate = formatSysDate(new Date()); a.endDate = calculateEndDate(plan.duration); 
                 a.lastPaymentDate = "N/A"; a.nextEmiDate = calculateNextEmiDate(a.planType, null);
-                a.transactions = []; 
+                a.transactions = [];
+                let insRate = plan.type.includes('daily') ? 3 : 5;
+                a.insuranceAmt = Math.round((plan.principal * insRate) / 100); 
 
                 // HYBRID UPDATE
                 a.isHybrid = plan.isHybrid; a.phase1Days = plan.phase1Days; a.phase1Emi = plan.phase1Emi; 
@@ -1988,7 +2187,7 @@
                         if(pZ) pZ.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[2rem] text-center shadow-inner hover-scale"><p class="text-4xl mb-3">✅</p><p class="text-sm font-black text-emerald-700 uppercase tracking-widest">EMI Paid!</p></div>`; 
                     } 
                     else { 
-                        if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer pulse-glow">Pay EMI Online (₹${u.cycleEmi||0}) 💳</button>`; 
+                        if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer pulse-glow">Pay EMI Online (₹${Math.min(u.outstanding||0, u.cycleEmi||0)}) 💳</button>`; 
                     }
                 } else if (u.status === "Deactive") { 
                     if(pZ) pZ.innerHTML = `<button onclick="routePanelSection('cust-apply')" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer hover-scale">Request New Loan 📝</button>`; 
@@ -2000,7 +2199,8 @@
 
        async function customerSelfPayEmi() { 
             try {
-                let u = serverDb[currentlyLoggedInMobile]; if(!u) return; let cEmi = u.cycleEmi || 0;
+                let u = serverDb[currentlyLoggedInMobile]; if(!u) return; 
+                let cEmi = Math.min(u.outstanding || 0, u.cycleEmi || 0); // Fix: Prevent overcharging on final EMI
                 if(confirm(`Pay EMI ₹${cEmi} via Online Gateway?`)) { 
                     u.emiSettled = 'online_paid'; 
                     await saveDataToCloud(currentlyLoggedInMobile); 
@@ -2054,7 +2254,61 @@
                 document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('auth-container')?.classList.remove('hidden'); toggleLoginForm('customer'); otpRequested = false; document.getElementById('cust-otp')?.classList.add('hidden'); let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify & Access"; ['cust-mobile', 'cust-otp', 'emp-username', 'emp-password', 'apply-cust-name', 'apply-cust-phone'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; }); currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; closeGlobalModal();
             } catch(e) {}
         }
-        
+    
+    function showDashboardList(type) {
+            let html = ''; 
+            let todayStr = formatSysDate(new Date());
+            let title = '';
+
+            const activeFilter = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (document.getElementById('dashboard-active-branch-select')?.value || "ALL");
+
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m]; if (!c) return;
+
+                let matchBranch = (activeFilter === "ALL" || activeFilter === "" || c.branch === activeFilter);
+                if (!matchBranch) return;
+
+                let amount = 0; let match = false;
+                if (type === 'advance') {
+                    title = "Today's Advance Collections";
+                    let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Advance');
+                    if(tx) { match = true; amount = tx.amount; }
+                } else if (type === 'settle') {
+                    title = "Today's Direct Settlements";
+                    let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Direct Settle');
+                    if(tx) { match = true; amount = tx.amount; }
+                } else if (type === 'today-bounce') {
+                    title = "Today's Bounced EMIs";
+                    let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Bounced');
+                    if(tx) { match = true; amount = tx.amount; }
+                } else if (type === 'total-risk') {
+                    title = "Total Overdue (Risk) Clients";
+                    if(c.overdue && c.overdue > 0 && c.status === "Active") { match = true; amount = c.overdue; }
+                }
+
+                if(match) {
+                    html += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-2 flex justify-between items-center hover-scale">
+                        <div>
+                            <p class="text-xs font-black text-slate-800">${c.name}</p>
+                            <p class="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-widest">${c.id} | ${m}</p>
+                        </div>
+                        <span class="text-sm font-black text-rose-600 bg-white border border-rose-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount}</span>
+                    </div>`;
+                }
+            });
+
+            if(!html) html = `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed"><p class="text-2xl mb-2">📊</p><p class="text-[9px] text-slate-400 font-bold uppercase">No records found for today.</p></div>`;
+
+            let wrapper = `
+                <div class="mb-4 border-b border-slate-100 pb-3 flex justify-between items-center">
+                    <h3 class="text-sm font-black text-slate-900 uppercase">${title}</h3>
+                </div>
+                <div class="max-h-[60vh] overflow-y-auto pr-1">
+                    ${html}
+                </div>`;
+            openGlobalModal(wrapper);
+        }    
     </script>
 </body>
 </html>
