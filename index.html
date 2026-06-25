@@ -1222,12 +1222,14 @@
         }
         async function deleteClientRecord() {
             const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-            if(confirm("⚠ DELETE client? (Record will be archived for audit compliance)")) { 
+            if(confirm("⚠ WARNING: Completely DELETE client? (Saara data, collection aur disbursal hamesha ke liye WIPE OUT ho jayega)")) { 
                 try { 
-                    serverDb[m].status = "Deleted"; // Fix: Soft delete for financial audit security
+                    delete serverDb[m]; // Fix: Hard Delete karein taaki dashboard stats se completely remove ho jaye
                     await localforage.setItem('opas_local_db', serverDb); 
-                    await saveDataToCloud(m); 
-                    alert("Client removed from active records."); 
+                    // Cloud se permanently wipe karne ke liye null bhejein
+                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) });
+                    
+                    alert("Client completely wiped out."); 
                     syncAdminEditDropdown(); 
                     refreshHeadDashboardStats(); 
                     routePanelSection('dashboard');
@@ -1263,7 +1265,7 @@
                 Object.keys(serverDb).forEach(k => {
                    if (k === "SYSTEM_SETTINGS") return;
                     let f = serverDb[k]; 
-                    if (!f) return; // 🛡️ TITANIUM SHIELD
+                    if (!f || f.status === 'Deleted' || f.status === 'Rejected') return; // 🛡️ Fix: Deleted/Rejected clients ka data dashboard stats me nahi judna chahiye
                     let match = (activeFilter === "ALL" || activeFilter === "" || f.branch === activeFilter);
                     
                     if(match) {
@@ -1381,8 +1383,8 @@
         }
         
         async function rejectAndTrashApplication(mobile) {
-            if(confirm("❌ Is application ko REJECT karna chahte hain? (Record will be archived)")) {
-                serverDb[mobile].status = "Rejected"; // Fix: Soft delete instead of hard delete
+            if(confirm("❌ Is application ko REJECT karna chahte hain? (Form completely delete ho jayega)")) {
+                delete serverDb[mobile]; // Fix: Hard Delete karein
                 await localforage.setItem('opas_local_db', serverDb);
                 await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: mobile, data: null }) });
                 alert("Application Rejected & Removed.");
@@ -1893,6 +1895,18 @@
                     let c = serverDb[m]; if(!c || c.branch !== staffBranch) return; // Fix: Dusri branch ke clients ko process hone se rokein
                     if(!c.transactions) c.transactions = [];
                     
+                    // UX FIX: Agar staff ne "Advance" box me amount type kiya par "Settle" button dabana bhool gaya, toh usko auto-grab karein taaki bounce penalty na lage
+                    try {
+                        let advInput = document.getElementById(`adv-input-${m}`);
+                        if (advInput && advInput.value && !advInput.disabled && !c.emiSettled && !c.advancePaid) {
+                            let amt = parseInt(advInput.value);
+                            let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
+                            if (amt > 0 && amt <= totalDebt) {
+                                c.advancePaid = amt;
+                            }
+                        }
+                    } catch(e) {}
+                    
                     let isClientDue = false;
                     if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
                         let emiDateObj = parseSysDate(c.nextEmiDate);
@@ -2285,7 +2299,7 @@
 
             Object.keys(serverDb).forEach(m => {
                 if (m === "SYSTEM_SETTINGS") return;
-                let c = serverDb[m]; if (!c) return;
+                let c = serverDb[m]; if (!c || c.status === 'Deleted' || c.status === 'Rejected') return;
 
                 let matchBranch = (activeFilter === "ALL" || activeFilter === "" || c.branch === activeFilter);
                 if (!matchBranch) return;
