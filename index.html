@@ -234,6 +234,7 @@
                             <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl"></div>
                             <div class="flex justify-between relative z-10"><span>Base Principal:</span><span class="text-white font-bold" id="math-principal">₹0</span></div>
                             <div class="flex justify-between relative z-10"><span>Generated Interest:</span><span class="text-blue-400 font-bold" id="math-interest">₹0</span></div>
+                            <div class="flex justify-between relative z-10"><span>Insurance Premium:</span><span class="text-amber-400 font-bold" id="math-insurance">₹0</span></div>
                             <div class="flex justify-between border-t border-slate-700/50 pt-3 mt-2 relative z-10"><span class="text-slate-400 font-black uppercase text-[9px]">Final Payable</span><span class="text-emerald-400 text-xl font-black" id="math-total-payable">₹0</span></div>
                             <div id="math-emi-breakdown" class="text-[9px] text-amber-300 font-bold mt-2 pt-2 border-t border-slate-700/50 relative z-10 hidden">
                                 </div>
@@ -303,6 +304,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Active EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Next Due Date (DD-MM-YYYY)</label><input type="text" id="edit-cust-due-date" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold" placeholder="e.g. 25-06-2026"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Insurance Charged Fee</label><input type="number" id="edit-cust-insurance" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
                             <div class="col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option><option value="Requested">Requested (New Form)</option><option value="Deleted">Deleted (Archived)</option></select></div>
                         </div>
                         <div class="flex gap-2 pt-4 border-t border-slate-100">
@@ -480,8 +482,8 @@
                     <tr><th class="border border-slate-800 p-2 bg-slate-50">Nominee Name</th><td class="border border-slate-800 p-2" id="lbl-p-nominee-1">-</td><th class="border border-slate-800 p-2 bg-slate-50">Nominee Relation</th><td class="border border-slate-800 p-2 font-bold" id="lbl-p-relation-1">-</td></tr>
                 </table>
                 <table class="w-full border-collapse border border-slate-800 text-left text-[11px] font-sans mt-4">
-                    <tr class="bg-slate-50"><th class="border border-slate-800 p-2">Lending Model</th><th class="border border-slate-800 p-2">Principal</th><th class="border border-slate-800 p-2">ROI Setup</th><th class="border border-slate-800 p-2">Interest</th><th class="border border-slate-800 p-2 font-black">Final Repayment</th></tr>
-                    <tr><td class="border border-slate-800 p-2 font-semibold" id="lbl-p-plan-1">-</td><td class="border border-slate-800 p-2" id="lbl-p-principal-1">-</td><td class="border border-slate-800 p-2 font-bold" id="lbl-p-roi-1">-</td><td class="border border-slate-800 p-2 text-slate-800" id="lbl-p-interest-amt-1">-</td><td class="border border-slate-800 p-2 font-black" id="lbl-p-total-payable-1">-</td></tr>
+                    <tr class="bg-slate-50"><th class="border border-slate-800 p-2">Lending Model</th><th class="border border-slate-800 p-2">Principal</th><th class="border border-slate-800 p-2">ROI Setup</th><th class="border border-slate-800 p-2">Interest</th><th class="border border-slate-800 p-2">Insurance Charge</th><th class="border border-slate-800 p-2 font-black">Final Repayment</th></tr>
+                    <tr><td class="border border-slate-800 p-2 font-semibold" id="lbl-p-plan-1">-</td><td class="border border-slate-800 p-2" id="lbl-p-principal-1">-</td><td class="border border-slate-800 p-2 font-bold" id="lbl-p-roi-1">-</td><td class="border border-slate-800 p-2 text-slate-800" id="lbl-p-interest-amt-1">-</td><td class="border border-slate-800 p-2 text-slate-800" id="lbl-p-insurance-1">-</td><td class="border border-slate-800 p-2 font-black" id="lbl-p-total-payable-1">-</td></tr>
                 </table>
                 <p id="lbl-p-hybrid-breakdown" class="text-[10px] font-sans font-bold text-center mt-2 italic hidden">-</p>
             </div>
@@ -804,6 +806,7 @@
             setHtmlSafe('lbl-p-principal-1', `₹${c.principal}`);
             setHtmlSafe('lbl-p-roi-1', `${c.roi}%`);
             setHtmlSafe('lbl-p-interest-amt-1', `₹${c.interestAmt}`);
+            setHtmlSafe('lbl-p-insurance-1', `₹${c.insuranceAmt || 0}`); // Fix: Populate Insurance in print engine
             setHtmlSafe('lbl-p-total-payable-1', `₹${c.totalPayable}`);
 
             setHtmlSafe('lbl-p-branch-2', `${c.branch} / ${c.center}`);
@@ -1172,6 +1175,7 @@
                 const m = getSafeValue('admin-edit-client-select'); const b = document.getElementById('admin-edit-form-block');
                 if(!m) { b?.classList.add('hidden'); return; } let c = serverDb[m];
                 document.getElementById('edit-cust-name').value = c.name||""; document.getElementById('edit-cust-outstanding').value = c.outstanding||0; document.getElementById('edit-cust-emi').value = c.cycleEmi||0; document.getElementById('edit-cust-od').value = c.overdue||0; document.getElementById('edit-cust-status').value = c.status||"Active"; document.getElementById('edit-cust-due-date').value = c.nextEmiDate||"N/A";
+                document.getElementById('edit-cust-insurance').value = c.insuranceAmt || 0; // Fix: Load insurance into editor
                 b?.classList.remove('hidden');
             } catch(e) {}
         }
@@ -1211,6 +1215,7 @@
                  }
 
                  serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = newOut; serverDb[m].cycleEmi = parseInt(getSafeValue('edit-cust-emi'))||0; serverDb[m].overdue = newOd; serverDb[m].status = newStatus; serverDb[m].nextEmiDate = safeDate;
+                 serverDb[m].insuranceAmt = parseInt(getSafeValue('edit-cust-insurance')) || 0; // Fix: Save insurance configuration updates
                  await saveDataToCloud(m); 
                  alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats(); 
              } catch(e) { alert("Error saving data."); }
@@ -1395,6 +1400,9 @@
                 serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].duration); 
                 serverDb[mobile].lastPaymentDate = "N/A"; 
                 serverDb[mobile].nextEmiDate = calculateNextEmiDate(serverDb[mobile].planType, serverDb[mobile].approvalDate); 
+                // Fix: Log an automated audit trail for Insurance premium on approval moment
+                if(!serverDb[mobile].transactions) serverDb[mobile].transactions = [];
+                serverDb[mobile].transactions.push({ date: serverDb[mobile].approvalDate, amount: serverDb[mobile].insuranceAmt || 0, type: 'Insurance Fee Deducted (Disbursal Upfront)' });
                 await saveDataToCloud(mobile); 
                 alert("Account Approved & Activated Successfully!"); 
                 refreshHeadDashboardStats(); 
@@ -1499,6 +1507,7 @@
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Total Payable</span><span class="font-black text-emerald-600">₹${(c.totalPayable||0).toLocaleString()}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Active Cycle EMI</span><span class="font-black text-slate-800">₹${c.cycleEmi||0}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Overdue</span><span class="font-black text-rose-500">₹${c.overdue||0}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Insurance Charge</span><span class="font-black text-indigo-600">₹${c.insuranceAmt||0}</span></div>
                             ${hybridInfo}
                         </div>
                     </div>
@@ -1586,6 +1595,8 @@
                 const plan = loanPlans.find(p => p.id === planId);
                 if(!plan) throw new Error("Plan not found");
 
+                let insRate = plan.type.includes('daily') ? 3 : 5;
+                let insAmt = Math.round((plan.principal * insRate) / 100);
                 return { 
                     principal: plan.principal, 
                     interestAmt: plan.interestAmt, 
@@ -1597,7 +1608,8 @@
                     duration: plan.duration,
                     isHybrid: plan.isHybrid,
                     phase1Days: plan.phase1Days, phase1Emi: plan.phase1Emi,
-                    phase2Days: plan.phase2Days, phase2Emi: plan.phase2Emi
+                    phase2Days: plan.phase2Days, phase2Emi: plan.phase2Emi,
+                    insuranceAmt: insAmt // Fix: Returned insurance calculated value to live panel
                 }; 
             } catch(e) { 
                 return { principal: 0, interestAmt: 0, totalPayable: 0, cycleType: "daily", cycleEmi: 0, printPlanName: "Plan", typedRoi: 0, isHybrid: false }; 
@@ -1609,6 +1621,7 @@
                 const m = calculateLoanMetrics(); 
                 setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); 
                 setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); 
+                setHtmlSafe('math-insurance', `₹${(m.insuranceAmt || 0).toLocaleString('en-IN')}`); // Fix: Show insurance amount live in UI
                 setHtmlSafe('math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
 
                 const bBox = document.getElementById('math-emi-breakdown');
@@ -2217,7 +2230,11 @@ while (remainingAdv > 0) {
                 if(u.transactions && u.transactions.length > 0) {
                     for(let i = u.transactions.length - 1; i >= 0; i--) { 
                         let t = u.transactions[i]; 
-                        html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between hover-scale"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-sm font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">+ ₹${t.amount}</span></div>`; 
+                        // Fix: Differentiate upfront deduction text styling from normal payment collections in digital ledger
+                        let IsDeduction = t.type.includes('Deducted') || t.type.includes('Penalty') || t.type.includes('Bounced');
+                        let signStr = IsDeduction ? "- " : "+ ";
+                        let badgeColor = IsDeduction ? "text-slate-500 bg-slate-100" : "text-sm font-black text-emerald-600 bg-emerald-50";
+                        html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between hover-scale"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-xs font-black px-4 py-2 rounded-xl ${badgeColor}">${signStr}₹${t.amount}</span></div>`;
                     }
                 }
                 z.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">📭</p><p class="text-[10px] font-bold text-slate-400 uppercase">No transactions.</p></div>`;
