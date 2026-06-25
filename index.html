@@ -1949,31 +1949,34 @@
                         c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Advance' }); 
                         
                         let remainingAdv = remainingForPrincipal; // Only excess principal payment skips EMIs
-while (remainingAdv > 0) {
-                                let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
-                                if (!currentPhaseEmi) break;
+                        let emiCoveredToday = false; // FIX: Add flag to track if today's EMI requirement is met
 
-                                if (remainingAdv >= currentPhaseEmi) {
-                                    remainingAdv -= currentPhaseEmi;
-                                    c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
-                                    c.emisPaidCount = (c.emisPaidCount || 0) + 1;
-                                } else {
-                                    break; // Partial EMI covered, baaki agle cycle mein handle hoga
-                                }
+                        while (remainingAdv > 0) {
+                            let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                            if (!currentPhaseEmi) break;
+
+                            if (remainingAdv >= currentPhaseEmi) {
+                                remainingAdv -= currentPhaseEmi;
+                                c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                                c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                                emiCoveredToday = true; // FIX: Mark as successfully paid a full EMI cycle
+                            } else {
+                                break; // Partial EMI covered, baaki agle cycle mein handle hoga
                             }
-                            
-                            // Fix: Handle partial payments! If they are due today but didn't pay the full EMI, penalize the shortfall and move calendar forward.
-                            if (isClientDue && c.status === "Active" && c.outstanding > 0) {
-                                let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
-                                if (remainingAdv < currentPhaseEmi) {
-                                    let shortfall = currentPhaseEmi - remainingAdv;
-                                    c.overdue = (c.overdue || 0) + shortfall;
-                                    c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
-                                    c.emisPaidCount = (c.emisPaidCount || 0) + 1;
-                                    // Fix: Show the exact penalty amount in passbook so customers understand the overdue addition
-                                    c.transactions.push({ date: todayStr, amount: shortfall, type: 'Shortfall Penalty' });
-                                }
+                        }
+                        
+                        // FIX: Handle partial payments! Only penalize if they were DUE today AND didn't cover at least ONE full EMI cycle.
+                        if (isClientDue && c.status === "Active" && c.outstanding > 0 && !emiCoveredToday) {
+                            let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                            if (remainingAdv < currentPhaseEmi) {
+                                let shortfall = currentPhaseEmi - remainingAdv;
+                                c.overdue = (c.overdue || 0) + shortfall;
+                                c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                                c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                                // Fix: Show the exact penalty amount in passbook so customers understand the overdue addition
+                                c.transactions.push({ date: todayStr, amount: shortfall, type: 'Shortfall Penalty' });
                             }
+                        }
                         }
 
                         // 🛡️🔥 THE HYBRID EMI SWITCHER
