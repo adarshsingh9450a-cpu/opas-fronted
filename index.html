@@ -1570,8 +1570,8 @@
                 ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-plan-select').value = '';
                 
-                let cd = document.getElementById('new-cust-center');
-                if(cd) { cd.innerHTML = `<option value="">-- Select Centre --</option>`; cd.disabled = true; }
+                // Fix: Center dropdown ko disable karne ki bajaye wapas active branch ke hisab se load karein
+                syncKycCentreDropdown();
                 
                 document.getElementById('new-cust-nominee-relation').value = 'Husband';
                 document.getElementById('new-cust-caste').value = 'Samanya';
@@ -2099,6 +2099,7 @@
         function processRequestedClientKyc(mobile) {
             try {
                 let req = serverDb[mobile]; if(!req) return;
+                clearKycForm(); // Fix: Purane typed data ko wipe karein taaki naye request me mix na ho
                 document.getElementById('new-cust-name').value = req.name||""; document.getElementById('new-cust-phone').value = mobile; 
                 document.getElementById('new-loan-plan-select').value = req.tempPlanStr || "";
                 runLiveLoanMath(); routePanelSection('kyc');
