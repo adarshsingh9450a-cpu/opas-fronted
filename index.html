@@ -559,13 +559,18 @@
                 if (response.ok) {
                     let cloudData = await response.json();
                     
-                    // Fix: Smart Timestamp Merge! Cloud wins ONLY if its data is newer. This protects offline work AND allows Head approvals to sync down to staff.
+                    // Fix: Smart Timestamp & Status Shield. Prevents offline staff from accidentally overwriting Head's approvals.
                     Object.keys(cloudData).forEach(k => {
-                        // Fix: Null check add kiya taaki deleted records se app crash na ho
-                        if (cloudData[k] && (!serverDb[k] || !serverDb[k].lastUpdated || (cloudData[k].lastUpdated && cloudData[k].lastUpdated > serverDb[k].lastUpdated))) {
-                            serverDb[k] = cloudData[k]; 
-                        } else if (cloudData[k] === null) {
-                            delete serverDb[k]; // Agar cloud se null aaya hai, toh local se bhi delete karein
+                        if (cloudData[k] === null) {
+                            delete serverDb[k]; 
+                        } else if (cloudData[k]) {
+                            // If cloud has newer data, OR if cloud says 'Active' but local says 'Pending' (meaning Head approved while staff was offline)
+                            let isCloudNewer = !serverDb[k] || !serverDb[k].lastUpdated || (cloudData[k].lastUpdated > serverDb[k].lastUpdated);
+                            let isCloudApproved = (cloudData[k].status === "Active" && serverDb[k] && serverDb[k].status === "Pending Approval");
+                            
+                            if (isCloudNewer || isCloudApproved) {
+                                serverDb[k] = cloudData[k]; 
+                            }
                         }
                     });
                     
@@ -576,15 +581,14 @@
                         }
                     });
                     
-                    Object.keys(localData).forEach(k => {
+                    for (const k of Object.keys(localData)) {
                         if(k !== "SYSTEM_SETTINGS") {
-                            // Fix: Agar cloud me data nahi hai YA local data ka timestamp cloud se naya hai (offline edits), toh usko cloud pe bhejo
-                            // Fix: Added cloudData[k] !== null check to prevent offline loop crash
+                            // Fix: Awaiting each sync to prevent Render/Neon DB API flooding limits
                             if(cloudData[k] === undefined || (cloudData[k] !== null && localData[k] && localData[k].lastUpdated && (!cloudData[k].lastUpdated || localData[k].lastUpdated > cloudData[k].lastUpdated))) {
-                                saveDataToCloud(k); 
+                                await saveDataToCloud(k); 
                             }
                         }
-                    });
+                    }
 
                     await localforage.setItem('opas_local_db', serverDb);
 
@@ -624,6 +628,10 @@
             try {
                 const response = await fetch(API_URL);
                 if (response.ok) {
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new Error("Render Gateway Error or Cold Start HTML received.");
+                    }
                     let cloudData = await response.json();
                     if (cloudData["SYSTEM_SETTINGS"]) {
                         // Fix: Smart merge taaki ek admin ka data dusre admin ke data ko overwrite na kare
@@ -762,7 +770,7 @@
             if(fromDateStr && fromDateStr !== "N/A" && fromDateStr !== "Completed") { 
                 let parts = fromDateStr.split('-'); d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10)-1, parseInt(parts[0], 10), 0, 0, 0, 0); 
             } else { d = new Date(); }
-            d.setHours(0,0,0,0); d.setDate(d.getDate() + (planTypeStr.includes('daily') ? 1 : 7)); 
+            d.setHours(0,0,0,0); d.setDate(d.getDate() + ((planTypeStr || '').includes('daily') ? 1 : 7)); 
             return formatSysDate(d);
         }
 
@@ -926,7 +934,14 @@
         }
 
         async function deleteLoanPlan(id) {
-            if(confirm("Delete this Master Plan? Existing loans won't be affected.")) {
+            // Check if any pending requested client is tied to this plan
+            let isPlanInUse = Object.values(serverDb).some(c => c && c.status === 'Requested' && c.tempPlanStr === id);
+            if (isPlanInUse) {
+                alert("⚠️ Cannot Delete! There are pending customer applications using this plan. Approve or Reject them first.");
+                return;
+            }
+
+            if(confirm("Delete this Master Plan? Existing active loans won't be affected.")) {
                 loanPlans = loanPlans.filter(p => p.id !== id);
                 await saveSystemSettings();
                 renderSetupLists(); syncKycPlanDropdown();
@@ -1592,8 +1607,9 @@
         // =========================================================================
         function calculateLoanMetrics() { 
             try {
-                const planId = getSafeValue('new-loan-plan-select');
-                if(!planId) throw new Error("No Plan");
+                let planId = getSafeValue('new-loan-plan-select');
+                if (!planId) planId = getSafeValue('renew-loan-plan-select');
+                if (!planId) throw new Error("No Plan");
                 const plan = loanPlans.find(p => p.id === planId);
                 if(!plan) throw new Error("Plan not found");
 
@@ -1899,7 +1915,7 @@
                     try {
                         let advInput = document.getElementById(`adv-input-${m}`);
                         if (advInput && advInput.value && !advInput.disabled && !c.emiSettled && !c.advancePaid) {
-                            let amt = parseInt(advInput.value);
+                            let amt = parseInt(advInput.value) || 0; // Added fallback to 0
                             let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
                             if (amt > 0 && amt <= totalDebt) {
                                 c.advancePaid = amt;
@@ -1996,7 +2012,8 @@
                         // 🛡️🔥 THE HYBRID EMI SWITCHER
                     if(c.isHybrid) {
                         // Fix: Calculate hybrid phase based on actual billed cycles passed (Total Payable - Outstanding + Overdue), not just payments made, so bad payers don't stay in Phase 1 forever.
-                        let simulatedCycles = Math.floor(((c.totalPayable || 0) - (c.outstanding || 0) + (c.overdue || 0)) / (c.phase1Emi || 1));
+                        let safePhase1Emi = (c.phase1Emi && c.phase1Emi > 0) ? c.phase1Emi : 1;
+                        let simulatedCycles = Math.floor(((c.totalPayable || 0) - (c.outstanding || 0) + (c.overdue || 0)) / safePhase1Emi);
                         c.cycleEmi = (simulatedCycles < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
                     }
                     
@@ -2286,8 +2303,15 @@
 
         function logout() { 
             try {
-                document.getElementById('main-views-container')?.classList.add('hidden'); document.getElementById('app-header')?.classList.add('hidden'); document.getElementById('auth-container')?.classList.remove('hidden'); toggleLoginForm('customer'); otpRequested = false; document.getElementById('cust-otp')?.classList.add('hidden'); let btn = document.getElementById('cust-action-btn'); if(btn) btn.innerText = "Verify & Access"; ['cust-mobile', 'cust-otp', 'emp-username', 'emp-password', 'apply-cust-name', 'apply-cust-phone'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; }); currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; closeGlobalModal();
-            } catch(e) {}
+                // Clear state variables
+                currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; 
+                // Wipe data from memory and local device to prevent cross-login data leaks
+                serverDb = {}; 
+                localforage.removeItem('opas_local_db').then(() => {
+                    // Force a complete page reload to clear all cached JS objects
+                    window.location.reload();
+                });
+            } catch(e) { window.location.reload(); }
         }
     
     function showDashboardList(type) {
