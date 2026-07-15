@@ -1239,12 +1239,12 @@
             const m = getSafeValue('admin-edit-client-select'); if(!m) return;
             if(confirm("⚠ WARNING: Completely DELETE client? (Saara data, collection aur disbursal hamesha ke liye WIPE OUT ho jayega)")) { 
                 try { 
-                    delete serverDb[m]; // Fix: Hard Delete karein taaki dashboard stats se completely remove ho jaye
+                    // FIX: Hard Delete causes ghost data sync bugs from offline staff devices. Using Soft-Delete Override instead.
+                    serverDb[m] = { status: "Deleted", lastUpdated: Date.now(), name: "Deleted Client", voterRef: "WIPED / WIPED" };
                     await localforage.setItem('opas_local_db', serverDb); 
-                    // Cloud se permanently wipe karne ke liye null bhejein
-                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: m, data: null }) });
+                    await saveDataToCloud(m);
                     
-                    alert("Client completely wiped out."); 
+                    alert("Client completely wiped out. Staff can now safely enter correct details without duplicate errors."); 
                     syncAdminEditDropdown(); 
                     refreshHeadDashboardStats(); 
                     routePanelSection('dashboard');
@@ -1401,9 +1401,10 @@
         
         async function rejectAndTrashApplication(mobile) {
             if(confirm("❌ Is application ko REJECT karna chahte hain? (Form completely delete ho jayega)")) {
-                delete serverDb[mobile]; // Fix: Hard Delete karein
+                // FIX: Soft-Delete override to prevent offline staff devices from re-uploading rejected requests.
+                serverDb[mobile] = { status: "Rejected", lastUpdated: Date.now(), name: "Rejected Request", voterRef: "WIPED / WIPED" };
                 await localforage.setItem('opas_local_db', serverDb);
-                await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: mobile, data: null }) });
+                await saveDataToCloud(mobile);
                 alert("Application Rejected & Removed.");
                 refreshHeadDashboardStats();
                 renderPendingRequestsBox();
@@ -1666,7 +1667,7 @@
                 if(!p || p.length < 10) { alert("Enter proper 10-digit number!"); return; }
                 if(!plan) { alert("Please select a Master Plan first!"); return; }
                 // Fix: Allow 'Deactive' AND 'Deleted' clients to pass duplicate check
-                if(serverDb[p] && serverDb[p].status !== 'Requested' && serverDb[p].status !== 'Deactive' && serverDb[p].status !== 'Deleted') { alert("Duplicate Error! Client is already active."); return; } 
+                if(serverDb[p] && serverDb[p].status !== 'Requested' && serverDb[p].status !== 'Deactive' && serverDb[p].status !== 'Deleted' && serverDb[p].status !== 'Rejected') { alert("Duplicate Error! Client is already active."); return; }
                 document.getElementById('kyc-stage-a')?.classList.add('hidden'); document.getElementById('kyc-stage-b')?.classList.remove('hidden'); 
             } catch(e) {}
         }
@@ -1693,7 +1694,7 @@
                         // Fix: Ensure Soft-Deleted (archived) clients are not blocked by the Aadhaar check
                         return client && client.voterRef && 
                                client.voterRef.startsWith(idRef + " /") && 
-                               client.status !== 'Deactive' && client.status !== 'Requested' && client.status !== 'Deleted';
+                               client.status !== 'Deactive' && client.status !== 'Requested' && client.status !== 'Deleted' && client.status !== 'Rejected';
                     });
                     if (isAadhaarDuplicate) {
                         alert("⚠️ Duplicate Error! Ye Aadhaar/ID Number pehle se hi kisi active account me registered hai.");
