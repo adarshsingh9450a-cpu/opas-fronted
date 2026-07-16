@@ -343,7 +343,8 @@
                             <input type="number" id="plan-principal" placeholder="Principal ₹" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
                             <input type="number" id="plan-roi" placeholder="ROI %" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
                             <input type="number" id="plan-duration" placeholder="Total Days/Weeks" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
-                            <select id="plan-type" onchange="toggleHybridSetup()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <input type="number" id="plan-insurance-pct" placeholder="Insurance % (e.g. 3)" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                            <select id="plan-type" onchange="toggleHybridSetup()" class="col-span-2 w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
                                 <option value="daily">Daily (Normal)</option>
                                 <option value="daily-hybrid">Daily (Hybrid EMI)</option>
                                 <option value="weekly">Weekly (Normal)</option>
@@ -904,6 +905,7 @@
             const roi = parseFloat(getSafeValue('plan-roi'));
             const duration = parseInt(getSafeValue('plan-duration'));
             const type = getSafeValue('plan-type');
+            const insPct = parseFloat(getSafeValue('plan-insurance-pct')) || 0; // NEW: Get custom insurance %
 
             if(!name || !principal || !roi || !duration) { alert("Please fill all plan fields."); return; }
 
@@ -925,6 +927,7 @@
 
             loanPlans.push({
                 id: 'PLN' + Date.now(), name, principal, roi, duration, type, totalPayable: total, interestAmt: interest,
+                insPct: insPct, // NEW: Save insurance % in the plan object
                 isHybrid: type === 'daily-hybrid', phase1Days: p1Days, phase1Emi: p1Emi, phase2Days: p2Days, phase2Emi: p2Emi, baseEmi
             });
 
@@ -986,8 +989,9 @@
                 // Render Plans
                 let pHtml = '';
                 loanPlans.forEach(p => { 
+                    let insDisplay = p.insPct ? ` | Ins: ${p.insPct}%` : ``; // NEW: Show custom insurance %
                     let desc = p.isHybrid ? `<span class="text-amber-500 block text-[8px] font-bold mt-1">Hybrid: ${p.phase1Days}d @ ₹${p.phase1Emi}, ${p.phase2Days}d @ ₹${p.phase2Emi}</span>` : `<span class="text-slate-400 block text-[8px] font-bold mt-1">Normal: ${p.duration} Cycles @ ₹${p.baseEmi}</span>`;
-                    pHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-indigo-100 animate-fade"><div><span class="text-xs font-black text-slate-800">${p.name}</span><span class="text-[9px] text-slate-500 font-bold block">₹${p.principal} | ${p.roi}%</span>${desc}</div><button onclick="deleteLoanPlan('${p.id}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Del</button></div>`; 
+                    pHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-indigo-100 animate-fade"><div><span class="text-xs font-black text-slate-800">${p.name}</span><span class="text-[9px] text-slate-500 font-bold block">₹${p.principal} | ROI: ${p.roi}%${insDisplay}</span>${desc}</div><button onclick="deleteLoanPlan('${p.id}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Del</button></div>`; 
                 });
                 let pl = document.getElementById('setup-plan-list'); if(pl) pl.innerHTML = pHtml || `<p class="text-[9px] text-center text-slate-400 italic">No plans created.</p>`;
 
@@ -1079,7 +1083,23 @@
                 if(zone) zone.innerHTML = html || `<p class="text-[10px] text-center text-slate-400 py-4">No staff found.</p>`;
             } catch(e) {}
         }
-        async function deleteStaff(u) { if(confirm("Delete this staff account?")) { delete staffDb[u]; await saveSystemSettings(); renderStaffList(); } }
+        async function deleteStaff(u) { 
+            if(confirm(`Are you sure you want to delete staff account: ${u}?`)) { 
+                try {
+                    delete staffDb[u]; // Remove from local memory
+                    
+                    // Forcefully update the System Settings object and save to cloud immediately
+                    serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+                    await localforage.setItem('opas_local_db', serverDb);
+                    await saveDataToCloud("SYSTEM_SETTINGS");
+                    
+                    alert("Staff account deleted successfully!");
+                    renderStaffList(); // Force UI refresh
+                } catch(e) {
+                    alert("Failed to delete staff. Please check connection.");
+                }
+            } 
+        }
 
         function syncAdminEditDropdown() {
             try {
@@ -1616,7 +1636,8 @@
                 const plan = loanPlans.find(p => p.id === planId);
                 if(!plan) throw new Error("Plan not found");
 
-                let insRate = plan.type.includes('daily') ? 3 : 5;
+                // NEW: Use custom plan percentage if available, otherwise fallback to old logic for backward compatibility
+                let insRate = plan.insPct !== undefined ? plan.insPct : (plan.type.includes('daily') ? 3 : 5);
                 let insAmt = Math.round((plan.principal * insRate) / 100);
                 return { 
                     principal: plan.principal, 
@@ -1704,8 +1725,8 @@
 
                 const metrics = calculateLoanMetrics();
 
-                let insRate = metrics.cycleType === 'daily' ? 3 : 5;
-                let insuranceAmt = Math.round((metrics.principal * insRate) / 100);
+                // NEW: Direct fetch insurance amount from already calculated metrics
+                let insuranceAmt = metrics.insuranceAmt || 0;
                 const branch = getSafeValue('new-cust-branch');
                 const center = getSafeValue('new-cust-center');
                 
@@ -2112,8 +2133,9 @@
                 a.approvalDate = formatSysDate(new Date()); a.endDate = calculateEndDate(plan.duration); 
                 a.lastPaymentDate = "N/A"; a.nextEmiDate = calculateNextEmiDate(a.planType, null);
                 a.transactions = [];
-                let insRate = plan.type.includes('daily') ? 3 : 5;
-                a.insuranceAmt = Math.round((plan.principal * insRate) / 100); 
+                // NEW: Use custom plan percentage if available, otherwise fallback to old logic
+                let insRate = plan.insPct !== undefined ? plan.insPct : (plan.type.includes('daily') ? 3 : 5);
+                a.insuranceAmt = Math.round((plan.principal * insRate) / 100);
 
                 // HYBRID UPDATE
                 a.isHybrid = plan.isHybrid; a.phase1Days = plan.phase1Days; a.phase1Emi = plan.phase1Emi; 
