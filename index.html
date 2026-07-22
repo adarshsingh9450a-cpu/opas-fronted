@@ -11,10 +11,24 @@
     <style>
         html, body { overscroll-behavior-y: contain !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #cbd5e1; display: flex; justify-content: center; margin: 0; padding: 0; }
-        .app-container { width: 100%; max-width: 480px; height: 100dvh; background: #f8fafc; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.2); }
+        .app-container { 
+            width: 100%; max-width: 480px; height: 100dvh; position: relative; display: flex; flex-direction: column; overflow: hidden; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.2); 
+            background: radial-gradient(circle at 10% 0%, #e0e7ff 0%, transparent 40%), 
+                        radial-gradient(circle at 90% 100%, #e0f2fe 0%, transparent 40%),
+                        linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
         .app-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 2rem; position: relative; }
         
-        /* --- PREMIUM ANIMATIONS --- */
+        /* --- PREMIUM ANIMATIONS & SPLASH --- */
+        @keyframes splashFadeOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; visibility: hidden; z-index: -1; transform: scale(1.05); } }
+        @keyframes logoReveal { 0% { opacity: 0; transform: translateY(30px) scale(0.9); filter: blur(10px); } 50% { opacity: 1; transform: translateY(-5px) scale(1.02); filter: blur(0); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes shimmerGlow { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+        
+        .splash-screen { position: absolute; inset: 0; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; animation: splashFadeOut 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.5s forwards; }
+        .splash-logo { animation: logoReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .shimmer-text { background: linear-gradient(to right, #60a5fa 20%, #ffffff 40%, #ffffff 60%, #60a5fa 80%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shimmerGlow 2s linear infinite; }
+        
         .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
         .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .hover-scale { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s; }
@@ -46,24 +60,44 @@
 <body>
     <div class="app-container">
         
-        <div id="auth-container" class="absolute inset-0 bg-white z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
+        <!-- PREMIUM SPLASH SCREEN -->
+        <div id="splash-screen" class="splash-screen">
+            <div class="splash-logo text-center">
+                <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] mx-auto mb-6 shadow-2xl shadow-blue-500/40 flex items-center justify-center transform rotate-3 relative overflow-hidden">
+                    <div class="absolute inset-0 bg-white/20 blur-md animate-pulse"></div>
+                    <span class="text-5xl text-white font-black relative z-10">₹</span>
+                </div>
+                <h1 class="text-3xl font-black text-white tracking-tight uppercase mb-1">OPAS</h1>
+                <h2 class="text-sm font-black shimmer-text tracking-[0.4em] uppercase">Micro Finance</h2>
+                
+                <div class="mt-10 flex justify-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                    <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="auth-container" class="absolute inset-0 bg-white/40 backdrop-blur-md z-50 flex flex-col justify-center px-6 py-10 animate-fade overflow-y-auto">
             <div class="text-center mb-8 mt-4 animate-slide-up">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl mx-auto mb-5 shadow-xl shadow-indigo-500/30 flex items-center justify-center transform rotate-3 hover-scale"><span class="text-4xl text-white font-black">₹</span></div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">OPAS MICRO FINANCE</h1>
-                <span class="text-[10px] font-black text-blue-600 tracking-[0.2em] block uppercase mt-1">Pvt Ltd</span>
-                <p id="cloud-status" class="text-[9px] font-bold text-emerald-500 mt-2 bg-emerald-50 inline-block px-3 py-1 rounded-full border border-emerald-100 transition-all">☁️ Cloud Syncing...</p>
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-3xl mx-auto mb-5 shadow-xl shadow-indigo-500/30 flex items-center justify-center transform rotate-3 hover-scale"><span class="text-4xl text-white font-black">₹</span></div>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase drop-shadow-sm">OPAS MICRO FINANCE</h1>
+                <span class="text-[10px] font-black text-blue-700 tracking-[0.2em] block uppercase mt-1">Pvt Ltd</span>
+                <p id="cloud-status" class="text-[9px] font-bold text-emerald-600 mt-2 bg-emerald-50/80 backdrop-blur-sm inline-block px-3 py-1 rounded-full border border-emerald-200 shadow-sm transition-all">☁️ Cloud Syncing...</p>
             </div>
 
-            <div id="customer-login-form" class="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner animate-slide-up" style="animation-delay: 0.1s;">
-                <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">Customer Portal</span></div>
-                <input type="tel" id="cust-mobile" placeholder="Registered 10-digit number" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all">
-                <input type="text" id="cust-otp" placeholder="Enter OTP (1234)" class="hidden w-full px-5 py-4 bg-white border border-blue-200 rounded-2xl text-lg font-black text-center text-blue-700 focus:outline-none shadow-sm animate-fade">
-                <button onclick="handleCustomerLogin(event)" id="cust-action-btn" class="btn-fluid w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 pulse-glow">Verify & Access</button>
-                <div class="text-center pt-4 border-t border-slate-200"><button onclick="toggleLoginForm('employee')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest py-2">💼 Enterprise Staff Login →</button></div>
+            <div id="customer-login-form" class="space-y-4 glass-card p-7 rounded-[2rem] animate-slide-up relative overflow-hidden" style="animation-delay: 0.1s;">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl"></div>
+                <div class="text-center mb-2 relative z-10"><span class="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">Customer Portal</span></div>
+                <input type="tel" id="cust-mobile" placeholder="Registered 10-digit number" class="w-full px-5 py-4 bg-white/80 border border-white rounded-2xl text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all relative z-10">
+                <input type="text" id="cust-otp" placeholder="Enter OTP (1234)" class="hidden w-full px-5 py-4 bg-white/80 border border-blue-200 rounded-2xl text-lg font-black text-center text-blue-700 focus:outline-none shadow-sm animate-fade relative z-10">
+                <button onclick="handleCustomerLogin(event)" id="cust-action-btn" class="btn-fluid w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 pulse-glow relative z-10">Verify & Access</button>
+                <div class="text-center pt-4 border-t border-slate-200/60 relative z-10"><button onclick="toggleLoginForm('employee')" class="text-[10px] font-black text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest py-2">💼 Enterprise Staff Login →</button></div>
             </div>
 
-            <div id="employee-login-form" class="space-y-4 hidden bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner animate-fade">
-                <div class="text-center mb-2"><span class="text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200">Enterprise Portal</span></div>
+            <div id="employee-login-form" class="space-y-4 hidden glass-card p-7 rounded-[2rem] animate-fade relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-32 h-32 bg-rose-400/10 rounded-full blur-2xl"></div>
+                <div class="text-center mb-2 relative z-10"><span class="text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200">Enterprise Portal</span></div>
                 <input type="text" id="emp-username" placeholder="Employee ID (staff01/head01)" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-rose-300 shadow-sm transition-all">
                 <input type="password" id="emp-password" placeholder="Password" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-rose-300 shadow-sm transition-all">
                 <button onclick="handleEmployeeLogin(event)" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg">Authorize Access</button>
@@ -152,32 +186,32 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 animate-slide-up" style="animation-delay: 0.1s;">
-                    <div class="glass-card p-5 rounded-[1.5rem] hover-scale"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
-                    <div class="glass-card p-5 rounded-[1.5rem] border-blue-200 hover-scale"><p class="text-[9px] font-black text-blue-500 uppercase" id="lbl-disburse-month">Month's Disbursal</p><p class="text-xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
+                    <div onclick="showDashboardList('disburse-today')" class="glass-card p-5 rounded-[1.5rem] hover-scale cursor-pointer"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
+                    <div onclick="showDashboardList('disburse-month')" class="glass-card p-5 rounded-[1.5rem] border-blue-200 hover-scale cursor-pointer"><p class="text-[9px] font-black text-blue-500 uppercase" id="lbl-disburse-month">Month's Disbursal</p><p class="text-xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
                     
-                    <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem] hover-scale"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-today">Today's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-today">₹0</p></div>
-                    <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem] hover-scale"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-month">Month's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-month">₹0</p></div>
+                    <div onclick="showDashboardList('collect-today')" class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem] hover-scale cursor-pointer"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-today">Today's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-today">₹0</p></div>
+                    <div onclick="showDashboardList('collect-month')" class="bg-emerald-50 border border-emerald-100 p-5 rounded-[1.5rem] hover-scale cursor-pointer"><p class="text-[9px] font-black text-emerald-600 uppercase" id="lbl-collect-month">Month's Collection</p><p class="text-xl font-black text-emerald-600 mt-2" id="m-collection-month">₹0</p></div>
 
                     <!-- Insurance Row -->
-                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-indigo-600 uppercase" id="lbl-ins-today">Today's Insurance</p><p class="text-xl font-black text-indigo-700 mt-1" id="m-ins-today">₹0</p></div>
-                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-indigo-600 uppercase" id="lbl-ins-month">Month's Insurance</p><p class="text-xl font-black text-indigo-700 mt-1" id="m-ins-month">₹0</p></div>
+                    <div onclick="showDashboardList('ins-today')" class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-indigo-600 uppercase" id="lbl-ins-today">Today's Insurance</p><p class="text-xl font-black text-indigo-700 mt-1" id="m-ins-today">₹0</p></div>
+                    <div onclick="showDashboardList('ins-month')" class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-indigo-600 uppercase" id="lbl-ins-month">Month's Insurance</p><p class="text-xl font-black text-indigo-700 mt-1" id="m-ins-month">₹0</p></div>
 
-                    <!-- Advance & Settle (Clickable) -->
+                    <!-- Advance & Settle -->
                     <div onclick="showDashboardList('advance')" class="bg-blue-50 border border-blue-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv">Today's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-today-advance">₹0</p></div>
-                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv-m">Month's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-month-advance">₹0</p></div>
+                    <div onclick="showDashboardList('advance-month')" class="bg-blue-50 border border-blue-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-blue-600 uppercase" id="lbl-dash-adv-m">Month's Advance</p><p class="text-xl font-black text-blue-700 mt-1" id="head-month-advance">₹0</p></div>
 
                     <div onclick="showDashboardList('settle')" class="bg-amber-50 border border-amber-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle">Today's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-today-settle">₹0</p></div>
-                    <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl hover-scale"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle-m">Month's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-month-settle">₹0</p></div>
+                    <div onclick="showDashboardList('settle-month')" class="bg-amber-50 border border-amber-100 p-4 rounded-2xl hover-scale cursor-pointer"><p class="text-[9px] font-black text-amber-600 uppercase" id="lbl-dash-settle-m">Month's Settle</p><p class="text-xl font-black text-amber-700 mt-1" id="head-month-settle">₹0</p></div>
 
-                    <!-- Bounced & Overdue (Clickable) -->
+                    <!-- Bounced & Overdue -->
                     <div onclick="showDashboardList('today-bounce')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Today's Bounced EMI</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-bounce-today">₹0</div></div>
                     <div onclick="showDashboardList('total-risk')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
 
-                    <div id="dash-active-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
-                    <div id="dash-closed-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
+                    <div onclick="showDashboardList('active')" id="dash-active-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale cursor-pointer"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
+                    <div onclick="showDashboardList('deactive')" id="dash-closed-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale cursor-pointer"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
                     
-                    <div class="glass-card p-5 rounded-[1.5rem] text-center bg-purple-50/40 border-purple-100 hover-scale"><p class="text-[9px] font-black text-purple-600 uppercase">New Loans (Month)</p><p class="text-2xl font-black text-purple-700 mt-2" id="m-new-clients">0</p></div>
-                    <div class="glass-card p-5 rounded-[1.5rem] text-center bg-amber-50/40 border-amber-100 hover-scale"><p class="text-[9px] font-black text-amber-600 uppercase">Renewed (Month)</p><p class="text-2xl font-black text-amber-700 mt-2" id="m-renew-clients">0</p></div>
+                    <div onclick="showDashboardList('new-month')" class="glass-card p-5 rounded-[1.5rem] text-center bg-purple-50/40 border-purple-100 hover-scale cursor-pointer"><p class="text-[9px] font-black text-purple-600 uppercase">New Loans (Month)</p><p class="text-2xl font-black text-purple-700 mt-2" id="m-new-clients">0</p></div>
+                    <div onclick="showDashboardList('renew-month')" class="glass-card p-5 rounded-[1.5rem] text-center bg-amber-50/40 border-amber-100 hover-scale cursor-pointer"><p class="text-[9px] font-black text-amber-600 uppercase">Renewed (Month)</p><p class="text-2xl font-black text-amber-700 mt-2" id="m-renew-clients">0</p></div>
                 </div>
             </div>
 
@@ -239,6 +273,17 @@
                             <div id="math-emi-breakdown" class="text-[9px] text-amber-300 font-bold mt-2 pt-2 border-t border-slate-700/50 relative z-10 hidden">
                                 </div>
                         </div>
+                        
+                        <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 space-y-3 mt-3 animate-slide-up">
+                            <label class="block text-[9px] font-black text-amber-700 uppercase tracking-widest ml-1">Back-Date Entry (Optional)</label>
+                            <p class="text-[8px] font-bold text-amber-600 ml-1 leading-tight">Purane system ka loan add karne ke liye Original Disbursal Date aur Jama EMIs type karein. Naye loan ke liye ise khali chhod dein.</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="new-cust-backdate" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none text-slate-700">
+                                <input type="number" id="new-cust-paid-emis" placeholder="EMIs Already Paid" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                                <input type="number" id="new-cust-historic-od" placeholder="Existing Overdue ₹ (If any)" class="col-span-2 w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            </div>
+                        </div>
+
                         <button onclick="goToKycStageB()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4.5 rounded-xl text-xs uppercase mt-4 shadow-lg shadow-slate-900/20">Verify & Next Step →</button>
                     </div>
 
@@ -268,7 +313,7 @@
                         <select id="settle-client-mobile-select" onchange="syncDirectSettlementViewLabels()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                         
                         <div id="settle-math-receipt-box" class="hidden bg-slate-900 p-5 rounded-2xl space-y-3 text-xs font-medium text-slate-300 animate-fade relative overflow-hidden"><div class="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-xl"></div><div class="flex justify-between relative z-10"><span>ID:</span><span class="font-bold text-white font-mono" id="lbl-s-id">-</span></div><div class="flex justify-between relative z-10"><span>Plan:</span><span class="text-blue-400 font-bold" id="lbl-s-plan">-</span></div><div class="border-t border-slate-700/50 pt-4 mt-2 flex justify-between font-bold items-end relative z-10"><span class="text-[9px] uppercase text-slate-400">Total Payable</span><span class="text-emerald-400 font-black text-2xl" id="lbl-s-outstanding">₹0</span></div></div>
-                        <button onclick="executeFullDirectLoanClosure()" class="btn-fluid w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4.5 rounded-xl text-[11px] uppercase shadow-lg shadow-emerald-500/30 mt-2">Confirm & Settle</button>
+                        <button onclick="executeFullDirectLoanClosure(event)" class="btn-fluid w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4.5 rounded-xl text-[11px] uppercase shadow-lg shadow-emerald-500/30 mt-2">Confirm & Settle</button>
                     </div>
                     <div id="settle-success-action-panel" class="hidden space-y-4 animate-slide-up text-center pt-2">
                         <div class="bg-emerald-50 border border-emerald-100 p-6 rounded-[1.5rem]"><p class="text-3xl mb-3 hover-scale">🎉</p><p class="text-xs font-black text-emerald-700 uppercase">Account Safely Closed!</p></div>
@@ -687,6 +732,7 @@
                     caste: getSafeValue('new-cust-caste'), religion: getSafeValue('new-cust-religion'), land: getSafeValue('new-cust-land'),
                     attendance: getSafeValue('new-cust-attendance'), purpose: getSafeValue('new-cust-purpose'), house: getSafeValue('new-cust-house'),
                     address: getSafeValue('new-cust-address'),
+                    backdate: getSafeValue('new-cust-backdate'), paidEmis: getSafeValue('new-cust-paid-emis'),
                     ppi_tv: document.getElementById('ppi-tv')?.checked, ppi_fridge: document.getElementById('ppi-fridge')?.checked,
                     ppi_bike: document.getElementById('ppi-bike')?.checked, ppi_almirah: document.getElementById('ppi-almirah')?.checked
                 };
@@ -715,6 +761,8 @@
                     if(draft.purpose) document.getElementById('new-cust-purpose').value = draft.purpose;
                     if(draft.house) document.getElementById('new-cust-house').value = draft.house;
                     if(draft.address) document.getElementById('new-cust-address').value = draft.address;
+                    if(draft.backdate) document.getElementById('new-cust-backdate').value = draft.backdate;
+                    if(draft.paidEmis) document.getElementById('new-cust-paid-emis').value = draft.paidEmis;
 
                     if(draft.ppi_tv !== undefined) document.getElementById('ppi-tv').checked = draft.ppi_tv;
                     if(draft.ppi_fridge !== undefined) document.getElementById('ppi-fridge').checked = draft.ppi_fridge;
@@ -727,6 +775,11 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => { 
+            setTimeout(() => { 
+                let splash = document.getElementById('splash-screen');
+                if(splash) splash.style.display = 'none'; 
+            }, 3200);
+
             let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
             let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
             
@@ -740,7 +793,58 @@
             syncSetupDropdowns(); 
             syncKycPlanDropdown(); // Load Plans into Dropdowns
             restoreKycDraft();
+            await checkAuthSession(); // NEW: Auto-Login trigger
         });
+
+        // =========================================================================
+        // 🔐 SESSION PERSISTENCE ENGINE (48-HOUR KEEPALIVE)
+        // =========================================================================
+        function setAuthSession(role, id) {
+            localStorage.setItem('opas_sess_role', role);
+            localStorage.setItem('opas_sess_id', id);
+            localStorage.setItem('opas_sess_time', Date.now());
+        }
+
+        async function checkAuthSession() {
+            let role = localStorage.getItem('opas_sess_role');
+            let id = localStorage.getItem('opas_sess_id');
+            let time = localStorage.getItem('opas_sess_time');
+            
+            if (role && id && time) {
+                let diffHours = (Date.now() - parseInt(time)) / (1000 * 60 * 60);
+                if (diffHours < 48) { // 48 Hour Inactivity Check
+                    localStorage.setItem('opas_sess_time', Date.now()); // Reset timer on active use
+                    
+                    if (role === 'customer') {
+                        currentlyLoggedInMobile = id;
+                        if (!serverDb[id]) { 
+                            let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = id; 
+                            showDashboard('customer'); routePanelSection('cust-apply'); 
+                        } else if (serverDb[id].status === 'Requested' || serverDb[id].status === 'Pending Approval') { 
+                            showDashboard('customer'); routePanelSection('cust-pending'); 
+                        } else { 
+                            showDashboard('customer'); 
+                        }
+                    } else if (role === 'head') {
+                        currentLoggedInRole = 'head';
+                        showDashboard('head');
+                    } else if (role === 'staff') {
+                        if(staffDb[id]) {
+                            currentLoggedInRole = 'staff'; let staff = staffDb[id];
+                            const df = document.getElementById('dashboard-active-branch-select'); 
+                            const lf = document.getElementById('ledger-active-branch-select');
+                            const sf = document.getElementById('settle-branch-filter'); 
+                            if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; 
+                            if(lf) lf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`;
+                            if(sf) { sf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; syncSettleCentreFilter(); }
+                            setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
+                            let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
+                            showDashboard('staff'); updatePendingRequestsBadge();
+                        } else { logout(); } // Auto-logout if admin deleted this staff account
+                    }
+                } else { logout(); } // Time Expired
+            }
+        }
 
         async function forceCloudSync(event) {
             let btn = event.currentTarget.querySelector('span');
@@ -807,7 +911,9 @@
             setHtmlSafe('lbl-p-spouse-1', c.spouse);
             setHtmlSafe('lbl-p-sys-id-1', c.id);
             setHtmlSafe('lbl-p-voter-1', c.voterRef);
-            setHtmlSafe('lbl-p-approval-date-1', "Pending Approval");
+            // FIX: Print actual imported date instead of "Pending" for legally backdated loans
+            let displayDate = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate + " (Imported)" : "Pending Approval";
+            setHtmlSafe('lbl-p-approval-date-1', displayDate);
             setHtmlSafe('lbl-p-nominee-1', c.nominee);
             setHtmlSafe('lbl-p-relation-1', c.nomineeRelation);
             
@@ -907,7 +1013,8 @@
             const type = getSafeValue('plan-type');
             const insPct = parseFloat(getSafeValue('plan-insurance-pct')) || 0; // NEW: Get custom insurance %
 
-            if(!name || !principal || !roi || !duration) { alert("Please fill all plan fields."); return; }
+            // FIX 2C: Prevent Negative/Zero Plan Creation Math Exploits
+            if(!name || principal <= 0 || roi < 0 || duration <= 0 || insPct < 0) { alert("Please fill all plan fields with valid positive numbers."); return; }
 
             let interest = Math.round((principal * roi) / 100);
             let total = principal + interest;
@@ -1007,7 +1114,8 @@
 
         async function createNewBranch() { 
             const n = getSafeValue('setup-branch-name').trim(); if(!n) { alert("Branch name empty."); return; } 
-            if(branchList.includes(n)) { alert("Branch already exists."); return; }
+            // FIX: Case-insensitive check to prevent "Delhi" and "DELHI" DB splits
+            if(branchList.some(b => b.toLowerCase() === n.toLowerCase())) { alert("Branch already exists."); return; }
             branchList.push(n); alert(`Branch ${n} Created & Synced!`); document.getElementById('setup-branch-name').value = ''; 
             await saveSystemSettings(); syncSetupDropdowns(); 
         }
@@ -1036,6 +1144,8 @@
         async function createNewCentre() { 
             const pb = getSafeValue('setup-centre-parent'); const cn = getSafeValue('setup-centre-name').trim(); 
             if(!pb || !cn) { alert("Select branch & enter centre."); return; } 
+            // FIX: Case-insensitive check for centres within the same branch
+            if(centreList.some(c => c.branch === pb && c.name.toLowerCase() === cn.toLowerCase())) { alert("Centre already exists in this branch."); return; }
             centreList.push({ id: "c" + Date.now(), branch: pb, name: cn }); alert(`Centre ${cn} Saved & Synced!`); document.getElementById('setup-centre-name').value = ''; 
             await saveSystemSettings(); syncSetupDropdowns(); 
         }
@@ -1164,7 +1274,7 @@
             box.classList.remove('hidden');
         }
 
-       async function executeFullDirectLoanClosure() {
+       async function executeFullDirectLoanClosure(event) {
             const m = document.getElementById('settle-client-mobile-select').value;
             if(!m || !serverDb[m]) return;
             
@@ -1172,6 +1282,8 @@
             let settlementAmount = (serverDb[m].outstanding || 0) + (serverDb[m].overdue || 0); 
             
             if(confirm(`Kya aap sach mein ${serverDb[m].name} ka total bacha hua (Outstanding + Overdue) ₹${settlementAmount} lekar account close karna chahte hain?`)) {
+                // FIX 3: Disable button instantly to prevent double-click ghost/duplicate passbook entries
+                if(event && event.currentTarget) { event.currentTarget.disabled = true; event.currentTarget.innerText = "Processing..."; }
                 serverDb[m].outstanding = 0;
                 serverDb[m].overdue = 0; // Clear the overdue upon settlement
                 serverDb[m].status = "Deactive";
@@ -1218,9 +1330,10 @@
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
              try {
                  let oldOut = serverDb[m].outstanding;
-                 let newOut = parseInt(getSafeValue('edit-cust-outstanding')) || 0;
+                 // FIX 2B: Prevent Admin from saving corrupted negative debt amounts
+                 let newOut = Math.max(0, parseInt(getSafeValue('edit-cust-outstanding')) || 0);
                  let oldOd = serverDb[m].overdue || 0;
-                 let newOd = parseInt(getSafeValue('edit-cust-od')) || 0;
+                 let newOd = Math.max(0, parseInt(getSafeValue('edit-cust-od')) || 0);
                  
                  // Fix: Log a transaction if Admin modifies Outstanding OR Overdue manually
                  if (oldOut !== newOut || oldOd !== newOd) {
@@ -1249,8 +1362,12 @@
                      serverDb[m].approvalDate = formatSysDate(new Date());
                  }
 
-                 serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = newOut; serverDb[m].cycleEmi = parseInt(getSafeValue('edit-cust-emi'))||0; serverDb[m].overdue = newOd; serverDb[m].status = newStatus; serverDb[m].nextEmiDate = safeDate;
-                 serverDb[m].insuranceAmt = parseInt(getSafeValue('edit-cust-insurance')) || 0; // Fix: Save insurance configuration updates
+                 serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = newOut; 
+                 // FIX 3: Protected the remaining fields from negative input crashes
+                 serverDb[m].cycleEmi = Math.max(0, parseInt(getSafeValue('edit-cust-emi'))||0); 
+                 serverDb[m].overdue = newOd; serverDb[m].status = newStatus; serverDb[m].nextEmiDate = safeDate;
+                 serverDb[m].insuranceAmt = Math.max(0, parseInt(getSafeValue('edit-cust-insurance')) || 0); 
+                 
                  await saveDataToCloud(m); 
                  alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats(); 
              } catch(e) { alert("Error saving data."); }
@@ -1312,7 +1429,9 @@
 
                             let viewDetailsBtn = `<button onclick="showClientFullInfo('${k}')" class="w-full mt-3 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-black py-2 rounded-xl text-[10px] uppercase transition-all shadow-sm">📋 Check KYC Details</button>`;
 
-                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${viewDetailsBtn}${actionBtn}</div>`;
+                            let backdateBadge = (f.customAppDate && f.customAppDate !== "N/A") ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase shadow-sm ml-2 border border-amber-200">Imported</span>` : '';
+                            
+                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm flex items-center">${f.name||'Unk'}${backdateBadge}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${viewDetailsBtn}${actionBtn}</div>`;
                         }
                         
                         let appDateMonth = "";
@@ -1353,15 +1472,6 @@
                                         if (isCurrentMonth && matchToday) todayBounceAmt += tx.amount;
                                     }
                                 });
-                            }
-
-                            if(f.emiSettled === 'received' || f.emiSettled === 'online_paid') {
-                                cT += (f.cycleEmi||0);
-                                if (isCurrentMonth) cM += (f.cycleEmi||0);
-                            }
-                            if(f.advancePaid > 0) {
-                                todayAdv += f.advancePaid;
-                                if(isCurrentMonth) monthAdv += f.advancePaid;
                             }
                         }
 
@@ -1433,17 +1543,42 @@
 
         async function executeHeadApproval(mobile) { 
             try {
-                if(!serverDb[mobile]) return;
-                serverDb[mobile].isApproved = true; 
-                serverDb[mobile].status = "Active"; 
-                serverDb[mobile].approvalDate = formatSysDate(new Date()); 
-                serverDb[mobile].endDate = calculateEndDate(serverDb[mobile].duration); 
-                serverDb[mobile].lastPaymentDate = "N/A"; 
-                serverDb[mobile].nextEmiDate = calculateNextEmiDate(serverDb[mobile].planType, serverDb[mobile].approvalDate); 
-                // Fix: Log an automated audit trail for Insurance premium on approval moment
-                if(!serverDb[mobile].transactions) serverDb[mobile].transactions = [];
-                serverDb[mobile].transactions.push({ date: serverDb[mobile].approvalDate, amount: serverDb[mobile].insuranceAmt || 0, type: 'Insurance Fee Deducted (Disbursal Upfront)' });
-                await saveDataToCloud(mobile); 
+                let c = serverDb[mobile];
+                // FIX 1: Strict double-click protection so passbook doesn't get duplicate insurance/import entries
+                if(!c || c.isApproved || c.status === "Active") return; 
+                
+                let isBackdated = c.customAppDate && c.customAppDate !== "N/A";
+                let finalAppDate = isBackdated ? c.customAppDate : formatSysDate(new Date());
+                
+                c.isApproved = true; 
+                c.status = "Active"; 
+                c.approvalDate = finalAppDate; 
+                
+                // End date dynamically calculates either from Backdate or Today
+                let appDateObj = isBackdated ? parseSysDate(finalAppDate) : new Date();
+                let durDays = c.planType === 'weekly' ? c.duration * 7 : c.duration;
+                appDateObj.setDate(appDateObj.getDate() + parseInt(durDays));
+                c.endDate = formatSysDate(appDateObj);
+                
+                c.lastPaymentDate = "N/A"; 
+                c.nextEmiDate = isBackdated ? c.customNextEmi : calculateNextEmiDate(c.planType, c.approvalDate); 
+                
+                if(!c.transactions) c.transactions = [];
+                
+                // Audit Trails
+                c.transactions.push({ date: finalAppDate, amount: c.insuranceAmt || 0, type: 'Insurance Fee Deducted (Upfront)' });
+                
+                // If it was backdated with paid EMIs, generate the historic ledger passbook injection
+                if (c.backdatePaidAmount && c.backdatePaidAmount > 0) {
+                    c.transactions.push({ date: finalAppDate, amount: c.backdatePaidAmount, type: 'Old System Import (Paid)' });
+                }
+                
+                // FIX 2: If historic overdue was added, show it explicitly in the passbook as a Penalty so clients don't argue about ghost charges
+                if (c.overdue && c.overdue > 0 && isBackdated) {
+                    c.transactions.push({ date: finalAppDate, amount: c.overdue, type: 'Old System Penalty (Overdue)' });
+                }
+
+                await saveDataToCloud(mobile);
                 alert("Account Approved & Activated Successfully!"); 
                 refreshHeadDashboardStats(); 
             } catch(e) {}
@@ -1492,11 +1627,12 @@
                     if(match) {
                         count++;
                         let statusColor = c.status === 'Active' ? 'text-emerald-500' : (c.status === 'Pending Approval' ? 'text-amber-500' : 'text-rose-500');
-                        let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase">Hybrid</span>` : '';
+                        let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mr-1">Hybrid</span>` : '';
+                        let importedTag = (c.customAppDate && c.customAppDate !== "N/A") ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Imported</span>` : '';
                         
                         html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
-                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold">${c.id||'NA'} ${tag}</p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
+                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold flex items-center">${c.id||'NA'} <span class="ml-2">${tag}${importedTag}</span></p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
                                 <span class="text-[9px] font-black px-3 py-1.5 rounded-xl uppercase bg-blue-50 text-blue-600 shadow-inner">${c.planName||'Plan'}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-4 mt-1 pt-3 border-t border-slate-50 text-[10px]">
@@ -1523,11 +1659,14 @@
 
             let hybridInfo = c.isHybrid ? `<div class="col-span-2 mt-2 p-2 bg-amber-50 rounded-lg text-amber-700 text-[9px] font-bold">Hybrid Master: ${c.emisPaidCount}/${c.duration} Paid. Current Active EMI: ₹${c.cycleEmi}</div>` : '';
 
+            let importInfo = (c.customAppDate && c.customAppDate !== "N/A") ? `<p class="text-[9px] text-amber-600 font-bold bg-amber-50 inline-block px-2 py-1 rounded-md mt-2">Old Loan Imported: ${c.customAppDate}</p>` : '';
+            
             let html = `
                 <div class="text-center border-b border-slate-100 pb-4 mb-4">
                     <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl font-black shadow-inner">${c.name ? c.name.substring(0,1).toUpperCase() : 'U'}</div>
                     <h2 class="text-lg font-black text-slate-900">${c.name}</h2>
                     <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">${mobile} | ID: ${c.id}</p>
+                    ${importInfo}
                 </div>
                 <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-2 text-xs">
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -1607,7 +1746,7 @@
         function clearKycForm() {
             try {
                 // Fix: 'new-cust-branch' ko array se hata diya taaki staff ka active branch reset na ho
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-backdate', 'new-cust-paid-emis', 'new-cust-historic-od'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-plan-select').value = '';
                 
                 // Fix: Center dropdown ko disable karne ki bajaye wapas active branch ke hisab se load karein
@@ -1663,13 +1802,31 @@
                 const m = calculateLoanMetrics(); 
                 setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); 
                 setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); 
-                setHtmlSafe('math-insurance', `₹${(m.insuranceAmt || 0).toLocaleString('en-IN')}`); // Fix: Show insurance amount live in UI
-                setHtmlSafe('math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
+                setHtmlSafe('math-insurance', `₹${(m.insuranceAmt || 0).toLocaleString('en-IN')}`); 
+                
+                // Live adjust Final Payable if user types paid EMIs in backdate section
+                let typedPaidEmis = parseInt(getSafeValue('new-cust-paid-emis')) || 0;
+                let activeOutstanding = m.totalPayable;
+                
+                if (typedPaidEmis > 0) {
+                    for(let i=0; i<typedPaidEmis; i++) {
+                        let currentPhaseEmi = m.isHybrid ? ((i < m.phase1Days) ? m.phase1Emi : m.phase2Emi) : m.cycleEmi;
+                        // FIX 3A: Added explicitly break safeguard to prevent infinite loop RAM crashes if staff types 99999 EMIs
+                        if (activeOutstanding >= currentPhaseEmi) {
+                            activeOutstanding -= currentPhaseEmi;
+                        } else {
+                            break; 
+                        }
+                    }
+                }
+                
+                setHtmlSafe('math-total-payable', `₹${activeOutstanding.toLocaleString('en-IN')}`);
 
                 const bBox = document.getElementById('math-emi-breakdown');
                 if(bBox) {
                     if (m.isHybrid) {
-                        bBox.innerHTML = `🔥 HYBRID PLAN SETUP<br>Phase 1: ${m.phase1Days} Days @ ₹${m.phase1Emi} EMI<br>Phase 2: ${m.phase2Days} Days @ ₹${m.phase2Emi} EMI`;
+                        let phaseInfo = (typedPaidEmis >= m.phase1Days) ? `<span class="text-emerald-400">Currently in Phase 2</span>` : `<span class="text-blue-400">Currently in Phase 1</span>`;
+                        bBox.innerHTML = `🔥 HYBRID PLAN SETUP<br>Phase 1: ${m.phase1Days} Days @ ₹${m.phase1Emi} EMI<br>Phase 2: ${m.phase2Days} Days @ ₹${m.phase2Emi} EMI<br>${typedPaidEmis > 0 ? phaseInfo : ''}`;
                         bBox.classList.remove('hidden');
                     } else if (m.principal > 0) {
                         bBox.innerHTML = `✅ STANDARD PLAN<br>EMI: ₹${m.cycleEmi} per ${m.cycleType}`;
@@ -1771,6 +1928,56 @@
 
                 let isFirst = pastLoans.length === 0;
 
+                // === BACKDATE LOGIC PROCESSING ===
+                let backdateVal = getSafeValue('new-cust-backdate');
+                // FIX 2A: Math.max ensures no negative values can be injected by staff
+                let paidEmisVal = Math.max(0, parseInt(getSafeValue('new-cust-paid-emis')) || 0);
+                let historicOverdue = Math.max(0, parseInt(getSafeValue('new-cust-historic-od')) || 0);
+                
+                let actualOutstanding = metrics.totalPayable;
+                let actualEmisPaid = 0;
+                let backdatePaidAmount = 0;
+                let activeCycleEmi = metrics.cycleEmi;
+
+                // Handle Hybrid / Normal EMI deductions for backdated loans
+                if (paidEmisVal > 0) {
+                    for(let i=0; i<paidEmisVal; i++) {
+                        let currentPhaseEmi = metrics.isHybrid ? ((actualEmisPaid < metrics.phase1Days) ? metrics.phase1Emi : metrics.phase2Emi) : metrics.cycleEmi;
+                        // FIX 3B: Exact same protection for the actual submit sequence
+                        if (actualOutstanding >= currentPhaseEmi) {
+                            actualOutstanding -= currentPhaseEmi;
+                            backdatePaidAmount += currentPhaseEmi;
+                            actualEmisPaid++;
+                        } else {
+                            break;
+                        }
+                    }
+                    // Find exactly which EMI phase they are currently on after paying X emis
+                    activeCycleEmi = metrics.isHybrid ? ((actualEmisPaid < metrics.phase1Days) ? metrics.phase1Emi : metrics.phase2Emi) : metrics.cycleEmi;
+                }
+
+                let customAppDate = "N/A";
+                let customNextEmi = "N/A";
+                
+                if (backdateVal) {
+                    // FIX: Prevent Javascript Timezone offset bugs by parsing YYYY-MM-DD manually
+                    let bp = backdateVal.split('-');
+                    let bd = new Date(parseInt(bp[0]), parseInt(bp[1])-1, parseInt(bp[2]), 0, 0, 0);
+                    customAppDate = formatSysDate(bd);
+                    // Accurately jump forward in time to setup the next correct due date
+                    let nextEmiObj = new Date(parseInt(bp[0]), parseInt(bp[1])-1, parseInt(bp[2]), 0, 0, 0);
+                    let daysToAdd = metrics.cycleType === 'daily' ? (actualEmisPaid + 1) : ((actualEmisPaid + 1) * 7);
+                    nextEmiObj.setDate(nextEmiObj.getDate() + daysToAdd);
+                    
+                    // Time-Loop Catch-Up Fix: If the calculated next EMI is far in the past, snap it to today so the ledger doesn't lag for months.
+                    let todayCheck = new Date();
+                    todayCheck.setHours(0,0,0,0);
+                    if (nextEmiObj < todayCheck) {
+                        nextEmiObj = new Date(todayCheck); // Snap to today
+                    }
+                    customNextEmi = formatSysDate(nextEmiObj);
+                }
+
                 // Client ka Profile Database me banayein (With Hybrid Properties)
                 serverDb[phone] = {
                     id: sysId, name: name, branch: branch, center: center, spouse: spouse,
@@ -1782,16 +1989,20 @@
                     planType: metrics.cycleType, planName: metrics.printPlanName, duration: metrics.duration,
                     principal: metrics.principal, roi: metrics.typedRoi,
                     interestAmt: metrics.interestAmt, totalPayable: metrics.totalPayable,
-                    outstanding: metrics.totalPayable, cycleEmi: metrics.cycleEmi, // Initial EMI
-                    overdue: 0, advancePaid: 0, insuranceAmt: insuranceAmt,
+                    outstanding: actualOutstanding, cycleEmi: activeCycleEmi, // Initial EMI adjusted for backdate
+                    overdue: historicOverdue, advancePaid: 0, insuranceAmt: insuranceAmt,
                     
                     // HYBRID ENGINE PROPERTIES
                     isHybrid: metrics.isHybrid, phase1Days: metrics.phase1Days, phase1Emi: metrics.phase1Emi, 
-                    phase2Days: metrics.phase2Days, phase2Emi: metrics.phase2Emi, emisPaidCount: 0,
+                    phase2Days: metrics.phase2Days, phase2Emi: metrics.phase2Emi, emisPaidCount: actualEmisPaid,
                     
                     status: "Pending Approval", isApproved: false,
                     isFirstLoan: isFirst, isRenewed: false,
+                    
+                    // Backdate Storage Injectors
                     approvalDate: "N/A", endDate: "N/A", lastPaymentDate: "N/A", nextEmiDate: "N/A",
+                    customAppDate: customAppDate, customNextEmi: customNextEmi, backdatePaidAmount: backdatePaidAmount,
+                    
                     emiSettled: null, transactions: [], pastLoans: pastLoans
                 };
 
@@ -1800,7 +2011,12 @@
                 
                 let oldText = btn.innerText;
                 btn.innerText = "Saving... ⏳";
+                // FIX 2: Disable button physically to stop spam-click cloning during slow internet
+                btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed');
+                
                 await saveDataToCloud(phone);
+                
+                btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 btn.innerText = oldText;
                 
                 alert("✅ KYC Form Submitted Successfully! \nSystem Head Approval ke liye pending hai.");
@@ -1842,6 +2058,8 @@
             if(!input || !input.value) { alert("Enter amount!"); return; }
             let amt = parseInt(input.value);
             if(!serverDb[mobile]) return;
+            // FIX: Prevent negative or zero value injection hack
+            if(amt <= 0) { alert("Amount zero ya negative nahi ho sakta!"); return; } 
             let totalDebt = (serverDb[mobile].outstanding || 0) + (serverDb[mobile].overdue || 0);
             if(amt > totalDebt) { alert(`Amount total debt (₹${totalDebt}) se zyada nahi ho sakta!`); return; }
             serverDb[mobile].advancePaid = amt;
@@ -2128,11 +2346,16 @@
                 a.planName = plan.name; a.duration = plan.duration;
                 a.principal = plan.principal; a.roi = plan.roi; a.interestAmt = plan.interestAmt; 
                 a.totalPayable = plan.totalPayable; a.outstanding = plan.totalPayable; 
-                a.status = "Active"; a.isRenewed = true; a.isFirstLoan = false; a.emiSettled = null; a.advancePaid = 0; 
-                a.overdue = 0; // Fix: Prevent old penalties from haunting the new renewed loan
-                a.approvalDate = formatSysDate(new Date()); a.endDate = calculateEndDate(plan.duration); 
-                a.lastPaymentDate = "N/A"; a.nextEmiDate = calculateNextEmiDate(a.planType, null);
+                // FIX 1: Renewals must NOT bypass Head Approval! Lock it down for security.
+                a.status = "Pending Approval"; a.isApproved = false; a.isRenewed = true; a.isFirstLoan = false; a.emiSettled = null; a.advancePaid = 0; 
+                a.overdue = 0; // Prevent old penalties from haunting the new renewed loan
+                a.approvalDate = "N/A"; a.endDate = "N/A"; 
+                a.lastPaymentDate = "N/A"; a.nextEmiDate = "N/A";
                 a.transactions = [];
+                
+                // FIX 1: Wipe old imported data so renewed loans don't permanently carry the "Imported" badge from their past
+                a.customAppDate = "N/A"; a.customNextEmi = "N/A"; a.backdatePaidAmount = 0;
+                
                 // NEW: Use custom plan percentage if available, otherwise fallback to old logic
                 let insRate = plan.insPct !== undefined ? plan.insPct : (plan.type.includes('daily') ? 3 : 5);
                 a.insuranceAmt = Math.round((plan.principal * insRate) / 100);
@@ -2220,7 +2443,8 @@
                         btn.innerText = "Syncing Cloud...";
                         await loadDataFromCloud();
                         currentlyLoggedInMobile = m;
-                        if (!serverDb[m]) { let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; showDashboard('customer'); routePanelSection('cust-apply'); } 
+                        setAuthSession('customer', m); // NEW: Save device session
+                        if (!serverDb[m]) { let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; showDashboard('customer'); routePanelSection('cust-apply'); }
                         else if (serverDb[m].status === 'Requested') { showDashboard('customer'); routePanelSection('cust-pending'); } 
                         else if (serverDb[m].status === 'Pending Approval') { showDashboard('customer'); routePanelSection('cust-pending'); }
                         else { showDashboard('customer'); }
@@ -2242,10 +2466,12 @@
 
                 if (u === 'head01' && p === 'head123') { 
                     currentLoggedInRole = 'head'; 
+                    setAuthSession('head', u); // NEW: Save device session
                     showDashboard('head'); 
                 } 
                 else if (staffDb[u] && staffDb[u].pass === p) { 
                     currentLoggedInRole = 'staff'; let staff = staffDb[u];
+                    setAuthSession('staff', u); // NEW: Save device session
                     const df = document.getElementById('dashboard-active-branch-select'); 
                     const lf = document.getElementById('ledger-active-branch-select');
                     const sf = document.getElementById('settle-branch-filter'); 
@@ -2306,7 +2532,9 @@
                         let t = u.transactions[i]; 
                         // Fix: Differentiate upfront deduction text styling from normal payment collections in digital ledger
                         let IsDeduction = t.type.includes('Deducted') || t.type.includes('Penalty') || t.type.includes('Bounced');
+                        let isImport = t.type.includes('Import');
                         let signStr = IsDeduction ? "- " : "+ ";
+                        if(isImport) signStr = "★ "; // Custom star indicator for bulk imports
                         let badgeColor = IsDeduction ? "text-slate-500 bg-slate-100" : "text-sm font-black text-emerald-600 bg-emerald-50";
                         html += `<div class="bg-white p-5 border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between hover-scale"><div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${t.date}</p><p class="text-xs font-bold text-slate-800 mt-1">${t.type}</p></div><span class="text-xs font-black px-4 py-2 rounded-xl ${badgeColor}">${signStr}₹${t.amount}</span></div>`;
                     }
@@ -2344,6 +2572,12 @@
             try {
                 // Clear state variables
                 currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; 
+                
+                // NEW: Clear saved 48-hour authentications
+                localStorage.removeItem('opas_sess_role');
+                localStorage.removeItem('opas_sess_id');
+                localStorage.removeItem('opas_sess_time');
+                
                 // Wipe data from memory and local device to prevent cross-login data leaks
                 serverDb = {}; 
                 localforage.removeItem('opas_local_db').then(() => {
@@ -2357,6 +2591,12 @@
             let html = ''; 
             let todayStr = formatSysDate(new Date());
             let title = '';
+            
+            // Get currently selected month directly from the filter
+            let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
+            let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
+            if(!selectedMonthVal) { selectedMonthVal = currentYYYYMM; }
+            let isCurrentMonth = (selectedMonthVal === currentYYYYMM); // BUG FIX: Match dashboard logic
 
             const activeFilter = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (document.getElementById('dashboard-active-branch-select')?.value || "ALL");
 
@@ -2368,14 +2608,39 @@
                 if (!matchBranch) return;
 
                 let amount = 0; let match = false;
+                
+                let appDateMonth = "";
+                if(c.approvalDate && c.approvalDate !== "N/A" && c.approvalDate !== "Completed") {
+                    let pts = c.approvalDate.split('-');
+                    if(pts.length === 3) appDateMonth = `${pts[2]}-${pts[1]}`;
+                }
+
                 if (type === 'advance') {
                     title = "Today's Advance Collections";
                     let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Advance');
                     if(tx) { match = true; amount = tx.amount; }
+                } else if (type === 'advance-month') { 
+                    title = "Month's Advance Collections";
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if(t.type === 'Advance' && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) {
+                                match = true; amount += t.amount;
+                            }
+                        });
+                    }
                 } else if (type === 'settle') {
                     title = "Today's Direct Settlements";
                     let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Direct Settle');
                     if(tx) { match = true; amount = tx.amount; }
+                } else if (type === 'settle-month') { 
+                    title = "Month's Direct Settlements";
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if(t.type === 'Direct Settle' && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) {
+                                match = true; amount += t.amount;
+                            }
+                        });
+                    }
                 } else if (type === 'today-bounce') {
                     title = "Today's Bounced EMIs";
                     let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Bounced');
@@ -2383,20 +2648,70 @@
                 } else if (type === 'total-risk') {
                     title = "Total Overdue (Risk) Clients";
                     if(c.overdue && c.overdue > 0 && c.status === "Active") { match = true; amount = c.overdue; }
+                } else if (type === 'disburse-today') {
+                    title = "Today's Disbursals";
+                    if(c.isApproved && c.approvalDate === todayStr) { match = true; amount = c.principal; }
+                } else if (type === 'disburse-month') {
+                    title = "Month's Disbursals";
+                    if(c.isApproved && appDateMonth === selectedMonthVal) { match = true; amount = c.principal; }
+                } else if (type === 'collect-today') {
+                    title = "Today's Collections";
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if((t.type === 'Received' || t.type === 'Online App') && t.date === todayStr) { match = true; amount += t.amount; }
+                        });
+                    }
+                } else if (type === 'collect-month') {
+                    title = "Month's Collections";
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if((t.type === 'Received' || t.type === 'Online App') && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; }
+                        });
+                    }
+                } else if (type === 'ins-today') {
+                    title = "Today's Insurance";
+                    if(c.isApproved && c.approvalDate === todayStr && c.insuranceAmt > 0) { match = true; amount = c.insuranceAmt; }
+                } else if (type === 'ins-month') {
+                    title = "Month's Insurance";
+                    if(c.isApproved && appDateMonth === selectedMonthVal && c.insuranceAmt > 0) { match = true; amount = c.insuranceAmt; }
+                } else if (type === 'active') {
+                    title = "Active Accounts";
+                    if(c.status === "Active") { match = true; amount = c.outstanding; }
+                } else if (type === 'deactive') {
+                    title = "Closed/Deactive Accounts";
+                    if(c.status === "Deactive") { match = true; amount = 0; }
+                } else if (type === 'new-month') {
+                    title = "New Loans (Month)";
+                    if(c.isApproved && c.isFirstLoan && appDateMonth === selectedMonthVal) { match = true; amount = c.principal; }
+                } else if (type === 'renew-month') {
+                    title = "Renewed Loans (Month)";
+                    if(c.isApproved && c.isRenewed && appDateMonth === selectedMonthVal) { match = true; amount = c.principal; }
                 }
 
                 if(match) {
-                    html += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-2 flex justify-between items-center hover-scale">
+                    // Color formatting logic based on the action type
+                    let amtLabel = type === 'deactive' ? `<span class="text-sm font-black text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">Closed</span>` : `<span class="text-sm font-black text-rose-600 bg-white border border-rose-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                    
+                    if(type.includes('disburse') || type.includes('new') || type.includes('renew') || type === 'active') {
+                        amtLabel = `<span class="text-sm font-black text-emerald-600 bg-white border border-emerald-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                    } else if (type.includes('collect') || type.includes('advance') || type.includes('settle')) {
+                        amtLabel = `<span class="text-sm font-black text-blue-600 bg-white border border-blue-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                    } else if (type.includes('ins')) {
+                        amtLabel = `<span class="text-sm font-black text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                    }
+                    
+                    html += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-2 flex justify-between items-center hover-scale cursor-pointer shadow-sm transition-all hover:bg-slate-100" onclick="showClientFullInfo('${m}')">
                         <div>
                             <p class="text-xs font-black text-slate-800">${c.name}</p>
                             <p class="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-widest">${c.id} | ${m}</p>
+                            <p class="text-[9px] text-indigo-600 font-black mt-1 uppercase bg-indigo-100 px-2 py-0.5 rounded-md inline-block border border-indigo-200 shadow-sm">${c.branch} / ${c.center}</p>
                         </div>
-                        <span class="text-sm font-black text-rose-600 bg-white border border-rose-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount}</span>
+                        ${amtLabel}
                     </div>`;
                 }
             });
 
-            if(!html) html = `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed"><p class="text-2xl mb-2">📊</p><p class="text-[9px] text-slate-400 font-bold uppercase">No records found for today.</p></div>`;
+            if(!html) html = `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed"><p class="text-2xl mb-2">📊</p><p class="text-[9px] text-slate-400 font-bold uppercase">No records found for this category.</p></div>`;
 
             let wrapper = `
                 <div class="mb-4 border-b border-slate-100 pb-3 flex justify-between items-center">
