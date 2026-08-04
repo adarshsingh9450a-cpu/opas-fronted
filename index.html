@@ -131,7 +131,7 @@
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-amber-400 mt-4 hidden transition-colors"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">🔄</span> Renew Client</button>
                 
-                <button onclick="routePanelSection('admin-edit')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit/Delete Data</button>
+                <button onclick="routePanelSection('admin-edit')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit Data</button>
                 <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border border-blue-900/30 hidden transition-colors"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
                 <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 hidden transition-colors"><span class="text-lg mr-2">⚙️</span> Setup Nodes & Plans</button>
                 
@@ -226,8 +226,12 @@
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
                     <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <input type="text" id="report-name-search" onkeyup="renderClientDirectory()" placeholder="🔍 Search by Name or ID..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
                         <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none transition-all focus:border-blue-300"><option value="total">Total Active</option><option value="pending">Pending Approvals ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
-                        <select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-4 mt-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="report-branch-filter" onchange="syncReportDropdowns(); renderClientDirectory()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                            <select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                        </div>
                     </div>
                     <div class="flex justify-between items-center px-1"><span class="text-[10px] font-black uppercase text-slate-500">Results</span><span class="text-[10px] font-black bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg shadow-sm" id="report-count-badge">0 Found</span></div>
                     <div id="client-directory-list-zone" class="space-y-4 max-h-[50vh] overflow-y-auto pr-1"></div>
@@ -279,7 +283,7 @@
                             <p class="text-[8px] font-bold text-amber-600 ml-1 leading-tight">Purane system ka loan add karne ke liye Original Disbursal Date aur Jama EMIs type karein. Naye loan ke liye ise khali chhod dein.</p>
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="date" id="new-cust-backdate" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none text-slate-700">
-                                <input type="number" id="new-cust-paid-emis" placeholder="EMIs Already Paid" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                                <input type="number" id="new-cust-paid-emis" placeholder="Kitni Kist Jama Hai (e.g. 2, 5)" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
                                 <input type="number" id="new-cust-historic-od" placeholder="Existing Overdue ₹ (If any)" class="col-span-2 w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
                             </div>
                         </div>
@@ -338,9 +342,16 @@
             <div id="view-node-admin-edit" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
+                    <div class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
+                        <input type="text" id="admin-edit-search" onkeyup="syncAdminEditDropdown()" placeholder="🔍 Search Client Name..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none">
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="admin-edit-branch" onchange="syncAdminEditCentre(); syncAdminEditDropdown()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                            <select id="admin-edit-centre" onchange="syncAdminEditDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="ALL">-- All Centres --</option></select>
+                        </div>
+                    </div>
                     <select id="admin-edit-client-select" onchange="loadClientForEdit()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                     
-                    <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade">
+                    <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade mt-4">
                         <input type="text" id="edit-cust-name" placeholder="Client Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold">
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Outstanding</label><input type="number" id="edit-cust-outstanding" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
@@ -350,11 +361,11 @@
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Active EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Next Due Date (DD-MM-YYYY)</label><input type="text" id="edit-cust-due-date" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold" placeholder="e.g. 25-06-2026"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Insurance Charged Fee</label><input type="number" id="edit-cust-insurance" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
-                            <div class="col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option><option value="Requested">Requested (New Form)</option><option value="Deleted">Deleted (Archived)</option></select></div>
+                            <div id="edit-status-container" class="col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option><option value="Requested">Requested (New Form)</option><option value="Deleted">Deleted (Archived)</option></select></div>
                         </div>
                         <div class="flex gap-2 pt-4 border-t border-slate-100">
                             <button onclick="saveClientEdits()" class="btn-fluid flex-1 bg-slate-900 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md">Save Changes</button>
-                            <button onclick="deleteClientRecord()" class="btn-fluid w-16 bg-rose-100 text-rose-600 font-black py-4 rounded-xl text-lg shadow-sm">🗑</button>
+                            <button id="edit-delete-btn" onclick="deleteClientRecord()" class="btn-fluid w-16 bg-rose-100 text-rose-600 font-black py-4 rounded-xl text-lg shadow-sm">🗑</button>
                         </div>
                     </div>
                 </div>
@@ -817,7 +828,8 @@
                     
                     if (role === 'customer') {
                         currentlyLoggedInMobile = id;
-                        if (!serverDb[id]) { 
+                        // BUG FIX: Auto-Login me bhi Rejected/Deleted accounts ko fresh application page par bhejo
+                        if (!serverDb[id] || serverDb[id].status === 'Rejected' || serverDb[id].status === 'Deleted') { 
                             let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = id; 
                             showDashboard('customer'); routePanelSection('cust-apply'); 
                         } else if (serverDb[id].status === 'Requested' || serverDb[id].status === 'Pending Approval') { 
@@ -947,15 +959,27 @@
             document.getElementById('print-receipt-template').classList.remove('hidden');
             setHtmlSafe('lbl-r-name', u.name);
             setHtmlSafe('lbl-r-id', u.id);
-            setHtmlSafe('lbl-r-date', formatSysDate(new Date()));
             
-            // Fix: Print the ACTUAL amount from the customer's last transaction so advances/shortfalls print the correct legal receipt
             let paidAmt = 0;
-            if (u.transactions && u.transactions.length > 0) {
-                paidAmt = u.transactions[u.transactions.length - 1].amount;
-            } else {
-                paidAmt = u.emiSettled === 'online_paid' ? Math.min(u.outstanding || 0, u.cycleEmi || 0) : (u.cycleEmi || 0);
+            let receiptDate = formatSysDate(new Date());
+
+            // BUG FIX: Agar Day-End run nahi hua hai, to active pending amount ka fresh receipt dikhayein
+            if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') {
+                paidAmt = u.emiSettled === 'online_paid' 
+                    ? Math.min((u.outstanding || 0) + (u.overdue || 0), (u.cycleEmi || 0) + (u.overdue || 0))
+                    : Math.min((u.outstanding || 0) + (u.overdue || 0), u.cycleEmi || 0);
+            } else if (u.advancePaid > 0) {
+                paidAmt = u.advancePaid;
+            } else if (u.transactions && u.transactions.length > 0) {
+                // Agar pending kuch nahi hai, to sabse aakhri valid transaction uthayein
+                let lastValidTx = u.transactions.slice().reverse().find(t => ['Received', 'Online App', 'Advance', 'Direct Settle', 'Old System Import (Paid)'].includes(t.type));
+                if (lastValidTx) {
+                    paidAmt = lastValidTx.amount;
+                    receiptDate = lastValidTx.date;
+                }
             }
+            
+            setHtmlSafe('lbl-r-date', receiptDate);
             setHtmlSafe('lbl-r-amt', `₹${paidAmt}`);
             window.print();
         }
@@ -1211,14 +1235,58 @@
             } 
         }
 
+        function syncAdminEditCentre() {
+            const branchFilter = document.getElementById('admin-edit-branch').value;
+            const centreDropdown = document.getElementById('admin-edit-centre');
+            let opts = '<option value="ALL">-- All Centres --</option>';
+            centreList.forEach(c => { 
+                if (branchFilter === "ALL" || c.branch === branchFilter) {
+                    opts += `<option value="${c.name}">${c.name}</option>`; 
+                }
+            });
+            if(centreDropdown) centreDropdown.innerHTML = opts;
+        }
+
         function syncAdminEditDropdown() {
             try {
-                const sel = document.getElementById('admin-edit-client-select'); let opts = `<option value="">-- Select Client --</option>`;
+                const branchDropdown = document.getElementById('admin-edit-branch');
+                if (currentLoggedInRole === 'head') {
+                    branchDropdown.classList.remove('hidden');
+                    if (branchDropdown.options.length <= 1) {
+                        let bOpts = `<option value="ALL">-- All Branches --</option>`;
+                        branchList.forEach(b => { bOpts += `<option value="${b}">${b}</option>`; });
+                        branchDropdown.innerHTML = bOpts;
+                        syncAdminEditCentre();
+                    }
+                } else {
+                    branchDropdown.classList.add('hidden');
+                    // BUG FIX: Staff ke liye option pehle create karein warna filter blank aayega
+                    let staffBranch = getSafeValue('dashboard-active-branch-select');
+                    if (branchDropdown.innerHTML === "") branchDropdown.innerHTML = `<option value="${staffBranch}">${staffBranch}</option>`;
+                    branchDropdown.value = staffBranch; 
+                    if (document.getElementById('admin-edit-centre').options.length <= 1) syncAdminEditCentre();
+                }
+
+                const sel = document.getElementById('admin-edit-client-select'); 
+                let opts = `<option value="">-- Select Client --</option>`;
+                const searchQ = getSafeValue('admin-edit-search').toLowerCase();
+                const activeBranch = branchDropdown.value;
+                const activeCentre = getSafeValue('admin-edit-centre');
+
                 Object.keys(serverDb).forEach(m => { 
                     if(m === "SYSTEM_SETTINGS") return;
-                    let c = serverDb[m]; if(!c) return; opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
+                    let c = serverDb[m]; if(!c) return; 
+                    
+                    if (activeBranch !== "ALL" && c.branch !== activeBranch) return;
+                    if (activeCentre !== "ALL" && c.center !== activeCentre) return;
+                    // BUG FIX: Mobile Number 'm' ko bhi search criteria mein add kiya hai
+                    if (searchQ && !(c.name && c.name.toLowerCase().includes(searchQ)) && !(c.id && c.id.toLowerCase().includes(searchQ)) && !m.includes(searchQ)) return;
+
+                    opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
                 });
-                if(sel) sel.innerHTML = opts; document.getElementById('admin-edit-form-block')?.classList.add('hidden');
+                
+                if(sel) sel.innerHTML = opts; 
+                document.getElementById('admin-edit-form-block')?.classList.add('hidden');
             } catch(e) {}
         }
         function syncKycCentreDropdown() {
@@ -1270,7 +1338,9 @@
             if(!m || !serverDb[m]) { box.classList.add('hidden'); return; }
             setHtmlSafe('lbl-s-id', serverDb[m].id);
             setHtmlSafe('lbl-s-plan', serverDb[m].planName);
-            setHtmlSafe('lbl-s-outstanding', `₹${serverDb[m].outstanding}`);
+            // BUG FIX: Total Payable mein Overdue aur Outstanding dono jod kar dikhayein
+            let totalSettleAmt = (serverDb[m].outstanding || 0) + (serverDb[m].overdue || 0);
+            setHtmlSafe('lbl-s-outstanding', `₹${totalSettleAmt}`);
             box.classList.remove('hidden');
         }
 
@@ -1321,8 +1391,23 @@
             try {
                 const m = getSafeValue('admin-edit-client-select'); const b = document.getElementById('admin-edit-form-block');
                 if(!m) { b?.classList.add('hidden'); return; } let c = serverDb[m];
-                document.getElementById('edit-cust-name').value = c.name||""; document.getElementById('edit-cust-outstanding').value = c.outstanding||0; document.getElementById('edit-cust-emi').value = c.cycleEmi||0; document.getElementById('edit-cust-od').value = c.overdue||0; document.getElementById('edit-cust-status').value = c.status||"Active"; document.getElementById('edit-cust-due-date').value = c.nextEmiDate||"N/A";
-                document.getElementById('edit-cust-insurance').value = c.insuranceAmt || 0; // Fix: Load insurance into editor
+                
+                document.getElementById('edit-cust-name').value = c.name||""; 
+                document.getElementById('edit-cust-outstanding').value = c.outstanding||0; 
+                document.getElementById('edit-cust-emi').value = c.cycleEmi||0; 
+                document.getElementById('edit-cust-od').value = c.overdue||0; 
+                document.getElementById('edit-cust-status').value = c.status||"Active"; 
+                document.getElementById('edit-cust-due-date').value = c.nextEmiDate||"N/A";
+                document.getElementById('edit-cust-insurance').value = c.insuranceAmt || 0; 
+                
+                if (currentLoggedInRole === 'staff') {
+                    document.getElementById('edit-status-container').classList.add('hidden');
+                    document.getElementById('edit-delete-btn').classList.add('hidden');
+                } else {
+                    document.getElementById('edit-status-container').classList.remove('hidden');
+                    document.getElementById('edit-delete-btn').classList.remove('hidden');
+                }
+
                 b?.classList.remove('hidden');
             } catch(e) {}
         }
@@ -1586,42 +1671,67 @@
 
         function syncReportDropdowns() {
             try {
-                const activeBranch = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (document.getElementById('dashboard-active-branch-select')?.value || "ALL");
-                let opts = `<option value="">-- Target Centre --</option>`; 
+                const branchFilter = document.getElementById('report-branch-filter');
+                const centreFilter = document.getElementById('report-centre-filter');
+                
+                if (currentLoggedInRole === 'head') {
+                    branchFilter.classList.remove('hidden');
+                    let bOpts = `<option value="ALL">-- All Branches --</option>`;
+                    branchList.forEach(b => { bOpts += `<option value="${b}">${b}</option>`; });
+                    if(branchFilter.innerHTML === "") branchFilter.innerHTML = bOpts;
+                } else {
+                    branchFilter.classList.add('hidden');
+                }
+
+                const activeBranch = currentLoggedInRole === 'head' ? (branchFilter.value || "ALL") : getSafeValue('dashboard-active-branch-select');
+                let opts = `<option value="ALL">-- All Centres --</option>`; 
                 centreList.forEach(c => { 
                     if (activeBranch === "ALL" || c.branch === activeBranch) {
                         opts += `<option value="${c.name}">${c.name} (${c.branch})</option>`; 
                     }
                 });
-                let cs = document.getElementById('report-centre-filter'); if(cs) cs.innerHTML = opts;
+                if(centreFilter) centreFilter.innerHTML = opts;
             } catch(e) {}
         }
 
         function renderClientDirectory() {
             try {
-                const rt = getSafeValue('report-type-filter'); const cf = document.getElementById('report-centre-filter'); const lz = document.getElementById('client-directory-list-zone');
-                if(rt === 'centre') { if(cf) cf.classList.remove('hidden'); } else { if(cf) cf.classList.add('hidden'); }
+                const rt = getSafeValue('report-type-filter'); 
+                const cf = document.getElementById('report-centre-filter'); 
+                const bf = document.getElementById('report-branch-filter');
+                const lz = document.getElementById('client-directory-list-zone');
+                const searchQ = getSafeValue('report-name-search').toLowerCase();
+
+                if(rt === 'centre') { 
+                    if(cf) cf.classList.remove('hidden'); 
+                    if(currentLoggedInRole === 'head' && bf) bf.classList.remove('hidden');
+                } else { 
+                    if(cf) cf.classList.add('hidden'); 
+                    if(bf) bf.classList.add('hidden');
+                }
                 
-                let html = ''; let count = 0; const sc = cf ? cf.value : "";
-                const activeStaffBranch = currentLoggedInRole === 'staff' ? getSafeValue('dashboard-active-branch-select') : "ALL";
+                let html = ''; let count = 0; 
+                const sc = cf ? cf.value : "ALL";
+                const sb = bf ? bf.value : "ALL";
+                const activeStaffBranch = getSafeValue('dashboard-active-branch-select');
 
                 Object.keys(serverDb).forEach(mobile => {
                     if (mobile === "SYSTEM_SETTINGS") return;
-                    let c = serverDb[mobile]; 
-                    if (!c) return; // 🛡️ TITANIUM SHIELD
+                    let c = serverDb[mobile]; if (!c) return; 
                     
                     if (currentLoggedInRole === 'staff' && c.branch !== activeStaffBranch) return;
-                    if (currentLoggedInRole === 'head') {
-                        const hBranch = getSafeValue('head-analytics-branch-selector');
-                        if (hBranch !== "ALL" && c.branch !== hBranch) return;
-                    }
+                    if (currentLoggedInRole === 'head' && rt === 'centre' && sb !== "ALL" && c.branch !== sb) return;
+                    if (rt === 'centre' && sc !== "ALL" && c.center !== sc) return;
+
+                    // BUG FIX: Name / ID / Mobile Search Logic
+                    if (searchQ && !(c.name && c.name.toLowerCase().includes(searchQ)) && !(c.id && c.id.toLowerCase().includes(searchQ)) && !mobile.includes(searchQ)) return;
 
                     let match = false;
                     if (rt === 'total' && c.status === "Active") match = true; 
                     else if (rt === 'pending' && c.status === "Pending Approval") match = true; 
                     else if (rt === 'new' && c.isFirstLoan && c.status === "Active") match = true; 
                     else if (rt === 'renewed' && c.isRenewed && c.status === "Active") match = true; 
-                    else if (rt === 'centre' && c.center === sc && c.status === "Active") match = true;
+                    else if (rt === 'centre' && c.status === "Active") match = true;
                     else if (rt === 'closed' && c.status === "Deactive") match = true;
 
                     if(match) {
@@ -1644,8 +1754,7 @@
                     }
                 });
 
-                if(rt === 'centre' && !sc) { if(lz) lz.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">Select Centre.</p>`; } 
-                else { if(lz) lz.innerHTML = html || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No clients found.</p>`; }
+                if(lz) lz.innerHTML = html || `<p class="text-xs text-slate-400 text-center py-6 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No clients found.</p>`;
                 setHtmlSafe('report-count-badge', `${count} Found`);
             } catch(e) {}
         }
@@ -1926,13 +2035,13 @@
                     });
                 }
 
-                let isFirst = pastLoans.length === 0;
-
                 // === BACKDATE LOGIC PROCESSING ===
                 let backdateVal = getSafeValue('new-cust-backdate');
-                // FIX 2A: Math.max ensures no negative values can be injected by staff
                 let paidEmisVal = Math.max(0, parseInt(getSafeValue('new-cust-paid-emis')) || 0);
                 let historicOverdue = Math.max(0, parseInt(getSafeValue('new-cust-historic-od')) || 0);
+
+                // BUG FIX: Imported loan ko dashboard par "New Loan" na maane
+                let isFirst = pastLoans.length === 0 && paidEmisVal === 0 && !backdateVal && historicOverdue === 0;
                 
                 let actualOutstanding = metrics.totalPayable;
                 let actualEmisPaid = 0;
@@ -1959,21 +2068,27 @@
                 let customAppDate = "N/A";
                 let customNextEmi = "N/A";
                 
-                if (backdateVal) {
-                    // FIX: Prevent Javascript Timezone offset bugs by parsing YYYY-MM-DD manually
-                    let bp = backdateVal.split('-');
-                    let bd = new Date(parseInt(bp[0]), parseInt(bp[1])-1, parseInt(bp[2]), 0, 0, 0);
+                // BUG FIX: Agar date khali chhod di par Kist/Overdue jama hai, to auto past-date banayein
+                if (backdateVal || actualEmisPaid > 0 || historicOverdue > 0) {
+                    let bd;
+                    if (backdateVal) {
+                        let bp = backdateVal.split('-');
+                        bd = new Date(parseInt(bp[0]), parseInt(bp[1])-1, parseInt(bp[2]), 0, 0, 0);
+                    } else {
+                        bd = new Date();
+                        let daysToSubtract = metrics.cycleType === 'daily' ? actualEmisPaid : (actualEmisPaid * 7);
+                        bd.setDate(bd.getDate() - daysToSubtract);
+                    }
                     customAppDate = formatSysDate(bd);
-                    // Accurately jump forward in time to setup the next correct due date
-                    let nextEmiObj = new Date(parseInt(bp[0]), parseInt(bp[1])-1, parseInt(bp[2]), 0, 0, 0);
+                    
+                    let nextEmiObj = new Date(bd);
                     let daysToAdd = metrics.cycleType === 'daily' ? (actualEmisPaid + 1) : ((actualEmisPaid + 1) * 7);
                     nextEmiObj.setDate(nextEmiObj.getDate() + daysToAdd);
                     
-                    // Time-Loop Catch-Up Fix: If the calculated next EMI is far in the past, snap it to today so the ledger doesn't lag for months.
                     let todayCheck = new Date();
                     todayCheck.setHours(0,0,0,0);
                     if (nextEmiObj < todayCheck) {
-                        nextEmiObj = new Date(todayCheck); // Snap to today
+                        nextEmiObj = new Date(todayCheck); 
                     }
                     customNextEmi = formatSysDate(nextEmiObj);
                 }
@@ -2069,6 +2184,77 @@
             renderStaffLedgerSheets();
         }
 
+        // NAYA FUNCTION: QR Code Selection (Overdue vs Regular EMI)
+        function openQrSelectionModal(mobile, emiAmt, overdueAmt, name) {
+            let totalAmt = emiAmt + overdueAmt;
+            let html = `<div class="text-center p-4">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl">📱</div>
+                <h3 class="text-lg font-black text-slate-900 uppercase mb-1">Select Payment Type</h3>
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">${name} | ID: ${mobile}</p>
+                <div class="space-y-3">`;
+
+            if (overdueAmt > 0) {
+                html += `
+                <button onclick="showUpiQrCode('${mobile}', ${overdueAmt}, '${name}', 'OVERDUE CLEARANCE')" class="btn-fluid w-full bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-black py-4 rounded-xl text-xs uppercase shadow-sm transition-colors">
+                    1. Pay Only Overdue (₹${overdueAmt})
+                </button>
+                <button onclick="showUpiQrCode('${mobile}', ${totalAmt}, '${name}', 'TOTAL DUE (EMI + Overdue)')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
+                    2. Pay Total Amount (₹${totalAmt})
+                </button>`;
+            } else {
+                html += `
+                <button onclick="showUpiQrCode('${mobile}', ${emiAmt}, '${name}', 'REGULAR EMI')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
+                    Generate EMI QR (₹${emiAmt})
+                </button>`;
+            }
+
+            html += `</div>
+                <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase mt-4 transition-colors">Cancel</button>
+            </div>`;
+            
+            openGlobalModal(html);
+        }
+
+        // NAYA FUNCTION: Original Working Locked UPI QR Code
+        function showUpiQrCode(mobile, amount, name, type) {
+            // 🔥 WARNING: YAHAN APNI COMPANY KI ASLI UPI ID DAALEN (e.g., 9876543210@ybl, opas@sbi)
+            let companyUpi = "adarshsingh9450a@oksbi";
+            
+            // Standard UPI Deep Link (Locked Amount & Locked Account)
+            let upiLink = `upi://pay?pa=${companyUpi}&pn=OPAS+MICROFINANCE+PVT+LTD&am=${amount}&cu=INR&tn=${encodeURIComponent(type + " - " + mobile)}`;
+            
+            // Real-time High Quality QR Generate
+            let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+            
+            let isOverdue = type.includes('OVERDUE');
+            let color = isOverdue ? 'text-rose-600' : 'text-indigo-600';
+            let bg = isOverdue ? 'bg-rose-50' : 'bg-indigo-50';
+            let border = isOverdue ? 'border-rose-200' : 'border-indigo-200';
+            
+            let html = `
+                <div class="text-center p-2">
+                    <div class="w-12 h-12 ${bg} ${color} rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale">📱</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase mb-1">Scan to Pay</h3>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">${name} | ID: ${mobile}</p>
+                    <span class="text-[9px] font-black px-3 py-1 bg-slate-900 text-white rounded-md uppercase tracking-widest mb-4 inline-block shadow-sm">${type}</span>
+                    
+                    <div class="bg-white p-4 rounded-[2rem] shadow-lg border border-slate-100 inline-block mb-4 relative overflow-hidden">
+                        <div class="absolute inset-0 ${bg}/50 animate-pulse"></div>
+                        <img src="${qrUrl}" alt="UPI QR" class="w-48 h-48 mx-auto relative z-10 mix-blend-multiply">
+                    </div>
+                    
+                    <div class="${bg} border ${border} p-4 rounded-2xl mb-4 hover-scale">
+                        <p class="text-[9px] font-black ${color} uppercase tracking-widest mb-1">Locked Amount</p>
+                        <p class="text-4xl font-black ${color}">₹${amount}</p>
+                    </div>
+                    
+                    <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close QR Scanner</button>
+                    <p class="text-[8px] font-bold text-slate-400 mt-3 uppercase tracking-widest">Payment aane par Ledger se 'Received' dabayein</p>
+                </div>
+            `;
+            openGlobalModal(html);
+        }
+
         function renderStaffLedgerSheets() {
             try {
                 const con = document.getElementById('staff-cycle-list-zone'); const bf = getSafeValue('ledger-active-branch-select'); 
@@ -2099,8 +2285,20 @@
 
                         let aB = '';
                         let btnState = a.advancePaid > 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''; // UI Lock
-                        if(a.emiSettled === 'online_paid') { aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; } 
-                        else { aB = `<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Bounced</button>`; }
+                        
+                        // Overdue aur Active EMI ko alag-alag calculate karein taaki user choose kar sake
+                        let activeEmiAmount = Math.min(a.outstanding || 0, a.cycleEmi || 0);
+                        let activeOverdueAmount = a.overdue || 0;
+                        
+                        // Naya Smart QR Button
+                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${a.name.replace(/'/g, "\\'")}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
+
+                        if(a.emiSettled === 'online_paid') { 
+                            aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; 
+                        } 
+                        else { 
+                            aB = `${qrBtn}<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Bounced</button>`; 
+                        }
 
                         // HYBRID UI BADGE
                         let hybridBadge = a.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mt-1 inline-block">Hybrid Mode</span>` : '';
@@ -2199,7 +2397,10 @@
                         }
                     } 
                     else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
-                        let paidAmt = Math.min((c.outstanding || 0) + (c.overdue || 0), c.cycleEmi || 0);
+                        // BUG FIX: Agar customer ne online pay kiya hai, toh usne EMI aur Overdue dono bhara hai.
+                        let paidAmt = c.emiSettled === 'online_paid' 
+                            ? Math.min((c.outstanding || 0) + (c.overdue || 0), (c.cycleEmi || 0) + (c.overdue || 0)) 
+                            : Math.min((c.outstanding || 0) + (c.overdue || 0), c.cycleEmi || 0);
                         
                         // Pehle overdue clear karein
                         let overdueToClear = Math.min(c.overdue || 0, paidAmt);
@@ -2444,10 +2645,18 @@
                         await loadDataFromCloud();
                         currentlyLoggedInMobile = m;
                         setAuthSession('customer', m); // NEW: Save device session
-                        if (!serverDb[m]) { let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; showDashboard('customer'); routePanelSection('cust-apply'); }
-                        else if (serverDb[m].status === 'Requested') { showDashboard('customer'); routePanelSection('cust-pending'); } 
-                        else if (serverDb[m].status === 'Pending Approval') { showDashboard('customer'); routePanelSection('cust-pending'); }
-                        else { showDashboard('customer'); }
+                        
+                        // BUG FIX: Agar account nahi hai, ya pehle kabhi Reject/Delete ho gaya tha, toh usko Naya Form do.
+                        if (!serverDb[m] || serverDb[m].status === 'Rejected' || serverDb[m].status === 'Deleted') { 
+                            let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; 
+                            showDashboard('customer'); routePanelSection('cust-apply'); 
+                        }
+                        else if (serverDb[m].status === 'Requested' || serverDb[m].status === 'Pending Approval') { 
+                            showDashboard('customer'); routePanelSection('cust-pending'); 
+                        } 
+                        else { 
+                            showDashboard('customer'); 
+                        }
                         btn.innerText = "Verify & Access";
                     } else { alert('Galat OTP!'); }
                 }
