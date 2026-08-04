@@ -166,12 +166,39 @@
                                 <label class="text-[9px] font-black text-purple-300 uppercase ml-1">Head Branch Filter:</label>
                                 <select id="head-analytics-branch-selector" onchange="refreshHeadDashboardStats()" class="py-1.5 px-2 bg-white/10 border border-white/20 rounded-lg text-xs font-bold text-white focus:outline-none"></select>
                             </div>
-                            <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Global Target View</p>
-                            <h3 class="text-4xl font-black mt-1" id="head-total-outstanding">₹0</h3>
-                            <p class="text-[9px] text-purple-300 font-bold uppercase mt-1">Total Loan Outstanding</p>
-                            <div class="grid grid-cols-2 gap-4 pt-5 border-t border-white/10 mt-4 text-xs">
-                                <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Active Clients</p><p class="text-xl font-black text-emerald-400" id="head-total-clients">0</p></div>
-                                <div><p class="text-slate-400 font-bold uppercase text-[8px] mb-1" id="lbl-dash-profit">Monthly Profit Generable</p><p class="text-xl font-black text-white" id="head-profit-view">₹0</p></div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Total Active Outstanding</p>
+                                    <h3 class="text-4xl font-black mt-1 text-white" id="head-total-outstanding">₹0</h3>
+                                    <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1 bg-emerald-400/10 px-2 py-1 rounded-md inline-block shadow-inner" id="head-monthly-profit">Projected Monthly Profit: ₹0</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] text-purple-300 font-black uppercase mb-1">Net Cashflow (Today)</p>
+                                    <h3 class="text-2xl font-black mt-1 text-blue-300" id="head-net-cashflow">₹0</h3>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 pt-5 border-t border-white/10 mt-4 text-xs">
+                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Capital in Field (Mool)</p>
+                                    <p class="text-lg font-black text-white" id="head-capital-deployed">₹0</p>
+                                </div>
+                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Active Portfolio Risk (PAR)</p>
+                                    <p class="text-lg font-black text-rose-400" id="head-par-percentage">0%</p>
+                                </div>
+                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Total NPA (Overdue)</p>
+                                    <p class="text-lg font-black text-rose-400" id="head-total-npa">₹0</p>
+                                </div>
+                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Collection Efficiency</p>
+                                    <p class="text-lg font-black text-emerald-400" id="head-collection-efficiency">0%</p>
+                                </div>
+                                <div class="col-span-2 bg-white/10 p-3 rounded-xl flex justify-between items-center border border-white/20 mt-1">
+                                    <span class="text-slate-300 font-bold text-[9px] uppercase">Total Active Clients:</span>
+                                    <span class="font-black text-white text-lg" id="head-total-clients">0</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -207,6 +234,9 @@
                     <div onclick="showDashboardList('today-bounce')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Today's Bounced EMI</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-bounce-today">₹0</div></div>
                     <div onclick="showDashboardList('total-risk')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
 
+                    <!-- Naya Unmarked Actions Block -->
+                    <div onclick="showDashboardList('unmarked')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Pending Actions (Unmarked)</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-unmarked-today">₹0</div></div>
+
                     <div onclick="showDashboardList('active')" id="dash-active-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale cursor-pointer"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
                     <div onclick="showDashboardList('deactive')" id="dash-closed-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale cursor-pointer"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
                     
@@ -226,7 +256,7 @@
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
                     <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                        <input type="text" id="report-name-search" onkeyup="renderClientDirectory()" placeholder="🔍 Search by Name or ID..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
+                        <input type="text" id="report-name-search" oninput="renderClientDirectory()" placeholder="🔍 Live Search Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
                         <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none transition-all focus:border-blue-300"><option value="total">Total Active</option><option value="pending">Pending Approvals ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
                         <div class="grid grid-cols-2 gap-2">
                             <select id="report-branch-filter" onchange="syncReportDropdowns(); renderClientDirectory()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
@@ -242,6 +272,9 @@
                 <div class="glass-card p-5 rounded-[2rem] space-y-5">
                     <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
                     <div class="flex justify-between items-center"><span class="text-xs font-black uppercase text-slate-800">Sheets</span><div class="flex gap-1 bg-slate-100 p-1.5 rounded-lg border border-slate-200"><button onclick="switchStaffTab('daily')" id="tab-daily" class="text-[10px] px-4 py-2 rounded-md font-black bg-white text-blue-600 shadow-sm transition-all">DAILY</button><button onclick="switchStaffTab('weekly')" id="tab-weekly" class="text-[10px] px-4 py-2 rounded-md font-bold text-slate-400 transition-all">WEEKLY</button></div></div>
+                    
+                    <input type="text" id="ledger-search" oninput="renderStaffLedgerSheets()" placeholder="🔍 Search in Ledger..." class="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
+                    
                     <div class="space-y-4 max-h-[55vh] overflow-y-auto pr-1" id="staff-cycle-list-zone"></div>
                     <button onclick="uploadDayEndReport()" id="upload-day-btn" class="btn-fluid w-full bg-slate-200 text-slate-400 font-black py-4 rounded-xl text-[11px] uppercase tracking-widest cursor-not-allowed mt-2 border border-slate-300 transition-all" disabled>Upload Day-End 📤</button>
                 </div>
@@ -1560,8 +1593,29 @@
                             }
                         }
 
-                        if (f.status === "Active") { aC++; oT += (f.overdue||0); }
-                        if (f.status === "Deactive") deC++; 
+                        if (f.status === "Active") { 
+                            aC++; oT += (f.overdue||0); 
+                            
+                            // NAYA: Unmarked Clients Logic
+                            if (f.outstanding > 0 || f.overdue > 0) {
+                                let tDate = new Date(); tDate.setHours(0,0,0,0);
+                                let isDue = false;
+                                if(f.nextEmiDate && f.nextEmiDate !== "Completed" && f.nextEmiDate !== "N/A") {
+                                    let eDate = parseSysDate(f.nextEmiDate);
+                                    if(tDate >= eDate) isDue = true;
+                                } else if (!f.nextEmiDate || f.nextEmiDate === "N/A") {
+                                    isDue = true; 
+                                }
+                                let hasTxToday = f.transactions && f.transactions.some(tx => tx.date === todayStr);
+                                
+                                // Condition: Aaj EMI Due thi (ya overdue thi) par staff ne button touch nahi kiya
+                                if ((isDue || f.overdue > 0) && !f.emiSettled && !f.advancePaid && !hasTxToday) {
+                                    if(typeof unmarkedAmt === 'undefined') window.unmarkedAmt = 0; // global init for loop safety
+                                    window.unmarkedAmt += Math.min(f.outstanding || 0, f.cycleEmi || 0) + (f.overdue || 0);
+                                }
+                            }
+                        }
+                        if (f.status === "Deactive") deC++;
                         
                         if (appDateMonth === selectedMonthVal) {
                             if (f.isFirstLoan && f.isApproved) nC++; 
@@ -1583,16 +1637,88 @@
 
                 if(currentLoggedInRole === 'head') {
                     let totalOut = 0;
+                    let capitalDeployed = 0;
+                    let totalNpa = 0;
+                    let expectedToday = 0;
+                    let realMonthlyProfit = 0;
+                    
+                    let todayCheck = new Date(); 
+                    todayCheck.setHours(0,0,0,0);
+                    let todayStr = formatSysDate(new Date());
+                    
+                    let headCollectedToday = 0;
+                    let headDisbursedToday = 0;
+
                     Object.keys(serverDb).forEach(k => {
                         if (k === "SYSTEM_SETTINGS") return;
-                        if (!serverDb[k]) return;
-                        if(activeFilter === "ALL" || serverDb[k].branch === activeFilter) {
-                            if(serverDb[k].status === "Active") totalOut += (serverDb[k].outstanding || 0);
+                        let c = serverDb[k];
+                        if (!c) return;
+                        
+                        if(activeFilter === "ALL" || c.branch === activeFilter) {
+                            if(c.status === "Active") {
+                                totalOut += (c.outstanding || 0);
+                                totalNpa += (c.overdue || 0);
+                                
+                                // Exact Capital in Field (Mool)
+                                if(c.totalPayable > 0 && c.principal > 0) {
+                                    let remainingPrincipal = (c.outstanding / c.totalPayable) * c.principal;
+                                    capitalDeployed += remainingPrincipal;
+                                }
+
+                                // Monthly Profit Generable (Divided by days * 30)
+                                if(c.interestAmt > 0 && c.duration > 0) {
+                                    let dailyInterest = c.planType.includes('daily') ? (c.interestAmt / c.duration) : (c.interestAmt / (c.duration * 7));
+                                    realMonthlyProfit += (dailyInterest * 30);
+                                }
+
+                                // Expected Collection Today
+                                let isDueToday = false;
+                                if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                                    let emiDateObj = parseSysDate(c.nextEmiDate);
+                                    if(todayCheck >= emiDateObj) isDueToday = true;
+                                } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                                    isDueToday = true;
+                                }
+                                if (isDueToday || c.overdue > 0) {
+                                    expectedToday += Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
+                                }
+                            }
+                            
+                            // Cashflow Analytics (Today's ins and outs)
+                            if (c.approvalDate === todayStr && c.isApproved) {
+                                headDisbursedToday += (c.principal || 0);
+                            }
+                            if (c.transactions) {
+                                c.transactions.forEach(t => {
+                                    if (t.date === todayStr && (t.type === 'Received' || t.type === 'Online App' || t.type === 'Advance' || t.type === 'Direct Settle')) {
+                                        headCollectedToday += t.amount;
+                                    }
+                                });
+                            }
                         }
                     });
+
+                    let netCashflow = headCollectedToday - headDisbursedToday;
+                    let parPercentage = totalOut > 0 ? ((totalNpa / totalOut) * 100).toFixed(1) : 0;
+                    let collectionEfficiency = expectedToday > 0 ? ((headCollectedToday / expectedToday) * 100).toFixed(1) : (headCollectedToday > 0 ? 100 : 0);
+                    if(collectionEfficiency > 100) collectionEfficiency = 100; // Cap at 100%
+
                     setHtmlSafe('head-total-outstanding', `₹${totalOut.toLocaleString('en-IN')}`);
+                    setHtmlSafe('head-capital-deployed', `₹${Math.round(capitalDeployed).toLocaleString('en-IN')}`);
+                    setHtmlSafe('head-monthly-profit', `Projected Monthly Profit: ₹${Math.round(realMonthlyProfit).toLocaleString('en-IN')}`);
+                    
+                    let cashflowSign = netCashflow >= 0 ? "+" : "";
+                    let cashflowColor = netCashflow >= 0 ? "text-emerald-400" : "text-rose-400";
+                    let cashFlowElement = document.getElementById('head-net-cashflow');
+                    if(cashFlowElement) {
+                        cashFlowElement.innerText = `${cashflowSign}₹${Math.abs(netCashflow).toLocaleString('en-IN')}`;
+                        cashFlowElement.className = `text-2xl font-black mt-1 ${cashflowColor}`;
+                    }
+
+                    setHtmlSafe('head-par-percentage', `${parPercentage}%`);
+                    setHtmlSafe('head-total-npa', `₹${totalNpa.toLocaleString('en-IN')}`);
+                    setHtmlSafe('head-collection-efficiency', `${collectionEfficiency}%`);
                     setHtmlSafe('head-total-clients', cac);
-                    setHtmlSafe('head-profit-view', `₹${cp.toLocaleString('en-IN')}`);
                 }
 
                 setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); 
@@ -1605,6 +1731,7 @@
                 setHtmlSafe('head-month-settle', `₹${monthSettle.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-bounce-today', `₹${todayBounceAmt.toLocaleString('en-IN')}`);
+                setHtmlSafe('m-unmarked-today', `₹${(window.unmarkedAmt || 0).toLocaleString('en-IN')}`); window.unmarkedAmt = 0; // Resets for next time
                 setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
@@ -2262,6 +2389,7 @@
                 
                 let todayDateObj = new Date();
                 todayDateObj.setHours(0,0,0,0);
+                const searchQ = getSafeValue('ledger-search').toLowerCase(); // Ledger Search input read karega
 
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
@@ -2278,6 +2406,12 @@
 
                     // Fix: Clients with overdue must appear on ledger even if not their exact EMI day
                     if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0)) {
+                        
+                        // Live Ledger Search Logic Filter
+                        if (searchQ && !(a.name && a.name.toLowerCase().includes(searchQ)) && !(a.id && a.id.toLowerCase().includes(searchQ)) && !m.includes(searchQ)) {
+                            return; // Search match na hone par skip kar dega
+                        }
+
                         let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
                         if(a.emiSettled==='received') { bc = 'bg-emerald-100 text-emerald-800'; bt = 'Received'; }
                         if(a.emiSettled==='bounce') { bc = 'bg-rose-100 text-rose-800'; bt = 'Bounced'; }
@@ -2895,6 +3029,23 @@
                 } else if (type === 'renew-month') {
                     title = "Renewed Loans (Month)";
                     if(c.isApproved && c.isRenewed && appDateMonth === selectedMonthVal) { match = true; amount = c.principal; }
+                } else if (type === 'unmarked') {
+                    title = "Pending Actions (Unmarked Clients)";
+                    if (c.status === "Active" && (c.outstanding > 0 || c.overdue > 0)) {
+                        let tDate = new Date(); tDate.setHours(0,0,0,0);
+                        let isDue = false;
+                        if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                            let eDate = parseSysDate(c.nextEmiDate);
+                            if(tDate >= eDate) isDue = true;
+                        } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                            isDue = true; 
+                        }
+                        let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr);
+                        if ((isDue || c.overdue > 0) && !c.emiSettled && !c.advancePaid && !hasTxToday) {
+                            match = true; 
+                            amount = Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
+                        }
+                    }
                 }
 
                 if(match) {
@@ -2905,6 +3056,8 @@
                         amtLabel = `<span class="text-sm font-black text-emerald-600 bg-white border border-emerald-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     } else if (type.includes('collect') || type.includes('advance') || type.includes('settle')) {
                         amtLabel = `<span class="text-sm font-black text-blue-600 bg-white border border-blue-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                    } else if (type === 'unmarked') {
+                        amtLabel = `<span class="text-sm font-black text-amber-600 bg-white border border-amber-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     } else if (type.includes('ins')) {
                         amtLabel = `<span class="text-sm font-black text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     }
