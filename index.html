@@ -158,48 +158,59 @@
                     </div>
                 </div>
 
-                <div id="head-exclusive-stats" class="hidden glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up">
-                    <div class="bg-gradient-to-br from-purple-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-xl animate-pulse"></div>
-                        <div class="relative z-10">
-                            <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
-                                <label class="text-[9px] font-black text-purple-300 uppercase ml-1">Head Branch Filter:</label>
-                                <select id="head-analytics-branch-selector" onchange="refreshHeadDashboardStats()" class="py-1.5 px-2 bg-white/10 border border-white/20 rounded-lg text-xs font-bold text-white focus:outline-none"></select>
-                            </div>
-                            <div class="flex justify-between items-end">
+                <div id="head-exclusive-stats" class="hidden space-y-4 animate-slide-up mb-4">
+                    <!-- Top Controls & Clients -->
+                    <div class="glass-card p-4 rounded-3xl flex justify-between items-center shadow-sm hover-scale">
+                        <div class="flex-1 mr-4">
+                            <label class="text-[9px] font-black text-slate-500 uppercase ml-1 block mb-1">Branch Analytics Filter:</label>
+                            <select id="head-analytics-branch-selector" onchange="refreshHeadDashboardStats()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none"></select>
+                        </div>
+                        <div class="bg-blue-50 px-4 py-2 rounded-xl text-center border border-blue-100">
+                            <span class="text-blue-500 font-bold text-[8px] uppercase block">Total Clients</span>
+                            <span class="font-black text-blue-700 text-xl" id="head-total-clients">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Hero Metrics -->
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden hover-scale">
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
+                            <div class="relative z-10 flex justify-between items-end">
                                 <div>
-                                    <p class="text-[9px] text-purple-300 font-black uppercase mb-1" id="head-filter-title">Total Active Outstanding</p>
+                                    <p class="text-[10px] text-purple-300 font-black uppercase mb-1">Total Active Outstanding</p>
                                     <h3 class="text-4xl font-black mt-1 text-white" id="head-total-outstanding">₹0</h3>
-                                    <p class="text-[9px] text-emerald-400 font-bold uppercase mt-1 bg-emerald-400/10 px-2 py-1 rounded-md inline-block shadow-inner" id="head-monthly-profit">Projected Monthly Profit: ₹0</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-[9px] text-purple-300 font-black uppercase mb-1">Net Cashflow (Today)</p>
-                                    <h3 class="text-2xl font-black mt-1 text-blue-300" id="head-net-cashflow">₹0</h3>
+                                    <div class="mt-3 inline-block bg-white/10 border border-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                                        <p class="text-[9px] text-emerald-300 font-black uppercase" id="head-monthly-profit">Projected Monthly Profit: ₹0</p>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="grid grid-cols-2 gap-3 pt-5 border-t border-white/10 mt-4 text-xs">
-                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Capital in Field (Mool)</p>
-                                    <p class="text-lg font-black text-white" id="head-capital-deployed">₹0</p>
-                                </div>
-                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Active Portfolio Risk (PAR)</p>
-                                    <p class="text-lg font-black text-rose-400" id="head-par-percentage">0%</p>
-                                </div>
-                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Total NPA (Overdue)</p>
-                                    <p class="text-lg font-black text-rose-400" id="head-total-npa">₹0</p>
-                                </div>
-                                <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                                    <p class="text-slate-400 font-bold uppercase text-[8px] mb-1">Collection Efficiency</p>
-                                    <p class="text-lg font-black text-emerald-400" id="head-collection-efficiency">0%</p>
-                                </div>
-                                <div class="col-span-2 bg-white/10 p-3 rounded-xl flex justify-between items-center border border-white/20 mt-1">
-                                    <span class="text-slate-300 font-bold text-[9px] uppercase">Total Active Clients:</span>
-                                    <span class="font-black text-white text-lg" id="head-total-clients">0</span>
-                                </div>
+                        </div>
+                        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-3xl shadow-lg relative overflow-hidden hover-scale">
+                            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+                            <div class="relative z-10">
+                                <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Net Cashflow (Today)</p>
+                                <h3 class="text-3xl font-black mt-1" id="head-net-cashflow">₹0</h3>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Sub Metrics Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="glass-card p-4 rounded-3xl border-indigo-100 bg-indigo-50/30 text-center hover-scale">
+                            <p class="text-indigo-500 font-bold uppercase text-[9px] mb-1">Capital Deployed</p>
+                            <p class="text-lg font-black text-indigo-700" id="head-capital-deployed">₹0</p>
+                        </div>
+                        <div class="glass-card p-4 rounded-3xl border-emerald-100 bg-emerald-50/30 text-center hover-scale">
+                            <p class="text-emerald-600 font-bold uppercase text-[9px] mb-1">Collection Efficiency</p>
+                            <p class="text-lg font-black text-emerald-600" id="head-collection-efficiency">0%</p>
+                        </div>
+                        <div class="glass-card p-4 rounded-3xl border-rose-100 bg-rose-50/30 text-center hover-scale">
+                            <p class="text-rose-500 font-bold uppercase text-[9px] mb-1">Total NPA (Overdue)</p>
+                            <p class="text-lg font-black text-rose-600" id="head-total-npa">₹0</p>
+                        </div>
+                        <div class="glass-card p-4 rounded-3xl border-rose-100 bg-rose-50/30 text-center hover-scale">
+                            <p class="text-rose-500 font-bold uppercase text-[9px] mb-1">Portfolio Risk (PAR)</p>
+                            <p class="text-lg font-black text-rose-600" id="head-par-percentage">0%</p>
                         </div>
                     </div>
                 </div>
@@ -2345,7 +2356,7 @@
         // NAYA FUNCTION: Original Working Locked UPI QR Code
         function showUpiQrCode(mobile, amount, name, type) {
             // 🔥 WARNING: YAHAN APNI COMPANY KI ASLI UPI ID DAALEN (e.g., 9876543210@ybl, opas@sbi)
-            let companyUpi = "adarshsingh9450a@oksbi";
+            let companyUpi = "opasmicrofinancepvt@sbi";
             
             // Standard UPI Deep Link (Locked Amount & Locked Account)
             let upiLink = `upi://pay?pa=${companyUpi}&pn=OPAS+MICROFINANCE+PVT+LTD&am=${amount}&cu=INR&tn=${encodeURIComponent(type + " - " + mobile)}`;
@@ -2807,7 +2818,7 @@
                 await loadDataFromCloud();
                 btn.innerText = oldText;
 
-                if (u === 'head01' && p === 'head123') { 
+                if (u === 'head01' && p === 'Pass@1989') { 
                     currentLoggedInRole = 'head'; 
                     setAuthSession('head', u); // NEW: Save device session
                     showDashboard('head'); 
