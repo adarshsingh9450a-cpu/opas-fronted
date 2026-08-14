@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
     <title>OPAS MICRO FINANCE - Core Banking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <!-- 🌟 NAYA: Face API Integration for Biometrics -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         html, body { overscroll-behavior-y: contain !important; }
@@ -40,10 +42,68 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes faceScan { 0%, 100% { top: 0; opacity: 0; } 10% { opacity: 1; } 50% { top: 100%; opacity: 1; } 90% { opacity: 1; } }
         
         .btn-fluid { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); min-height: 50px; display: flex; align-items: center; justify-content: center; }
         .btn-fluid:active { transform: scale(0.95); }
-        .glass-card { background: rgba(255,255,255,0.98); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 8px 30px rgba(0,0,0,0.04); backdrop-filter: blur(10px); }
+        
+        /* 🌟 NAYA: 4D Premium Frosted Glass Effect */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(25px) saturate(200%); 
+            -webkit-backdrop-filter: blur(25px) saturate(200%); 
+            border: 1px solid rgba(255, 255, 255, 0.9); 
+            border-right-color: rgba(255, 255, 255, 0.3); 
+            border-bottom-color: rgba(255, 255, 255, 0.3); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05), inset 0 2px 5px rgba(255,255,255,1); 
+            transform-style: preserve-3d; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .hover-scale:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15), inset 0 2px 5px rgba(255,255,255,1); 
+        }
+
+        /* 🌟 NAYA: AI ChatGPT/Gemini Style Morphing Orb */
+        .ai-orb-wrapper { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .ai-orb { 
+            width: 100%; height: 100%; border-radius: 50%; 
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); 
+            background-size: 200% 200%; 
+            animation: orb-idle 4s infinite alternate, bg-shift 3s infinite linear; 
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5), inset 0 0 15px rgba(255,255,255,0.8); 
+            z-index: 3; cursor: pointer; transition: all 0.5s ease;
+        }
+        .ai-wave { 
+            position: absolute; inset: 0; border-radius: 50%; 
+            background: rgba(6, 182, 212, 0.3); z-index: 1; 
+            animation: pulse-wave 2.5s infinite cubic-bezier(0.25, 0.8, 0.25, 1); 
+        }
+        
+        /* Orb States: Listening (Red/Orange) & Speaking (Purple/Pink) */
+        .ai-is-listening .ai-orb { background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); box-shadow: 0 0 30px rgba(239, 68, 68, 0.7); animation: orb-listen 0.6s infinite alternate, bg-shift 1s infinite linear; }
+        .ai-is-listening .ai-wave { background: rgba(239, 68, 68, 0.4); animation: pulse-wave 1s infinite ease-out; }
+        
+        .ai-is-speaking .ai-orb { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); animation: orb-speak 1.5s infinite alternate, bg-shift 2s infinite linear; }
+        .ai-is-speaking .ai-wave { background: rgba(139, 92, 246, 0.4); animation: pulse-wave 1.5s infinite ease-out; }
+
+        @keyframes orb-idle {
+            0% { border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; transform: scale(1); }
+            50% { border-radius: 60% 40% 50% 50% / 50% 50% 70% 30%; transform: scale(1.05); }
+            100% { border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%; transform: scale(1); }
+        }
+        @keyframes orb-listen {
+            0% { border-radius: 30% 70% 50% 50% / 30% 30% 70% 70%; transform: scale(0.9); }
+            100% { border-radius: 60% 40% 30% 70% / 60% 60% 40% 40%; transform: scale(1.1); }
+        }
+        @keyframes orb-speak {
+            0% { border-radius: 50% 50% 60% 40% / 40% 60% 50% 50%; transform: scale(1) translateY(0); }
+            50% { border-radius: 30% 70% 40% 60% / 60% 40% 70% 30%; transform: scale(1.2) translateY(-2px); }
+            100% { border-radius: 70% 30% 60% 40% / 40% 60% 40% 60%; transform: scale(1) translateY(2px); }
+        }
+        @keyframes pulse-wave { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
+        @keyframes bg-shift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
         .sidebar-menu { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: absolute; top: 0; left: 0; height: 100%; z-index: 100; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .modal-zoom { animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -60,6 +120,9 @@
 <body>
     <div class="app-container">
         
+        <!-- 🌟 NAYA: TOAST NOTIFICATION CONTAINER -->
+        <div id="toast-container" class="fixed top-4 left-0 right-0 z-[10000] flex flex-col items-center gap-3 pointer-events-none px-4 transition-all"></div>
+
         <!-- PREMIUM SPLASH SCREEN -->
         <div id="splash-screen" class="splash-screen">
             <div class="splash-logo text-center">
@@ -131,8 +194,13 @@
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-amber-400 mt-4 hidden transition-colors"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">🔄</span> Renew Client</button>
                 
+                <button onclick="routePanelSection('weekly-bind')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-400 border border-indigo-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">📅</span> Weekly Binding</button>
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit Data</button>
-                <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border border-blue-900/30 hidden transition-colors"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
+                
+                <button onclick="routePanelSection('attendance')" class="menu-item role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 hover:bg-emerald-500 text-white mt-4 shadow-md hidden transition-colors"><span class="text-lg mr-2">🤳</span> Smart Attendance</button>
+                <button onclick="routePanelSection('payroll')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-amber-900/20 hover:bg-amber-900/40 text-amber-400 border border-amber-900/30 hidden transition-colors"><span class="text-lg mr-2">💸</span> Payroll & Salary</button>
+                
+                <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border border-blue-900/30 hidden transition-colors mt-4"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
                 <button onclick="routePanelSection('setup')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 hidden transition-colors"><span class="text-lg mr-2">⚙️</span> Setup Nodes & Plans</button>
                 
                 <button onclick="routePanelSection('cust-apply')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 text-white shadow-md hidden"><span class="text-lg mr-2">📝</span> Apply For Loan</button>
@@ -213,6 +281,20 @@
                             <p class="text-lg font-black text-rose-600" id="head-par-percentage">0%</p>
                         </div>
                     </div>
+                    
+                    <!-- NEW FRAUD RADAR BUTTON -->
+                    <div onclick="openFraudRadar()" class="bg-slate-900 rounded-3xl p-5 mt-2 flex justify-between items-center shadow-xl shadow-slate-900/20 hover-scale cursor-pointer relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-rose-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        <div class="relative z-10 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center text-2xl font-black pulse-glow">🚨</div>
+                            <div>
+                                <h4 class="text-white font-black text-sm uppercase tracking-wider">AI Fraud Radar</h4>
+                                <p class="text-rose-400 text-[9px] font-bold mt-1">Scan Staff Anomalies & Ghost Collections</p>
+                            </div>
+                        </div>
+                        <span class="text-slate-400 text-xl font-bold relative z-10 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+
                 </div>
 
                 <div id="shared-approval-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-purple-200 bg-purple-50/20">
@@ -221,6 +303,16 @@
                         <span class="bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg text-[9px] font-black shadow-sm" id="queue-count-badge">0 Pending</span>
                     </h3>
                     <div id="global-approval-zone" class="space-y-3"></div>
+                </div>
+
+                <!-- 🌟 NAYA: NEFT DISBURSEMENT QUEUE -->
+                <div id="shared-neft-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-blue-200 bg-blue-50/40 hidden">
+                    <h3 class="text-[10px] font-black text-blue-800 uppercase flex items-center justify-between">
+                        Bank Transfer (NEFT) Queue 
+                        <span class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black shadow-md" id="neft-count-badge">0 Waiting</span>
+                    </h3>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-tight">Client ke a/c me NEFT bhejkar Mark karein taaki uski EMI date start ho sake.</p>
+                    <div id="global-neft-zone" class="space-y-3"></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 animate-slide-up" style="animation-delay: 0.1s;">
@@ -268,7 +360,7 @@
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
                     <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                         <input type="text" id="report-name-search" oninput="renderClientDirectory()" placeholder="🔍 Live Search Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
-                        <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none transition-all focus:border-blue-300"><option value="total">Total Active</option><option value="pending">Pending Approvals ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
+                        <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none transition-all focus:border-blue-300"><option value="total">Total Active</option><option value="pending">Pending (Approve / NEFT) ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
                         <div class="grid grid-cols-2 gap-2">
                             <select id="report-branch-filter" onchange="syncReportDropdowns(); renderClientDirectory()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                             <select id="report-centre-filter" onchange="renderClientDirectory()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
@@ -342,6 +434,14 @@
                         <div class="grid grid-cols-3 gap-2 pt-2"><select id="new-cust-caste" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Samanya">Gen</option><option value="OBC">OBC</option><option value="SC">SC</option></select><select id="new-cust-religion" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Hindu">Hindu</option><option value="Muslim">Muslim</option></select><input type="text" id="new-cust-land" placeholder="Krishi Bhumi" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-semibold focus:outline-none"></div>
                         <div class="grid grid-cols-2 gap-3"><input type="text" id="new-cust-attendance" placeholder="Upasthiti (95%)" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"><select id="new-cust-purpose" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"><option value="Krishi">Krishi</option><option value="Footkar Vyapar">Retail</option></select></div>
                         <div class="grid grid-cols-1"><select id="new-cust-house" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"><option value="Apna">House: Own</option><option value="Kiraya">Rented</option></select></div>
+                        
+                        <!-- 🌟 NAYA: BANK DETAILS FOR NEFT -->
+                        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 mt-2 space-y-3 shadow-inner">
+                            <label class="block text-[9px] font-black text-blue-700 uppercase tracking-widest ml-1">Bank A/C Details (For NEFT)</label>
+                            <input type="text" id="new-cust-bank-name" placeholder="Bank Name (e.g. SBI)" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:border-blue-300">
+                            <input type="number" id="new-cust-bank-acc" placeholder="Account Number" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:border-blue-300">
+                            <input type="text" id="new-cust-bank-ifsc" placeholder="IFSC Code" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:border-blue-300 uppercase">
+                        </div>
                         <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100"><label class="block text-[9px] font-black text-indigo-700 uppercase tracking-widest mb-3">PPI Assets</label><div class="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-700"><label class="flex items-center gap-2"><input type="checkbox" id="ppi-tv" class="w-4 h-4 accent-indigo-600 rounded"> Gas/TV</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-fridge" class="w-4 h-4 accent-indigo-600 rounded"> Fridge</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-bike" class="w-4 h-4 accent-indigo-600 rounded"> MotorCycle</label><label class="flex items-center gap-2"><input type="checkbox" id="ppi-almirah" class="w-4 h-4 accent-indigo-600 rounded"> Almirah</label></div></div>
                         <textarea id="new-cust-address" placeholder="Full Address" rows="3" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold resize-none focus:outline-none"></textarea>
                         <div class="flex gap-3 pt-4 border-t border-slate-100"><button onclick="backToKycStageA()" class="btn-fluid w-1/3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold py-4 rounded-xl text-[10px] uppercase">Back</button><button onclick="processKycAndDisburse(event)" class="btn-fluid w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-lg shadow-blue-500/30">Submit & Print 🖨️</button></div>
@@ -383,6 +483,34 @@
                 </div>
             </div>
 
+            <div id="view-node-weekly-bind" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 space-y-4">
+                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">📅</div><h3 class="text-xs font-black text-indigo-600 uppercase">Weekly EMI Alignment</h3></div>
+                    <p class="text-[9px] font-bold text-slate-500 text-center mb-2">Ek centre ki saari weekly loans ko unke fix collection day (jaise Somvaar) par ek saath align karein.</p>
+                    
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="bind-branch" onchange="syncWeeklyBindCentre()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                            <select id="bind-centre" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="">-- Centre --</option></select>
+                        </div>
+                        <select id="bind-target-day" class="w-full p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-black focus:outline-none">
+                            <option value="">-- Target Collection Day --</option>
+                            <option value="1">Monday (Somvaar)</option>
+                            <option value="2">Tuesday (Mangalvaar)</option>
+                            <option value="3">Wednesday (Budhvaar)</option>
+                            <option value="4">Thursday (Guruvaar)</option>
+                            <option value="5">Friday (Shukravaar)</option>
+                            <option value="6">Saturday (Shanivaar)</option>
+                            <option value="0">Sunday (Ravivaar)</option>
+                        </select>
+                        <button onclick="loadClientsForBinding()" class="btn-fluid w-full bg-slate-800 text-white font-black py-3 rounded-xl text-[10px] uppercase shadow-md hover-scale">Fetch Weekly Clients</button>
+                    </div>
+                    
+                    <div id="bind-clients-list" class="space-y-2 max-h-[40vh] overflow-y-auto pr-1 hidden animate-fade mt-2"></div>
+                    <button id="btn-execute-bind" onclick="executeWeeklyBinding()" class="hidden btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4.5 rounded-xl text-xs uppercase shadow-lg shadow-indigo-500/30 mt-4 pulse-glow">Align EMIs to Target Day</button>
+                </div>
+            </div>
+
             <div id="view-node-admin-edit" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
@@ -397,15 +525,22 @@
                     
                     <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade mt-4">
                         <input type="text" id="edit-cust-name" placeholder="Client Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold">
+                        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-2 animate-fade">
+                            <label class="block text-[10px] font-black text-amber-700 uppercase mb-2">Sync Old Passbook (Dropdown Mode)</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Total EMIs Paid</label><select id="edit-cust-emis-paid" onchange="autoCalcEditPassbook()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none"><option value="0">0 (No EMI)</option></select></div>
+                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Overdue ₹</label><input type="number" id="edit-cust-historic-od" oninput="autoCalcEditPassbook()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700" placeholder="e.g. 500"></div>
+                            </div>
+                        </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Outstanding</label><input type="number" id="edit-cust-outstanding" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue</label><input type="number" id="edit-cust-od" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Outstanding (Auto/Manual)</label><input type="number" id="edit-cust-outstanding" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue (Auto/Manual)</label><input type="number" id="edit-cust-od" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Active EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Next Due Date (DD-MM-YYYY)</label><input type="text" id="edit-cust-due-date" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold" placeholder="e.g. 25-06-2026"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Insurance Charged Fee</label><input type="number" id="edit-cust-insurance" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
-                            <div id="edit-status-container" class="col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option><option value="Requested">Requested (New Form)</option><option value="Deleted">Deleted (Archived)</option></select></div>
+                            <div id="edit-status-container" class="col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Status</label><select id="edit-cust-status" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"><option value="Active">Active</option><option value="Deactive">Deactive (Closed)</option><option value="Pending Approval">Pending</option><option value="Pending NEFT">Pending NEFT</option><option value="Requested">Requested (New Form)</option><option value="Deleted">Deleted (Archived)</option></select></div>
                         </div>
                         <div class="flex gap-2 pt-4 border-t border-slate-100">
                             <button onclick="saveClientEdits()" class="btn-fluid flex-1 bg-slate-900 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md">Save Changes</button>
@@ -419,11 +554,18 @@
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👨‍💼</div><h3 class="text-xs font-black text-blue-600 uppercase">Staff Management</h3></div>
                     <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 space-y-3">
-                        <p class="text-[9px] font-black uppercase text-blue-600">Add New Field Officer</p>
-                        <input type="text" id="new-staff-name" placeholder="Full Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold">
-                        <div class="grid grid-cols-2 gap-2"><input type="text" id="new-staff-username" placeholder="Username" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><input type="password" id="new-staff-pass" placeholder="Password" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></div>
-                        <select id="new-staff-branch" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"></select>
-                        <button onclick="createNewStaffAccount()" class="btn-fluid w-full bg-blue-600 text-white font-black py-3.5 rounded-lg text-[10px] uppercase shadow-md">Create Staff</button>
+                        <p class="text-[9px] font-black uppercase text-blue-600 border-b border-blue-200/50 pb-2">Add New Field Officer & Set Salary</p>
+                        <input type="text" id="new-staff-name" placeholder="Full Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                        <div class="grid grid-cols-2 gap-2"><input type="text" id="new-staff-username" placeholder="Username" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"><input type="password" id="new-staff-pass" placeholder="Password" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></div>
+                        <select id="new-staff-branch" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select>
+                        
+                        <div class="grid grid-cols-3 gap-2 pt-2">
+                            <input type="number" id="new-staff-base" placeholder="Base Salary ₹" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <input type="number" id="new-staff-mesh" placeholder="Mesh Allow ₹" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <input type="number" id="new-staff-petrol" placeholder="Petrol Allow ₹" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                        </div>
+                        <p class="text-[8px] text-slate-500 font-bold leading-tight">Note: System salary ko active month ke dino (days) se divide karke per-day allowance nikalege.</p>
+                        <button onclick="createNewStaffAccount()" class="btn-fluid w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-all">Create Staff & Save Allowances</button>
                     </div>
                     <div class="pt-4 border-t border-slate-100">
                         <p class="text-[10px] font-black uppercase text-slate-500 mb-3">Active Staff Directory</p>
@@ -460,9 +602,18 @@
                     </div>
 
                     <div class="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 space-y-3 mt-4">
-                        <p class="text-[9px] font-black uppercase text-emerald-600">Create New Branch</p>
-                        <div class="flex gap-2"><input type="text" id="setup-branch-name" placeholder="Branch Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewBranch()" class="bg-emerald-600 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
-                        <div id="setup-branch-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
+                        <p class="text-[9px] font-black uppercase text-emerald-600 border-b border-emerald-200/50 pb-2">Create & Manage Branches (GPS)</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="setup-branch-name" placeholder="Branch Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                            <button onclick="createNewBranch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 rounded-lg text-xs shadow-md transition-colors">Add</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <input type="text" id="setup-branch-lat" placeholder="Latitude (Optional)" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <input type="text" id="setup-branch-lon" placeholder="Longitude (Optional)" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <button onclick="fetchAdminGpsForBranch()" class="col-span-2 bg-slate-800 hover:bg-slate-700 text-white text-[9px] font-black py-2 rounded-lg shadow-sm transition-all">📍 Auto-Fetch My Current GPS</button>
+                            <p class="col-span-2 text-[8px] text-slate-500 font-bold leading-tight">Note: Agar GPS khali choda, toh staff pehli baar jahan attendance mark karega, system wahi location lock kar dega.</p>
+                        </div>
+                        <div id="setup-branch-list" class="mt-3 space-y-2 max-h-[150px] overflow-y-auto pr-1"></div>
                     </div>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                         <p class="text-[9px] font-black uppercase text-slate-600">Create New Centre Cluster</p>
@@ -475,6 +626,54 @@
                         <p class="text-[9px] font-bold text-rose-500 mb-3">Ye button dabane se cloud ka saara purana data hamesha ke liye delete ho jayega. (Sirf Staff, Branch, Plans safe rahenge).</p>
                         <button onclick="factoryResetDatabase()" class="btn-fluid w-full bg-rose-600 text-white font-black px-4 py-3 rounded-xl text-[10px] uppercase shadow-md shadow-rose-500/30 hover-scale">⚠️ Wipe Entire Database</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 🌟 NAYA: STAFF ATTENDANCE PANEL -->
+            <div id="view-node-attendance" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card rounded-[2rem] p-6">
+                    <div class="text-center border-b border-slate-100 pb-4 mb-4">
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-4xl shadow-inner relative"><span class="animate-pulse">🤳</span><div class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div></div>
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Biometric Attendance</h3>
+                        <p class="text-[9px] font-bold text-slate-500 mt-1 uppercase tracking-widest">Geo-Fenced Perimeter Active</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl text-center shadow-sm">
+                            <p class="text-2xl font-black text-emerald-600" id="att-present-count">0</p>
+                            <p class="text-[8px] font-black text-emerald-500 uppercase tracking-widest mt-1">Days Present</p>
+                        </div>
+                        <div class="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-center shadow-sm">
+                            <p class="text-2xl font-black text-rose-500" id="att-absent-count">0</p>
+                            <p class="text-[8px] font-black text-rose-400 uppercase tracking-widest mt-1">Days Absent</p>
+                        </div>
+                        <div class="col-span-2 bg-slate-900 p-5 rounded-2xl flex justify-between items-center shadow-lg relative overflow-hidden">
+                            <div class="absolute -top-10 -left-10 w-24 h-24 bg-amber-500/20 rounded-full blur-2xl"></div>
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Total Fixed Pay</p>
+                                <p class="text-[10px] font-bold text-slate-300 relative z-10" id="att-total-salary">₹0</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1 relative z-10">Earned So Far</p>
+                                <p class="text-xl font-black text-emerald-400 relative z-10" id="att-earned-salary">₹0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-mark-attendance" onclick="markAttendanceStart()" class="btn-fluid w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4.5 rounded-xl text-xs uppercase shadow-lg shadow-emerald-500/30 pulse-glow mb-4">📸 Mark Present (Face Unlock)</button>
+                    <div id="msg-attendance-done" class="hidden bg-emerald-50 text-emerald-700 font-black p-4 rounded-xl text-[10px] uppercase text-center border border-emerald-200 mb-4 shadow-sm">✅ Today's Attendance Marked!</div>
+                    
+                    <h4 class="text-[10px] font-black text-slate-500 uppercase mb-3 px-1 border-b border-slate-100 pb-1">Current Month Register</h4>
+                    <div id="attendance-calendar-grid" class="grid grid-cols-5 gap-2 max-h-[30vh] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- 🌟 NAYA: HEAD PAYROLL PANEL -->
+            <div id="view-node-payroll" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 space-y-4">
+                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">💸</div><h3 class="text-xs font-black text-slate-900 uppercase tracking-widest">HR & Payroll Register</h3></div>
+                    <p class="text-[9px] font-bold text-slate-500 text-center mb-3">Live calculations factoring Base, Mess, Petrol & Attendance.</p>
+                    <div id="payroll-list-zone" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1"></div>
                 </div>
             </div>
 
@@ -566,7 +765,55 @@
                 <div id="modal-injection-zone"></div>
             </div>
         </div>
-    </div> 
+
+        <!-- 🌟 NAYA: 4D GLOWING AI FLOATING BUTTON & CHATBOX -->
+        <div id="ai-master-container" class="fixed bottom-6 right-6 z-[9999] no-print flex flex-col items-end">
+            
+            <div id="ai-chat-box" class="hidden w-[340px] h-[450px] mb-6 relative transition-all origin-bottom-right modal-zoom flex flex-col">
+                <!-- 4D Glass Backdrop -->
+                <div class="absolute inset-0 bg-white/40 backdrop-blur-[30px] saturate-200 border border-white/60 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.15),inset_0_2px_10px_rgba(255,255,255,1)]"></div>
+                
+                <div class="relative z-10 flex-1 flex flex-col overflow-hidden rounded-[2rem]">
+                    <!-- Real-time Visualizer Header -->
+                    <div class="bg-gradient-to-b from-white/60 to-transparent p-5 pb-2 flex flex-col items-center justify-center border-b border-white/40">
+                        <div class="flex w-full justify-between items-start absolute top-4 px-4 z-20">
+                            <div><h3 class="text-[10px] font-black uppercase tracking-widest text-slate-800 drop-shadow-md">OPAS Voice Intelligence</h3></div>
+                            <button onclick="toggleAIChat()" class="w-6 h-6 bg-slate-800/10 hover:bg-slate-800/20 text-slate-700 rounded-full flex items-center justify-center font-bold transition-colors">✕</button>
+                        </div>
+                        
+                        <!-- Mini Orb Visualizer inside Chat -->
+                        <div class="mt-4 mb-2">
+                            <div class="ai-orb-wrapper transform scale-75" id="ai-chat-orb">
+                                <div class="ai-orb"></div>
+                                <div class="ai-wave"></div>
+                                <div class="ai-wave" style="animation-delay: 1.2s"></div>
+                            </div>
+                        </div>
+                        <p id="ai-status-text" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ready to Assist</p>
+                    </div>
+
+                    <!-- Chat Log -->
+                    <div id="ai-chat-log" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
+                        <div class="text-left"><span class="bg-white/80 backdrop-blur-md border border-white text-slate-700 text-[11px] font-semibold px-4 py-3 rounded-2xl rounded-tl-sm inline-block shadow-sm">Namaste! Main OPAS AI hu. Aap mujhe bol kar ya type karke client details, EMI ya records ke baare mein pooch sakte hain.</span></div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="p-3 bg-white/50 backdrop-blur-md border-t border-white flex gap-2 items-center m-2 rounded-2xl shadow-inner">
+                        <button id="ai-mic-btn" onclick="startVoiceRecognition()" class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-lg shadow-lg hover-scale transition-colors" title="Hold to Speak">🎤</button>
+                        <input type="text" id="ai-user-input" placeholder="Type question..." class="flex-1 bg-transparent px-2 py-2 text-xs font-bold text-slate-800 focus:outline-none placeholder-slate-500" onkeypress="if(event.key === 'Enter') sendMsgToAI()">
+                        <button onclick="sendMsgToAI()" class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center text-sm shadow-md hover-scale transition-colors">➤</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Main Orb Button -->
+            <div class="ai-orb-wrapper" onclick="toggleAIChat()" title="Open OPAS AI">
+                <div class="ai-orb flex items-center justify-center text-2xl text-white drop-shadow-md">✨</div>
+                <div class="ai-wave"></div>
+                <div class="ai-wave" style="animation-delay: 1.2s"></div>
+            </div>
+        </div>
+    </div>
     
     <div id="print-paper-template" class="hidden bg-white max-w-4xl mx-auto text-black font-serif">
         <div class="print-page-break p-8 border-2 border-slate-900 rounded-xl bg-white">
@@ -581,6 +828,7 @@
                     <tr><th class="border border-slate-800 p-2 bg-slate-50 w-1/4">Applicant Name</th><td class="border border-slate-800 p-2 font-bold" id="lbl-p-name-1">-</td><th class="border border-slate-800 p-2 bg-slate-50 w-1/4">Mobile No</th><td class="border border-slate-800 p-2" id="lbl-p-phone-1">-</td></tr>
                     <tr><th class="border border-slate-800 p-2 bg-slate-50">Spouse Name</th><td class="border border-slate-800 p-2" id="lbl-p-spouse-1">-</td><th class="border border-slate-800 p-2 bg-slate-50">Voter Card Ref</th><td class="border border-slate-800 p-2" id="lbl-p-voter-1">-</td></tr>
                     <tr><th class="border border-slate-800 p-2 bg-slate-50">Nominee Name</th><td class="border border-slate-800 p-2" id="lbl-p-nominee-1">-</td><th class="border border-slate-800 p-2 bg-slate-50">Nominee Relation</th><td class="border border-slate-800 p-2 font-bold" id="lbl-p-relation-1">-</td></tr>
+                    <tr><th class="border border-slate-800 p-2 bg-slate-50 text-blue-800">Disbursement Bank</th><td class="border border-slate-800 p-2 font-black text-blue-900" id="lbl-p-bank-1">-</td><th class="border border-slate-800 p-2 bg-slate-50 text-blue-800">A/C Number</th><td class="border border-slate-800 p-2 font-mono font-black text-blue-900 tracking-wider" id="lbl-p-acc-1">-</td></tr>
                 </table>
                 <table class="w-full border-collapse border border-slate-800 text-left text-[11px] font-sans mt-4">
                     <tr class="bg-slate-50"><th class="border border-slate-800 p-2">Lending Model</th><th class="border border-slate-800 p-2">Principal</th><th class="border border-slate-800 p-2">ROI Setup</th><th class="border border-slate-800 p-2">Interest</th><th class="border border-slate-800 p-2">Insurance Charge</th><th class="border border-slate-800 p-2 font-black">Final Repayment</th></tr>
@@ -634,6 +882,22 @@
         let staffDb = {};
         let loanPlans = []; // 🌟 HYBRID UPGRADE: Store Master Plans
         let serverDb = {}; 
+
+        // 🌟 NAYA: BEAUTIFUL IN-APP NOTIFICATION SYSTEM
+        function showNotification(title, message, icon = '🔔', onClickFn = null) {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 w-full max-w-sm animate-slide-up pointer-events-auto cursor-pointer border border-slate-700 hover:bg-slate-800 transition-all';
+            toast.innerHTML = `<div class="text-3xl filter drop-shadow-md">${icon}</div><div class="flex-1"><h4 class="text-[10px] font-black uppercase text-blue-400 tracking-widest leading-none">${title}</h4><p class="text-xs font-bold mt-1 text-slate-200 leading-tight">${message}</p></div>`;
+            
+            if(onClickFn) { toast.onclick = () => { onClickFn(); toast.remove(); }; } 
+            else { toast.onclick = () => toast.remove(); }
+            
+            container.appendChild(toast);
+            if(navigator.vibrate) navigator.vibrate(200); // Phone vibration (Android)
+            setTimeout(() => { if(container.contains(toast)) toast.remove(); }, 6000);
+        }
 
         // =========================================================================
         // 🚀 DUAL SAVING ENGINE
@@ -735,22 +999,49 @@
                     }
                     let cloudData = await response.json();
                     if (cloudData["SYSTEM_SETTINGS"]) {
-                        // Fix: Smart merge taaki ek admin ka data dusre admin ke data ko overwrite na kare
+                        // 🛠️ FIX: Deep Merging for Offline/Online Data Synchronization
                         branchList = [...new Set([...(cloudData["SYSTEM_SETTINGS"].branches || []), ...branchList])];
-                        staffDb = { ...(cloudData["SYSTEM_SETTINGS"].staff || {}), ...staffDb };
                         
+                        // 1. Deep Merge Staff Data & Attendance
+                        let cloudStaff = cloudData["SYSTEM_SETTINGS"].staff || {};
+                        Object.keys(cloudStaff).forEach(empId => {
+                            if (staffDb[empId]) {
+                                let localAttendance = staffDb[empId].attendance || {};
+                                let cloudAttendance = cloudStaff[empId].attendance || {};
+                                staffDb[empId] = { ...cloudStaff[empId], ...staffDb[empId] };
+                                // Attendance records ko deep merge karein taaki offline records na mitein
+                                staffDb[empId].attendance = { ...cloudAttendance, ...localAttendance };
+                            } else {
+                                staffDb[empId] = cloudStaff[empId];
+                            }
+                        });
+                        
+                        // 2. Deep Merge Centres
                         let cloudCentres = cloudData["SYSTEM_SETTINGS"].centres || [];
-                        centreList.forEach(localC => { if(!cloudCentres.some(c => c.id === localC.id)) cloudCentres.push(localC); });
-                        centreList = cloudCentres;
+                        let centreMap = new Map();
+                        cloudCentres.forEach(c => centreMap.set(c.id, c));
+                        centreList.forEach(c => centreMap.set(c.id, { ...(centreMap.get(c.id) || {}), ...c }));
+                        centreList = Array.from(centreMap.values());
 
+                        // 3. Deep Merge Loan Plans
                         let cloudPlans = cloudData["SYSTEM_SETTINGS"].loanPlans || [];
-                        loanPlans.forEach(localP => { if(!cloudPlans.some(p => p.id === localP.id)) cloudPlans.push(localP); });
-                        loanPlans = cloudPlans;
+                        let planMap = new Map();
+                        cloudPlans.forEach(p => planMap.set(p.id, p));
+                        loanPlans.forEach(p => planMap.set(p.id, { ...(planMap.get(p.id) || {}), ...p }));
+                        loanPlans = Array.from(planMap.values());
+                        
+                        // 4. Deep Merge Branch GPS Configs
+                        if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
+                        let cloudCoords = cloudData["SYSTEM_SETTINGS"].branchCoords || {};
+                        Object.keys(cloudCoords).forEach(b => {
+                            serverDb["SYSTEM_SETTINGS"].branchCoords[b] = { ...(cloudCoords[b] || {}), ...(serverDb["SYSTEM_SETTINGS"].branchCoords[b] || {}) };
+                        });
                     }
                 }
             } catch(e) { console.error("Sync merge error"); }
             
-            serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans };
+            if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
+            serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans, branchCoords: serverDb["SYSTEM_SETTINGS"].branchCoords };
             await saveDataToCloud("SYSTEM_SETTINGS");
         }
 
@@ -759,12 +1050,22 @@
                 let pass = prompt("Delete confirm karne ke liye type karein: DELETE");
                 if(pass === 'DELETE') {
                     document.getElementById('cloud-status').innerText = "⚠️ WIPING CLOUD...";
+                    // 🚀 FIX: Factory Reset using Bulk API to prevent Server Crash
+                    let bulkDeletePayload = [];
                     let keys = Object.keys(serverDb);
                     for(let k of keys) {
                         if(k !== "SYSTEM_SETTINGS") {
-                            try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: k, data: null }) }); } catch(e) {}
+                            // Backend array banayenge jisme data 'null' bhejenge wipe karne ke liye
+                            bulkDeletePayload.push({ mobile: k, data: null });
                         }
                     }
+                    try {
+                        // Ek single bulk request bhej kar poora database saaf karenge
+                        await fetch(API_URL + '/bulk', { 
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ clients: bulkDeletePayload })
+                        });
+                    } catch(e) { console.error("Database wipe error", e); }
                     serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
                     await localforage.removeItem('opas_local_db');
                     localStorage.removeItem('kyc_draft');
@@ -786,6 +1087,7 @@
                     voter: getSafeValue('new-cust-voter'), nominee: getSafeValue('new-cust-nominee'), relation: getSafeValue('new-cust-nominee-relation'),
                     caste: getSafeValue('new-cust-caste'), religion: getSafeValue('new-cust-religion'), land: getSafeValue('new-cust-land'),
                     attendance: getSafeValue('new-cust-attendance'), purpose: getSafeValue('new-cust-purpose'), house: getSafeValue('new-cust-house'),
+                    bankName: getSafeValue('new-cust-bank-name'), bankAcc: getSafeValue('new-cust-bank-acc'), bankIfsc: getSafeValue('new-cust-bank-ifsc'),
                     address: getSafeValue('new-cust-address'),
                     backdate: getSafeValue('new-cust-backdate'), paidEmis: getSafeValue('new-cust-paid-emis'),
                     ppi_tv: document.getElementById('ppi-tv')?.checked, ppi_fridge: document.getElementById('ppi-fridge')?.checked,
@@ -815,6 +1117,9 @@
                     if(draft.attendance) document.getElementById('new-cust-attendance').value = draft.attendance;
                     if(draft.purpose) document.getElementById('new-cust-purpose').value = draft.purpose;
                     if(draft.house) document.getElementById('new-cust-house').value = draft.house;
+                    if(draft.bankName) document.getElementById('new-cust-bank-name').value = draft.bankName;
+                    if(draft.bankAcc) document.getElementById('new-cust-bank-acc').value = draft.bankAcc;
+                    if(draft.bankIfsc) document.getElementById('new-cust-bank-ifsc').value = draft.bankIfsc;
                     if(draft.address) document.getElementById('new-cust-address').value = draft.address;
                     if(draft.backdate) document.getElementById('new-cust-backdate').value = draft.backdate;
                     if(draft.paidEmis) document.getElementById('new-cust-paid-emis').value = draft.paidEmis;
@@ -876,7 +1181,7 @@
                         if (!serverDb[id] || serverDb[id].status === 'Rejected' || serverDb[id].status === 'Deleted') { 
                             let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = id; 
                             showDashboard('customer'); routePanelSection('cust-apply'); 
-                        } else if (serverDb[id].status === 'Requested' || serverDb[id].status === 'Pending Approval') { 
+                        } else if (serverDb[id].status === 'Requested' || serverDb[id].status === 'Pending Approval' || serverDb[id].status === 'Pending NEFT') { 
                             showDashboard('customer'); routePanelSection('cust-pending'); 
                         } else { 
                             showDashboard('customer'); 
@@ -972,6 +1277,8 @@
             setHtmlSafe('lbl-p-approval-date-1', displayDate);
             setHtmlSafe('lbl-p-nominee-1', c.nominee);
             setHtmlSafe('lbl-p-relation-1', c.nomineeRelation);
+            setHtmlSafe('lbl-p-bank-1', `${c.bankName || 'NA'} (IFSC: ${c.bankIfsc || 'NA'})`);
+            setHtmlSafe('lbl-p-acc-1', c.bankAcc || 'N/A');
             
             setHtmlSafe('lbl-p-plan-1', c.planName);
             setHtmlSafe('lbl-p-principal-1', `₹${c.principal}`);
@@ -1008,8 +1315,8 @@
             let receiptDate = formatSysDate(new Date());
 
             // BUG FIX: Agar Day-End run nahi hua hai, to active pending amount ka fresh receipt dikhayein
-            if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') {
-                paidAmt = u.emiSettled === 'online_paid' 
+            if (u.emiSettled === 'online_paid' || u.emiSettled === 'received_cash' || u.emiSettled === 'received_upi' || u.emiSettled === 'received') {
+                paidAmt = (u.emiSettled === 'online_paid' || u.emiSettled === 'received_upi') 
                     ? Math.min((u.outstanding || 0) + (u.overdue || 0), (u.cycleEmi || 0) + (u.overdue || 0))
                     : Math.min((u.outstanding || 0) + (u.overdue || 0), u.cycleEmi || 0);
             } else if (u.advancePaid > 0) {
@@ -1058,6 +1365,9 @@
                 if(panelId === 'staff-manage') renderStaffList();
                 if(panelId === 'admin-edit') syncAdminEditDropdown();
                 if(panelId === 'setup') renderSetupLists();
+                if(panelId === 'weekly-bind') syncWeeklyBindDropdowns();
+                if(panelId === 'attendance') renderStaffAttendanceCalendar();
+                if(panelId === 'payroll') renderHeadPayroll();
                 
                 const appBody = document.getElementById('main-views-container'); if(appBody) appBody.scrollTop = 0;
             } catch (e) { console.error(e); }
@@ -1170,10 +1480,16 @@
                 });
                 let pl = document.getElementById('setup-plan-list'); if(pl) pl.innerHTML = pHtml || `<p class="text-[9px] text-center text-slate-400 italic">No plans created.</p>`;
 
+                // Render Branches
                 let bHtml = '';
-                branchList.forEach(b => { bHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-emerald-100 animate-fade"><span class="text-xs font-black text-slate-800">${b}</span><button onclick="deleteBranch('${b}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Delete</button></div>`; });
+                let coords = serverDb["SYSTEM_SETTINGS"].branchCoords || {};
+                branchList.forEach(b => { 
+                    let gpsTag = coords[b] ? `<span class="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded block mt-1 w-fit">📍 GPS Active</span>` : `<span class="text-[8px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded block mt-1 w-fit">⚠️ No GPS Set</span>`;
+                    bHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-emerald-100 animate-fade"><div><span class="text-xs font-black text-slate-800">${b}</span>${gpsTag}</div><button onclick="deleteBranch('${b}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100 h-fit">Delete</button></div>`; 
+                });
                 let bl = document.getElementById('setup-branch-list'); if(bl) bl.innerHTML = bHtml;
 
+                // Render Centres
                 let cHtml = '';
                 centreList.forEach(c => { cHtml += `<div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100 animate-fade"><div><span class="text-xs font-black text-slate-800 block">${c.name}</span><span class="text-[9px] text-slate-400 font-bold">Branch: ${c.branch}</span></div><button onclick="deleteCentre('${c.id}')" class="text-rose-500 font-bold text-[10px] bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Delete</button></div>`; });
                 let cl = document.getElementById('setup-centre-list'); if(cl) cl.innerHTML = cHtml;
@@ -1181,11 +1497,31 @@
         }
 
         async function createNewBranch() { 
-            const n = getSafeValue('setup-branch-name').trim(); if(!n) { alert("Branch name empty."); return; } 
-            // FIX: Case-insensitive check to prevent "Delhi" and "DELHI" DB splits
+            const n = getSafeValue('setup-branch-name').trim(); 
+            const lat = getSafeValue('setup-branch-lat');
+            const lon = getSafeValue('setup-branch-lon');
+            if(!n) { alert("Branch name empty."); return; } 
             if(branchList.some(b => b.toLowerCase() === n.toLowerCase())) { alert("Branch already exists."); return; }
-            branchList.push(n); alert(`Branch ${n} Created & Synced!`); document.getElementById('setup-branch-name').value = ''; 
+            branchList.push(n); 
+            
+            if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
+            if(lat && lon) { serverDb["SYSTEM_SETTINGS"].branchCoords[n] = { lat: parseFloat(lat), lon: parseFloat(lon) }; }
+            
+            alert(`Branch ${n} Created & Synced!`); 
+            ['setup-branch-name', 'setup-branch-lat', 'setup-branch-lon'].forEach(id => document.getElementById(id).value = '');
             await saveSystemSettings(); syncSetupDropdowns(); 
+        }
+
+        function fetchAdminGpsForBranch() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    document.getElementById('setup-branch-lat').value = pos.coords.latitude;
+                    document.getElementById('setup-branch-lon').value = pos.coords.longitude;
+                    alert("✅ Admin coordinates fetched successfully!");
+                }, () => alert("GPS Access Denied!"), { enableHighAccuracy: true });
+            } else {
+                alert("Geolocation not supported.");
+            }
         }
         async function deleteBranch(name) {
             let hasClients = false;
@@ -1225,7 +1561,7 @@
             let hasClients = false;
             Object.keys(serverDb).forEach(m => {
                 // Fix: Deleted (archived) clients ko ignore karein taaki khali centre delete ho sake
-                if (m !== "SYSTEM_SETTINGS" && serverDb[m].center === targetCentre.name && serverDb[m].status !== "Deleted") {
+                if (m !== "SYSTEM_SETTINGS" && serverDb[m].center === targetCentre.name && serverDb[m].branch === targetCentre.branch && serverDb[m].status !== "Deleted") {
                     hasClients = true;
                 }
             });
@@ -1244,11 +1580,15 @@
 
         async function createNewStaffAccount() {
             const n = getSafeValue('new-staff-name').trim(); const u = getSafeValue('new-staff-username').trim(); const p = getSafeValue('new-staff-pass').trim(); const b = getSafeValue('new-staff-branch');
-            if(!n || !u || !p || !b) { alert("Fill all fields."); return; } 
+            const base = getSafeValue('new-staff-base') || 0; const mesh = getSafeValue('new-staff-mesh') || 0; const petrol = getSafeValue('new-staff-petrol') || 0;
+            if(!n || !u || !p || !b) { alert("Fill all essential fields."); return; } 
             if(staffDb[u] || u === 'head01') { alert("Username taken!"); return; }
-            staffDb[u] = { pass: p, name: n, empId: "EMP-" + n.substring(0, 2).toUpperCase() + Math.floor(10 + Math.random() * 90), branch: b, role: "Field Officer" };
-            alert(`Staff Account created & Synced to Cloud!`); 
-            document.getElementById('new-staff-name').value = ''; document.getElementById('new-staff-username').value = ''; document.getElementById('new-staff-pass').value = ''; 
+            staffDb[u] = { 
+                pass: p, name: n, empId: "EMP-" + n.substring(0, 2).toUpperCase() + Math.floor(10 + Math.random() * 90), 
+                branch: b, role: "Field Officer", baseSalary: parseInt(base), meshAllow: parseInt(mesh), petrolAllow: parseInt(petrol), attendance: {}
+            };
+            alert(`Staff Account created with Salary Parameters & Synced to Cloud!`); 
+            ['new-staff-name', 'new-staff-username', 'new-staff-pass', 'new-staff-base', 'new-staff-mesh', 'new-staff-petrol'].forEach(id => document.getElementById(id).value = '');
             await saveSystemSettings(); renderStaffList();
         }
         function renderStaffList() {
@@ -1256,7 +1596,20 @@
                 const zone = document.getElementById('active-staff-list'); let html = '';
                 Object.keys(staffDb).forEach(u => { 
                     let s = staffDb[u]; 
-                    html += `<div class="bg-white p-4 border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-2 hover-scale animate-fade"><div class="flex justify-between"><div><p class="text-xs font-black text-slate-800">${s.name||'N/A'} <span class="text-[9px] text-slate-400">(${u})</span></p><p class="text-[9px] text-blue-600 font-bold mt-1 uppercase">Branch: ${s.branch||'N/A'}</p></div><span class="text-[9px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-black">${s.empId||'N/A'}</span></div><button onclick="deleteStaff('${u}')" class="text-[9px] font-bold text-rose-500 text-right uppercase tracking-widest mt-1 hover:text-rose-700">Delete Staff</button></div>`; 
+                    let faceTag = s.faceDescriptor ? `<span class="text-[7px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 shadow-sm ml-2">👤 Face Locked</span>` : `<span class="text-[7px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded border border-rose-200 shadow-sm ml-2">⚠️ No Face</span>`;
+                    html += `<div class="bg-white p-4 border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-2 hover-scale animate-fade">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xs font-black text-slate-800 flex items-center">${s.name||'N/A'} ${faceTag}</p>
+                                <p class="text-[9px] text-slate-400 mt-1 uppercase tracking-widest">User: ${u} | ID: ${s.empId||'N/A'}</p>
+                                <p class="text-[9px] text-blue-600 font-bold mt-1 uppercase bg-blue-50 px-2 py-1 rounded inline-block">Branch: ${s.branch||'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-2 pt-2 border-t border-slate-100">
+                            <button onclick="openTransferStaffModal('${u}')" class="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:bg-indigo-100 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg transition-colors">🔄 Transfer</button>
+                            <button onclick="deleteStaff('${u}')" class="text-[9px] font-black text-rose-600 uppercase tracking-widest hover:bg-rose-100 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-lg transition-colors">🗑️ Delete</button>
+                        </div>
+                    </div>`; 
                 });
                 if(zone) zone.innerHTML = html || `<p class="text-[10px] text-center text-slate-400 py-4">No staff found.</p>`;
             } catch(e) {}
@@ -1324,7 +1677,7 @@
                     if (activeBranch !== "ALL" && c.branch !== activeBranch) return;
                     if (activeCentre !== "ALL" && c.center !== activeCentre) return;
                     // BUG FIX: Mobile Number 'm' ko bhi search criteria mein add kiya hai
-                    if (searchQ && !(c.name && c.name.toLowerCase().includes(searchQ)) && !(c.id && c.id.toLowerCase().includes(searchQ)) && !m.includes(searchQ)) return;
+                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !String(m).includes(searchQ)) return;
 
                     opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
                 });
@@ -1437,6 +1790,18 @@
                 if(!m) { b?.classList.add('hidden'); return; } let c = serverDb[m];
                 
                 document.getElementById('edit-cust-name').value = c.name||""; 
+                
+                // Auto-generate Dropdown based on Plan Duration
+                let emiDropdown = document.getElementById('edit-cust-emis-paid');
+                if (emiDropdown) {
+                    let opts = `<option value="0">0 (No EMI Paid)</option>`;
+                    let maxEmis = c.duration || 100; // Plan limit
+                    for(let i=1; i<=maxEmis; i++) { opts += `<option value="${i}">${i} EMIs Paid</option>`; }
+                    emiDropdown.innerHTML = opts;
+                    emiDropdown.value = c.emisPaidCount || 0;
+                }
+                document.getElementById('edit-cust-historic-od').value = c.overdue || 0;
+
                 document.getElementById('edit-cust-outstanding').value = c.outstanding||0; 
                 document.getElementById('edit-cust-emi').value = c.cycleEmi||0; 
                 document.getElementById('edit-cust-od').value = c.overdue||0; 
@@ -1455,6 +1820,47 @@
                 b?.classList.remove('hidden');
             } catch(e) {}
         }
+
+        // Dropdown Logic Calculator
+        function autoCalcEditPassbook() {
+            const m = getSafeValue('admin-edit-client-select'); if(!m) return;
+            let c = serverDb[m]; if(!c) return;
+
+            let typedPaidEmis = parseInt(getSafeValue('edit-cust-emis-paid')) || 0;
+            let typedOverdue = parseInt(getSafeValue('edit-cust-historic-od')) || 0;
+            
+            let activeOutstanding = c.totalPayable;
+            // FIX: Prevent Infinity crash if old data has 0 duration
+            let activeCycleEmi = c.isHybrid ? c.phase1Emi : (c.totalPayable / (c.duration || 1));
+            if (!activeCycleEmi || activeCycleEmi <= 0 || !isFinite(activeCycleEmi)) activeCycleEmi = c.cycleEmi; 
+
+            if (typedPaidEmis > 0) {
+                for(let i = 0; i < typedPaidEmis; i++) {
+                    let currentPhaseEmi = c.isHybrid ? ((i < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : activeCycleEmi;
+                    if (activeOutstanding >= currentPhaseEmi) {
+                        activeOutstanding -= currentPhaseEmi;
+                    } else { break; }
+                }
+                activeCycleEmi = c.isHybrid ? ((typedPaidEmis < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : activeCycleEmi;
+            }
+            
+            let actualAppDate = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : c.approvalDate;
+            if (actualAppDate && actualAppDate !== "N/A" && actualAppDate !== "Pending Approval") {
+                let bd = parseSysDate(actualAppDate);
+                let daysToAdd = c.planType === 'daily' ? (typedPaidEmis + 1) : ((typedPaidEmis + 1) * 7);
+                let nextEmiObj = new Date(bd);
+                nextEmiObj.setDate(nextEmiObj.getDate() + daysToAdd);
+                
+                let todayCheck = new Date(); todayCheck.setHours(0,0,0,0);
+                if (nextEmiObj < todayCheck) nextEmiObj = new Date(todayCheck); 
+                document.getElementById('edit-cust-due-date').value = formatSysDate(nextEmiObj);
+            }
+
+            document.getElementById('edit-cust-outstanding').value = Math.round(activeOutstanding);
+            document.getElementById('edit-cust-od').value = typedOverdue;
+            document.getElementById('edit-cust-emi').value = Math.round(activeCycleEmi);
+        }
+
         async function saveClientEdits() {
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
              try {
@@ -1486,14 +1892,18 @@
                  let safeDate = rawDate.replace(/\//g, '-').replace(/\./g, '-');
                  let newStatus = getSafeValue('edit-cust-status') || serverDb[m].status;
 
-                 // Fix: If Admin forces status to Active from Pending, generate an approval date so dashboard stats don't break
-                 if (newStatus === 'Active' && (!serverDb[m].approvalDate || serverDb[m].approvalDate === 'N/A' || serverDb[m].status !== 'Active')) {
-                     serverDb[m].approvalDate = formatSysDate(new Date());
+                 // 🚨 FIX: Prevent Admin from bypassing NEFT workflow via Edit Data Panel
+                 if ((serverDb[m].status === 'Pending Approval' || serverDb[m].status === 'Pending NEFT') && newStatus === 'Active') {
+                     alert("⚠️ Dhyan Dein: Kisi bhi 'Pending' file ko yahan se direct 'Active' mat karein! Dashboard par jaakar 'Approve' ya 'NEFT Mark' button ka use karein, taaki EMI calendar aur Dates sahi se generate ho sakein.");
+                     return;
                  }
 
+                 let parsedEmisPaid = parseInt(getSafeValue('edit-cust-emis-paid'));
+                 if(!isNaN(parsedEmisPaid)) { serverDb[m].emisPaidCount = parsedEmisPaid; }
+                 
                  serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = newOut; 
                  // FIX 3: Protected the remaining fields from negative input crashes
-                 serverDb[m].cycleEmi = Math.max(0, parseInt(getSafeValue('edit-cust-emi'))||0); 
+                 serverDb[m].cycleEmi = Math.max(0, parseInt(getSafeValue('edit-cust-emi'))||0);
                  serverDb[m].overdue = newOd; serverDb[m].status = newStatus; serverDb[m].nextEmiDate = safeDate;
                  serverDb[m].insuranceAmt = Math.max(0, parseInt(getSafeValue('edit-cust-insurance')) || 0); 
                  
@@ -1506,7 +1916,9 @@
             if(confirm("⚠ WARNING: Completely DELETE client? (Saara data, collection aur disbursal hamesha ke liye WIPE OUT ho jayega)")) { 
                 try { 
                     // FIX: Hard Delete causes ghost data sync bugs from offline staff devices. Using Soft-Delete Override instead.
-                    serverDb[m] = { status: "Deleted", lastUpdated: Date.now(), name: "Deleted Client", voterRef: "WIPED / WIPED" };
+                    serverDb[m].status = "Deleted";
+                    serverDb[m].lastUpdated = Date.now();
+                    serverDb[m].name = serverDb[m].name + " (Deleted)";
                     await localforage.setItem('opas_local_db', serverDb); 
                     await saveDataToCloud(m);
                     
@@ -1540,8 +1952,11 @@
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayBounceAmt = 0; let insT = 0, insM = 0;
                 let todayStr = formatSysDate(new Date());
+                window.unmarkedAmt = 0; // FIX: Reset global properly before loops to prevent double-counting
                 
                 let pendingApprovalHtml = ''; 
+                let neftHtml = '';
+                let neftCount = 0;
                 
                 Object.keys(serverDb).forEach(k => {
                    if (k === "SYSTEM_SETTINGS") return;
@@ -1561,6 +1976,27 @@
                             let backdateBadge = (f.customAppDate && f.customAppDate !== "N/A") ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase shadow-sm ml-2 border border-amber-200">Imported</span>` : '';
                             
                             pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm flex items-center">${f.name||'Unk'}${backdateBadge}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${viewDetailsBtn}${actionBtn}</div>`;
+                        }
+                        
+                        // 🌟 NAYA: NEFT Dashboard List Rendering
+                        if(f.status === 'Pending NEFT') {
+                            neftCount++;
+                            let bankDetails = f.bankAcc ? `<span class="block text-[9px] font-bold text-slate-600 uppercase">Bank: ${f.bankName||'NA'} | A/C: <span class="font-mono bg-blue-100 text-blue-800 px-1 py-0.5 rounded">${f.bankAcc}</span> | IFSC: ${f.bankIfsc||'NA'}</span>` : `<span class="block text-[9px] font-bold text-rose-500 uppercase">Bank details missing! Edit profile first.</span>`;
+                            let neftAction = currentLoggedInRole === 'head' 
+                               ? `<button onclick="event.stopPropagation(); executeNEFTDisbursement('${k}')" class="btn-fluid w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 rounded-xl text-[10px] uppercase shadow-lg shadow-blue-500/30 transition-all mt-3 pulse-glow">💰 Mark as NEFTed & Active</button>`
+                                : `<button disabled class="btn-fluid w-full mt-3 bg-white text-slate-500 font-black py-3.5 rounded-xl text-[10px] uppercase border border-slate-200 shadow-sm cursor-not-allowed">Admin Verification Pending</button>`;
+
+                            neftHtml += `<div class="p-5 bg-white border border-blue-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade">
+                                <div class="flex justify-between items-start cursor-pointer" onclick="showClientFullInfo('${k}')">
+                                    <div><h4 class="font-black text-slate-900 text-sm flex items-center">${f.name||'Unk'}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div>
+                                    <span class="text-[9px] bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm">Queue</span>
+                                </div>
+                                <div class="mt-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100 shadow-inner">
+                                    <p class="text-[10px] text-blue-700 font-black uppercase mb-1">Transfer Required: <span class="text-blue-400 line-through mr-1">₹${(f.principal||0).toLocaleString()}</span> ₹${(f.principal - (f.insuranceAmt || 0)).toLocaleString()}</p>
+                                    ${bankDetails}
+                                </div>
+                                ${neftAction}
+                            </div>`;
                         }
                         
                         let appDateMonth = "";
@@ -1646,6 +2082,18 @@
                     if(qBlock) qBlock.classList.remove('hidden');
                 }
 
+                // 🌟 NAYA: Rendering NEFT Queue to Dashboard
+                setHtmlSafe('neft-count-badge', `${neftCount} Waiting`);
+                const nZone = document.getElementById('global-neft-zone');
+                const nBlock = document.getElementById('shared-neft-queue-block');
+                if (neftHtml === '') { 
+                    if(nZone) nZone.innerHTML = ``; 
+                    if(nBlock) nBlock.classList.add('hidden');
+                } else { 
+                    if(nZone) nZone.innerHTML = neftHtml; 
+                    if(nBlock) nBlock.classList.remove('hidden');
+                }
+
                 if(currentLoggedInRole === 'head') {
                     let totalOut = 0;
                     let capitalDeployed = 0;
@@ -1678,7 +2126,8 @@
 
                                 // Monthly Profit Generable (Divided by days * 30)
                                 if(c.interestAmt > 0 && c.duration > 0) {
-                                    let dailyInterest = c.planType.includes('daily') ? (c.interestAmt / c.duration) : (c.interestAmt / (c.duration * 7));
+                                    let safeDuration = c.duration || 1;
+                                    let dailyInterest = c.planType.includes('daily') ? (c.interestAmt / safeDuration) : (c.interestAmt / (safeDuration * 7));
                                     realMonthlyProfit += (dailyInterest * 30);
                                 }
 
@@ -1767,17 +2216,33 @@
         async function executeHeadApproval(mobile) { 
             try {
                 let c = serverDb[mobile];
-                // FIX 1: Strict double-click protection so passbook doesn't get duplicate insurance/import entries
-                if(!c || c.isApproved || c.status === "Active") return; 
+                if(!c || c.isApproved || c.status === "Active" || c.status === "Pending NEFT") return; 
                 
+                // 🌟 NAYA LOGIC: Sirf file verify hui hai. EMI dates tabhi start hongi jab NEFT hogi.
+                c.status = "Pending NEFT"; 
+                await saveDataToCloud(mobile);
+                
+                showNotification('File Verified!', `${c.name} ki file pass ho gayi hai. Ab Bank Details me NEFT kariye.`, '🏦');
+                refreshHeadDashboardStats(); 
+            } catch(e) {}
+        }
+
+        // 🌟 NAYA: Jab Bank me paisa bhej diya jaye tabhi EMI dates chalu hon
+        async function executeNEFTDisbursement(mobile) {
+            try {
+                let c = serverDb[mobile];
+                if(!c || c.status !== "Pending NEFT") return; 
+                
+                let netTransfer = c.principal - (c.insuranceAmt || 0);
+                if(!confirm(`Kya aapne sach me ${c.name} (A/C: ${c.bankAcc || 'N/A'}) ko ₹${netTransfer} (Net Amount after Insurance) ka NEFT/Transfer kar diya hai?`)) return;
+
                 let isBackdated = c.customAppDate && c.customAppDate !== "N/A";
                 let finalAppDate = isBackdated ? c.customAppDate : formatSysDate(new Date());
                 
                 c.isApproved = true; 
-                c.status = "Active"; 
+                c.status = "Active"; // Ab jakar asli EMI Calendar Active hua!
                 c.approvalDate = finalAppDate; 
                 
-                // End date dynamically calculates either from Backdate or Today
                 let appDateObj = isBackdated ? parseSysDate(finalAppDate) : new Date();
                 let durDays = c.planType === 'weekly' ? c.duration * 7 : c.duration;
                 appDateObj.setDate(appDateObj.getDate() + parseInt(durDays));
@@ -1787,22 +2252,17 @@
                 c.nextEmiDate = isBackdated ? c.customNextEmi : calculateNextEmiDate(c.planType, c.approvalDate); 
                 
                 if(!c.transactions) c.transactions = [];
-                
-                // Audit Trails
                 c.transactions.push({ date: finalAppDate, amount: c.insuranceAmt || 0, type: 'Insurance Fee Deducted (Upfront)' });
                 
-                // If it was backdated with paid EMIs, generate the historic ledger passbook injection
                 if (c.backdatePaidAmount && c.backdatePaidAmount > 0) {
                     c.transactions.push({ date: finalAppDate, amount: c.backdatePaidAmount, type: 'Old System Import (Paid)' });
                 }
-                
-                // FIX 2: If historic overdue was added, show it explicitly in the passbook as a Penalty so clients don't argue about ghost charges
                 if (c.overdue && c.overdue > 0 && isBackdated) {
                     c.transactions.push({ date: finalAppDate, amount: c.overdue, type: 'Old System Penalty (Overdue)' });
                 }
 
                 await saveDataToCloud(mobile);
-                alert("Account Approved & Activated Successfully!"); 
+                showNotification('Disbursement Done 💸', `${c.name} ka account Active ho gaya hai aur kal se Ledger me EMI show hogi!`, '✅');
                 refreshHeadDashboardStats(); 
             } catch(e) {}
         }
@@ -1816,7 +2276,7 @@
                     branchFilter.classList.remove('hidden');
                     let bOpts = `<option value="ALL">-- All Branches --</option>`;
                     branchList.forEach(b => { bOpts += `<option value="${b}">${b}</option>`; });
-                    if(branchFilter.innerHTML === "") branchFilter.innerHTML = bOpts;
+                    branchFilter.innerHTML = bOpts; // FIX: Always update to show newly created branches dynamically
                 } else {
                     branchFilter.classList.add('hidden');
                 }
@@ -1866,7 +2326,7 @@
 
                     let match = false;
                     if (rt === 'total' && c.status === "Active") match = true; 
-                    else if (rt === 'pending' && c.status === "Pending Approval") match = true; 
+                    else if (rt === 'pending' && (c.status === "Pending Approval" || c.status === "Pending NEFT")) match = true; 
                     else if (rt === 'new' && c.isFirstLoan && c.status === "Active") match = true; 
                     else if (rt === 'renewed' && c.isRenewed && c.status === "Active") match = true; 
                     else if (rt === 'centre' && c.status === "Active") match = true;
@@ -1926,6 +2386,16 @@
                             <div class="col-span-2"><span class="block text-[9px] font-bold text-slate-400 uppercase">Full Address</span><span class="font-bold text-slate-700 leading-relaxed">${c.address||'N/A'}</span></div>
                         </div>
                     </div>
+                    
+                    <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 shadow-inner">
+                        <h4 class="text-[9px] font-black uppercase text-blue-700 mb-3 border-b border-blue-200/50 pb-1">Bank (NEFT) Profile</h4>
+                        <div class="grid grid-cols-2 gap-y-3">
+                            <div class="col-span-2"><span class="block text-[9px] font-bold text-slate-500 uppercase">Bank Name</span><span class="font-black text-slate-800">${c.bankName||'Not Provided'}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-500 uppercase">A/C Number</span><span class="font-black text-slate-800 font-mono tracking-wider">${c.bankAcc||'Not Provided'}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-500 uppercase">IFSC Code</span><span class="font-black text-slate-800">${c.bankIfsc||'Not Provided'}</span></div>
+                        </div>
+                    </div>
+
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <h4 class="text-[9px] font-black uppercase text-blue-600 mb-3 border-b border-slate-200 pb-1">Loan Profile</h4>
                         <div class="grid grid-cols-2 gap-y-3">
@@ -2149,6 +2619,9 @@
                 const attendance = getSafeValue('new-cust-attendance');
                 const purpose = getSafeValue('new-cust-purpose');
                 const house = getSafeValue('new-cust-house');
+                const bankName = getSafeValue('new-cust-bank-name');
+                const bankAcc = getSafeValue('new-cust-bank-acc');
+                const bankIfsc = getSafeValue('new-cust-bank-ifsc');
                 const address = getSafeValue('new-cust-address');
 
                 let ppi = [];
@@ -2237,6 +2710,7 @@
                     voterRef: idRef + " / " + voter, nominee: nominee, nomineeRelation: relation,
                     caste: caste, religion: religion, land: land, attendance: attendance,
                     purpose: purpose, house: house, address: address, ppiSummary: ppiStr,
+                    bankName: bankName, bankAcc: bankAcc, bankIfsc: bankIfsc,
                     
                     // Financials
                     planType: metrics.cycleType, planName: metrics.printPlanName, duration: metrics.duration,
@@ -2272,15 +2746,21 @@
                 btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 btn.innerText = oldText;
                 
+                showNotification('New File Added', `${name} ka form head ke paas Approval & NEFT ke liye chala gaya hai!`, '📝', () => routePanelSection('dashboard'));
                 alert("✅ KYC Form Submitted Successfully! \nSystem Head Approval ke liye pending hai.");
-                triggerPaperPrintDraft(phone);
-                clearKycForm();
+            triggerPaperPrintDraft(phone);
+            clearKycForm();
 
-            } catch (e) {
-                console.error("KYC Submit Error:", e);
-                alert("Data submit karne me error aayi! Console check karein.");
+        } catch (e) {
+            console.error("KYC Submit Error:", e);
+            alert("Data submit karne me error aayi! Network check karein.");
+            if(event && event.currentTarget) {
+                event.currentTarget.disabled = false;
+                event.currentTarget.classList.remove('opacity-50', 'cursor-not-allowed');
+                event.currentTarget.innerText = "Submit & Print 🖨️";
             }
         }
+    }
 
         // =========================================================================
         // 💸 HYBRID LEDGER & DAY END LOGIC
@@ -2311,8 +2791,8 @@
             if(!input || !input.value) { alert("Enter amount!"); return; }
             let amt = parseInt(input.value);
             if(!serverDb[mobile]) return;
-            // FIX: Prevent negative or zero value injection hack
-            if(amt <= 0) { alert("Amount zero ya negative nahi ho sakta!"); return; } 
+            // FIX: Prevent negative or zero value injection hack (Now NaN proof)
+            if(isNaN(amt) || amt <= 0) { alert("Amount zero ya negative nahi ho sakta!"); return; }
             let totalDebt = (serverDb[mobile].outstanding || 0) + (serverDb[mobile].overdue || 0);
             if(amt > totalDebt) { alert(`Amount total debt (₹${totalDebt}) se zyada nahi ho sakta!`); return; }
             serverDb[mobile].advancePaid = amt;
@@ -2320,6 +2800,34 @@
             await saveDataToCloud(mobile);
             alert(`Advance ₹${amt} locked for day-end settlement!`);
             renderStaffLedgerSheets();
+        }
+
+        // NAYA FUNCTION: Smart Receive Popup (Cash vs UPI)
+        function openPaymentModeModal(mobile, amount, name) {
+            let html = `<div class="text-center p-5 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">📥</div>
+                <h3 class="text-xl font-black text-slate-900 uppercase tracking-widest mb-1">Select Payment Mode</h3>
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-5 tracking-widest">${name} | ID: ${mobile}</p>
+                
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-5">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Collection Amount</p>
+                    <p class="text-3xl font-black text-slate-800">₹${amount}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4 relative z-10">
+                    <button onclick="setEmiStatus('${mobile}', 'received_cash'); closeGlobalModal();" class="btn-fluid bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-700 border border-emerald-200 font-black py-4 rounded-xl text-xs uppercase shadow-sm transition-all hover-scale">
+                        <span class="block text-2xl mb-1">💵</span> Cash
+                    </button>
+                    <button onclick="setEmiStatus('${mobile}', 'received_upi'); closeGlobalModal();" class="btn-fluid bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 border border-blue-200 font-black py-4 rounded-xl text-xs uppercase shadow-sm transition-all hover-scale">
+                        <span class="block text-2xl mb-1">📱</span> UPI Transfer
+                    </button>
+                </div>
+                
+                <p class="text-[8px] font-bold text-rose-500 uppercase tracking-widest bg-rose-50 p-2 rounded-lg border border-rose-100">⚠️ Audit Core actively monitors Cash vs UPI collection ratios.</p>
+                <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3.5 rounded-xl text-[10px] uppercase mt-4 transition-colors shadow-md">Cancel</button>
+            </div>`;
+            openGlobalModal(html);
         }
 
         // NAYA FUNCTION: QR Code Selection (Overdue vs Regular EMI)
@@ -2333,15 +2841,15 @@
 
             if (overdueAmt > 0) {
                 html += `
-                <button onclick="showUpiQrCode('${mobile}', ${overdueAmt}, '${name}', 'OVERDUE CLEARANCE')" class="btn-fluid w-full bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-black py-4 rounded-xl text-xs uppercase shadow-sm transition-colors">
+                <button onclick="showUpiQrCode('${mobile}', ${overdueAmt}, '${name.replace(/'/g, "\\'")}', 'OVERDUE CLEARANCE')" class="btn-fluid w-full bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-black py-4 rounded-xl text-xs uppercase shadow-sm transition-colors">
                     1. Pay Only Overdue (₹${overdueAmt})
                 </button>
-                <button onclick="showUpiQrCode('${mobile}', ${totalAmt}, '${name}', 'TOTAL DUE (EMI + Overdue)')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
+                <button onclick="showUpiQrCode('${mobile}', ${totalAmt}, '${name.replace(/'/g, "\\'")}', 'TOTAL DUE (EMI + Overdue)')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
                     2. Pay Total Amount (₹${totalAmt})
                 </button>`;
             } else {
                 html += `
-                <button onclick="showUpiQrCode('${mobile}', ${emiAmt}, '${name}', 'REGULAR EMI')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
+                <button onclick="showUpiQrCode('${mobile}', ${emiAmt}, '${name.replace(/'/g, "\\'")}', 'REGULAR EMI')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">
                     Generate EMI QR (₹${emiAmt})
                 </button>`;
             }
@@ -2436,13 +2944,17 @@
                         let activeOverdueAmount = a.overdue || 0;
                         
                         // Naya Smart QR Button
-                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${a.name.replace(/'/g, "\\'")}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
+                        let safeName = (a.name || 'Unknown Client').replace(/'/g, "\\'");
+                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${safeName}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
 
                         if(a.emiSettled === 'online_paid') { 
-                            aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online Paid</div>`; 
+                            aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online App Paid</div>`; 
                         } 
                         else { 
-                            aB = `${qrBtn}<button onclick="setEmiStatus('${m}', 'received')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Received</button><button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">Bounced</button>`; 
+                            // 🌟 NAYA: Clean UI with 1 Single Receive Popup Button
+                            aB = `${qrBtn}
+                            <button onclick="openPaymentModeModal('${m}', ${activeEmiAmount}, '${safeName}')" class="btn-fluid flex-[1.5] py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">📥 Receive</button>
+                            <button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">❌ BNC</button>`; 
                         }
 
                         // HYBRID UI BADGE
@@ -2541,11 +3053,9 @@
                             c.transactions.push({ date: todayStr, amount: 0, type: 'Missed Arrears' });
                         }
                     } 
-                    else if (c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
-                        // BUG FIX: Agar customer ne online pay kiya hai, toh usne EMI aur Overdue dono bhara hai.
-                        let paidAmt = c.emiSettled === 'online_paid' 
-                            ? Math.min((c.outstanding || 0) + (c.overdue || 0), (c.cycleEmi || 0) + (c.overdue || 0)) 
-                            : Math.min((c.outstanding || 0) + (c.overdue || 0), c.cycleEmi || 0);
+                    else if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
+                        // 🚨 FIX: Cash aur UPI dono default roop se pura amount (EMI + Overdue) collect karte hain. Partial payment ke liye staff manual 'Advance/Custom' box use karega.
+                        let paidAmt = Math.min((c.outstanding || 0) + (c.overdue || 0), (c.cycleEmi || 0) + (c.overdue || 0));
                         
                         // Pehle overdue clear karein
                         let overdueToClear = Math.min(c.overdue || 0, paidAmt);
@@ -2556,10 +3066,20 @@
                         c.outstanding = Math.max(0, (c.outstanding || 0) - remainingForPrincipal);
 
                         c.lastPaymentDate = todayStr; 
-                        c.transactions.push({ date: todayStr, amount: paidAmt, type: c.emiSettled === 'online_paid' ? 'Online App' : 'Received' });
+                        let txType = 'Received';
+                        if(c.emiSettled === 'online_paid' || c.emiSettled === 'received_upi') txType = 'Online App';
+                        c.transactions.push({ date: todayStr, amount: paidAmt, type: txType });
                         
                         // Date aur cycle tabhi aage push hoga agar aaj actually EMI day tha
                         if (isClientDue) {
+                            // 🚨 FIX: Strict Banking Logic - Check if today's EMI was actually covered!
+                            let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                            if (remainingForPrincipal < currentPhaseEmi && c.outstanding > 0) {
+                                let shortfall = currentPhaseEmi - remainingForPrincipal;
+                                c.overdue = (c.overdue || 0) + shortfall;
+                                c.transactions.push({ date: todayStr, amount: shortfall, type: 'Shortfall Penalty' });
+                            }
+                            
                             c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
                             c.emisPaidCount = (c.emisPaidCount || 0) + 1;
                         }
@@ -2639,15 +3159,27 @@
                 let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch);
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
                 
-                // Fix: Sabhi requests ko array me daal kar Promise.all se bhejenge taaki network crash na ho
-                let syncPromises = keys.map(k => fetch(API_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mobile: k, data: serverDb[k] })
-                }));
-                
-                let results = await Promise.allSettled(syncPromises);
-                let successCount = results.filter(r => r.status === 'fulfilled' && r.value.ok).length;
-                if (btn) btn.innerText = `Synced ${successCount}/${keys.length} ☁️`;
+                // 🚀 FIX: Bulk API Request to prevent Rate Limiting and Backend Overload
+                if (btn) btn.innerText = `Syncing Bulk Data... ☁️`;
+                try {
+                    // Saare clients ka ek single array bana rahe hain
+                    let bulkPayload = keys.map(k => ({ mobile: k, data: serverDb[k] }));
+                    
+                    // Backend par ek single request bhejenge (Apne API URL mein zarurat anusar '/bulk' add karein)
+                    let res = await fetch(API_URL + '/bulk', { 
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ clients: bulkPayload })
+                    });
+                    
+                    if(res.ok) {
+                        if (btn) btn.innerText = `Synced ${keys.length}/${keys.length} ☁️`;
+                    } else {
+                        throw new Error("Bulk sync failed due to server error");
+                    }
+                } catch(e) {
+                    console.error("Bulk sync error:", e);
+                    if (btn) btn.innerText = `Sync Failed ⚠️`;
+                }
 
                 alert("Ledger uploaded & Synced to Cloud Successfully! ✅"); 
                 refreshHeadDashboardStats(); 
@@ -2724,6 +3256,7 @@
 
                 if (serverDb[p]) {
                     serverDb[p].status = 'Requested';
+                    serverDb[p].name = n; // FIX: Update name if a previously deleted client reapplies
                     serverDb[p].tempPlanStr = planId; // Save ID instead
                 } else {
                     serverDb[p] = { name: n, status: 'Requested', tempPlanStr: planId, transactions: [], pastLoans: [] };
@@ -2796,9 +3329,9 @@
                             let pb = document.getElementById('apply-cust-phone'); if(pb) pb.value = m; 
                             showDashboard('customer'); routePanelSection('cust-apply'); 
                         }
-                        else if (serverDb[m].status === 'Requested' || serverDb[m].status === 'Pending Approval') { 
+                        else if (serverDb[m].status === 'Requested' || serverDb[m].status === 'Pending Approval' || serverDb[m].status === 'Pending NEFT') { 
                             showDashboard('customer'); routePanelSection('cust-pending'); 
-                        } 
+                        }
                         else { 
                             showDashboard('customer'); 
                         }
@@ -3095,6 +3628,1031 @@
                 </div>`;
             openGlobalModal(wrapper);
         }    
-    </script>
+
+        // =========================================================================
+        // 🗓️ WEEKLY CENTRE ALIGNMENT (BINDING) ENGINE
+        // =========================================================================
+        function syncWeeklyBindDropdowns() {
+            const branchDropdown = document.getElementById('bind-branch');
+            if (currentLoggedInRole === 'head') {
+                branchDropdown.classList.remove('hidden');
+                let bOpts = `<option value="">-- Select Branch --</option>`;
+                branchList.forEach(b => { bOpts += `<option value="${b}">${b}</option>`; });
+                branchDropdown.innerHTML = bOpts;
+            } else {
+                let staffBranch = getSafeValue('dashboard-active-branch-select');
+                branchDropdown.innerHTML = `<option value="${staffBranch}">${staffBranch}</option>`;
+                branchDropdown.value = staffBranch; 
+                branchDropdown.classList.add('hidden'); // Staff branch hide rahegi
+                syncWeeklyBindCentre();
+            }
+            document.getElementById('bind-clients-list').classList.add('hidden');
+            document.getElementById('btn-execute-bind').classList.add('hidden');
+        }
+
+        function syncWeeklyBindCentre() {
+            const branchFilter = document.getElementById('bind-branch').value;
+            const centreDropdown = document.getElementById('bind-centre');
+            let opts = '<option value="">-- Select Centre --</option>';
+            centreList.forEach(c => { 
+                if (c.branch === branchFilter) { opts += `<option value="${c.name}">${c.name}</option>`; }
+            });
+            centreDropdown.innerHTML = opts;
+        }
+
+        let bindableClientsCache = [];
+
+        function loadClientsForBinding() {
+            const b = getSafeValue('bind-branch');
+            const c = getSafeValue('bind-centre');
+            const d = getSafeValue('bind-target-day');
+            
+            if(!b || !c || d === "") { alert("Please select Branch, Centre aur Target Day purna roop se!"); return; }
+            
+            bindableClientsCache = [];
+            let html = '<div class="flex justify-between items-center mb-2 px-1"><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Selected Clients</span><button onclick="toggleAllBindCheckboxes()" class="text-[9px] bg-slate-200 px-3 py-1 rounded-md text-slate-700 font-black shadow-sm">Toggle All</button></div>';
+            
+            Object.keys(serverDb).forEach(m => {
+                if(m === "SYSTEM_SETTINGS") return;
+                let client = serverDb[m];
+                // Sirf ACTIVE aur WEEKLY clients ko fetch karega
+                if(client && client.branch === b && client.center === c && client.planType === 'weekly' && client.status === 'Active') {
+                    bindableClientsCache.push(m);
+                    html += `
+                    <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm mb-2 hover-scale">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="bind-chk-${m}" checked class="w-5 h-5 accent-indigo-600 bind-checkbox cursor-pointer">
+                            <div>
+                                <p class="text-xs font-black text-slate-800">${client.name}</p>
+                                <p class="text-[9px] text-slate-500 font-bold mt-0.5">Current Due: <span class="text-rose-500 font-black">${client.nextEmiDate}</span></p>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-black px-2 py-1 bg-indigo-50 text-indigo-600 rounded">₹${client.cycleEmi}</span>
+                    </div>`;
+                }
+            });
+            
+            const listDiv = document.getElementById('bind-clients-list');
+            const btnExec = document.getElementById('btn-execute-bind');
+            
+            if(bindableClientsCache.length > 0) {
+                listDiv.innerHTML = html;
+                listDiv.classList.remove('hidden');
+                btnExec.classList.remove('hidden');
+            } else {
+                listDiv.innerHTML = '<div class="text-center p-6 bg-slate-50 border border-slate-200 border-dashed rounded-xl"><p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">No active weekly clients found in this centre.</p></div>';
+                listDiv.classList.remove('hidden');
+                btnExec.classList.add('hidden');
+            }
+        }
+
+        function toggleAllBindCheckboxes() {
+            let boxes = document.querySelectorAll('.bind-checkbox');
+            let allChecked = Array.from(boxes).every(b => b.checked);
+            boxes.forEach(b => b.checked = !allChecked);
+        }
+
+        async function executeWeeklyBinding() {
+            const targetDay = parseInt(getSafeValue('bind-target-day'));
+            let selectedClients = [];
+            
+            bindableClientsCache.forEach(m => {
+                let chk = document.getElementById(`bind-chk-${m}`);
+                if(chk && chk.checked) selectedClients.push(m);
+            });
+            
+            if(selectedClients.length === 0) { alert("Select at least one client!"); return; }
+            
+            let dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            
+            if(!confirm(`⚠️ CONFIRMATION:\nKya aap sach mein in ${selectedClients.length} clients ki aane wali EMI dates ko ${dayNames[targetDay]} par shift karna chahte hain?`)) return;
+            
+            let executeBtn = document.getElementById('btn-execute-bind');
+            executeBtn.innerText = "Aligning Data... ⏳";
+            executeBtn.disabled = true;
+
+            try {
+                for (let m of selectedClients) {
+                let c = serverDb[m];
+                if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                    let currentDue = parseSysDate(c.nextEmiDate);
+                    
+                    // Math Logic: Calculate distance to the next occurrence of Target Day
+                    let distance = targetDay - currentDue.getDay();
+                    
+                    // Agar agla fix day same week me nahi aata, toh usko push kardo (+7 days)
+                    if (distance < 0) distance += 7; 
+                    
+                    if (distance > 0) {
+                        currentDue.setDate(currentDue.getDate() + distance);
+                        c.nextEmiDate = formatSysDate(currentDue);
+                        
+                        // FIX: Shift the official End Date too, otherwise loan expires early on dashboard
+                        if(c.endDate && c.endDate !== "N/A" && c.endDate !== "Completed") {
+                            let endObj = parseSysDate(c.endDate);
+                            endObj.setDate(endObj.getDate() + distance);
+                            c.endDate = formatSysDate(endObj);
+                        }
+                        
+                        // Internal transaction audit record add karein taki audit trail clear rahe
+                        if(!c.transactions) c.transactions = [];
+                        c.transactions.push({ date: formatSysDate(new Date()), amount: 0, type: `Centre Binding (${dayNames[targetDay]})` });
+                        
+                        c.lastUpdated = Date.now();
+                    }
+                }
+            }
+            
+            await localforage.setItem('opas_local_db', serverDb);
+            
+            // Background me saare updated clients ko sync kar do
+            let syncPromises = selectedClients.map(m => saveDataToCloud(m));
+            await Promise.allSettled(syncPromises);
+
+            alert(`✅ Successfully aligned ${selectedClients.length} clients' dates to ${dayNames[targetDay]}!`);
+            
+            executeBtn.innerText = "Align EMIs to Target Day";
+            executeBtn.disabled = false;
+            
+            // Refresh to Dashboard
+            routePanelSection('dashboard');
+            
+        } catch (error) {
+            console.error("Binding Sync Error:", error);
+            alert("Warning: Kuch clients ka data sync nahi ho paya. Network check karein.");
+            executeBtn.innerText = "Align EMIs to Target Day";
+            executeBtn.disabled = false;
+        }
+    }
+
+        // =========================================================================
+        // 🚨 OPAS AI FRAUD RADAR (V3: VETERAN-PROOF MILITARY GRADE)
+        // =========================================================================
+        function openFraudRadar() {
+            let todayObj = new Date();
+            todayObj.setHours(0,0,0,0);
+            let todayStr = formatSysDate(todayObj);
+            let currentDayOfWeek = todayObj.getDay(); // 0=Sun, 5=Fri, 6=Sat
+            
+            let branchAnomalies = {};
+            
+            // 🌟 NAYA: Live Collection Tracking Dashboard Variables
+            let globalCollection = {
+                total: 0, cash: 0, upi: 0, advance: 0, bouncedAmt: 0, bouncedCount: 0,
+                cashClients: [], upiClients: []
+            };
+            
+            // 🚨 EXTREME RADAR: System Audit Parameters (100x God Mode Upgrade)
+            let systemAudit = {
+                midnightEdits: 0,
+                backdatedForges: 0,
+                penaltyWaived: 0,
+                zeroDayDefaults: 0,
+                microSlicing: 0,
+                ghostClients: 0
+            };
+
+            // Helper: Exact Date Difference
+            function getDaysDiffReal(dateStr) {
+                if(!dateStr || dateStr === "N/A" || dateStr === "Completed") return 999;
+                let d = parseSysDate(dateStr);
+                return Math.round((todayObj - d) / (1000 * 60 * 60 * 24)); // Pos = Past, Neg = Future
+            }
+
+            // Start Deep Scanning Database
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (!c || c.status !== "Active") return; 
+                
+                let b = c.branch || "Unknown Branch";
+                let center = c.center || "Unknown Centre";
+                
+                if (!branchAnomalies[b]) branchAnomalies[b] = { totalFlags: 0, centres: {} };
+                if (!branchAnomalies[b].centres[center]) branchAnomalies[b].centres[center] = { bounceCount: 0, totalOut: 0, totalOd: 0, riskyClients: [] };
+
+                branchAnomalies[b].centres[center].totalOut += (c.outstanding || 0);
+                branchAnomalies[b].centres[center].totalOd += (c.overdue || 0);
+
+                let isShady = false;
+                let shadeReasons = [];
+
+                // 1. TIME TRAVEL FRAUD (Device Time Tampering)
+                let futureTx = c.transactions?.filter(t => getDaysDiffReal(t.date) < 0).length || 0;
+                if (futureTx > 0) {
+                    isShady = true;
+                    shadeReasons.push(`<span class="text-rose-600 font-black">⏱️ Time-Tampering! (Future Date Entry Detected)</span>`);
+                }
+
+                // 2. TEEMING & LADING (Cash Rolling: Bounce + Advance Cycling)
+                let last5 = c.transactions?.slice(-5) || [];
+                let hasBounce = last5.some(t => t.type === 'Bounced' || t.type === 'Missed Arrears');
+                let hasAdvance = last5.some(t => t.type === 'Advance');
+                if (hasBounce && hasAdvance && last5.length >= 3) {
+                    isShady = true;
+                    shadeReasons.push(`<span class="text-fuchsia-600 font-black">🔄 Teeming & Lading Risk (Bounce/Advance Cycling)</span>`);
+                }
+
+                // 3. GHOST BOUNCE & TODAY'S REPORT TRACKING (AI Enhanced)
+                let todayBounces = 0;
+                if (c.transactions) {
+                    c.transactions.forEach(t => {
+                        if (t.date === todayStr) {
+                            if (t.type === 'Bounced') {
+                                todayBounces++;
+                                branchAnomalies[b].centres[center].bounceCount++;
+                                globalCollection.bouncedCount++;
+                                globalCollection.bouncedAmt += (c.cycleEmi || 0);
+                            } else if (t.type === 'Received' || t.type === 'Direct Settle') {
+                                globalCollection.cash += t.amount;
+                                globalCollection.total += t.amount;
+                                globalCollection.cashClients.push({ name: c.name, id: c.id, amt: t.amount, type: c.planType });
+                            } else if (t.type === 'Online App') {
+                                globalCollection.upi += t.amount;
+                                globalCollection.total += t.amount;
+                                globalCollection.upiClients.push({ name: c.name, id: c.id, amt: t.amount, type: c.planType });
+                            } else if (t.type === 'Advance') {
+                                globalCollection.advance += t.amount;
+                                globalCollection.cash += t.amount; // Advance mostly staff via cash hi leta hai
+                                globalCollection.total += t.amount;
+                                globalCollection.cashClients.push({ name: c.name + " (Adv)", id: c.id, amt: t.amount, type: c.planType });
+                            }
+                        }
+                    });
+                }
+
+                // 4. ADVANCE HOARDING (Hold money, no settlement)
+                if (c.advancePaid > (c.cycleEmi * 2.5)) {
+                    isShady = true;
+                    shadeReasons.push(`<span class="text-amber-600 font-black">🟠 High Advance Hoard (₹${c.advancePaid} held)</span>`);
+                }
+
+                // 5. GHOST ABANDONMENT / DEAD NPA
+                let daysSinceLastPay = getDaysDiffReal(c.lastPaymentDate);
+                if (c.overdue >= (c.cycleEmi * 4) && daysSinceLastPay > 14 && daysSinceLastPay !== 999) {
+                    isShady = true;
+                    shadeReasons.push(`<span class="text-slate-600 font-black">⚫ Dead NPA (Abandoned for ${daysSinceLastPay} days)</span>`);
+                }
+
+                // 6. SHADY MANUAL EDITS (Recent debt reduction)
+                let recentEdits = c.transactions?.filter(t => (t.type.includes('Waived') || t.type.includes('Reduction')) && getDaysDiffReal(t.date) <= 7);
+                if (recentEdits && recentEdits.length > 0) {
+                    isShady = true;
+                    let totalWaived = recentEdits.reduce((sum, tx) => sum + tx.amount, 0);
+                    shadeReasons.push(`<span class="text-indigo-600 font-black">🟣 Unauthorised Backdoor Edit (₹${totalWaived} Waived)</span>`);
+                    systemAudit.penaltyWaived++;
+                }
+
+                // 🚨 7. EXTREME LEVEL: MIDNIGHT OPERATIONS & BACKDATE FORGERY
+                let lastUpdatedDate = c.lastUpdated ? new Date(c.lastUpdated) : null;
+                let isTodayUpdate = lastUpdatedDate && (lastUpdatedDate.toDateString() === todayObj.toDateString());
+
+                if (isTodayUpdate) {
+                    let updateHour = lastUpdatedDate.getHours();
+                    
+                    // Midnight Rider Detection (9 PM to 6 AM ki gayi entries/edits)
+                    if (updateHour >= 21 || updateHour < 6) {
+                        isShady = true;
+                        shadeReasons.push(`<span class="text-slate-800 font-black bg-slate-200 px-2 py-1 rounded-lg border border-slate-300 shadow-sm block mt-1">🌙 Midnight Operation! Edited at ${lastUpdatedDate.toLocaleTimeString()}</span>`);
+                        systemAudit.midnightEdits++;
+                    }
+
+                    // Backdated Payment Injection Detection (Smart Tracker)
+                    // Tracks if staff enters an old 'Received' or 'Advance' payment TODAY (Hiding yesterday's missing cash)
+                    let forgedPayments = c.transactions?.filter(t => (t.type === 'Received' || t.type === 'Advance') && getDaysDiffReal(t.date) >= 2);
+                    if (forgedPayments && forgedPayments.length > 0) {
+                        isShady = true;
+                        let forgedAmt = forgedPayments.reduce((sum, tx) => sum + tx.amount, 0);
+                        shadeReasons.push(`<span class="text-orange-700 font-black bg-orange-50 px-2 py-1 rounded-lg border border-orange-200 shadow-sm block mt-1">⏪ Backdate Forgery: Old Collection (₹${forgedAmt}) punched today!</span>`);
+                        systemAudit.backdatedForges++;
+                    }
+                }
+
+                // 🚨 8. ZERO-DAY DEFAULT (Ghost KYC / Fake Client Detection)
+                // Loan pass hua aur pehli kist hi bounce ho gayi (Staff ne target poora karne fake entry ki)
+                if ((c.emisPaidCount === 0 || !c.emisPaidCount) && (c.overdue > 0 || todayBounces > 0)) {
+                    isShady = true;
+                    shadeReasons.push(`<span class="text-red-700 font-black bg-red-50 px-2 py-1 rounded-lg border border-red-200 shadow-sm block mt-1">💀 Zero-Day Default! 1st EMI Bounced (High Fake KYC Risk)</span>`);
+                    systemAudit.zeroDayDefaults++;
+                }
+
+                // 🚨 9. MICRO-SLICING (Salami Attack / Cash Manipulation)
+                // Ek hi din me 3+ chhote-chhote payments entry karna, cash shortage hide karne ke liye
+                let todayReceipts = c.transactions?.filter(t => t.date === todayStr && (t.type === 'Received' || t.type === 'Advance')) || [];
+                if (todayReceipts.length >= 3) {
+                    isShady = true;
+                    let tinyTotal = todayReceipts.reduce((sum, t) => sum + t.amount, 0);
+                    shadeReasons.push(`<span class="text-pink-700 font-black bg-pink-50 px-2 py-1 rounded-lg border border-pink-200 shadow-sm block mt-1">🔪 Micro-Slicing! ${todayReceipts.length} split chunks entered today (Total: ₹${tinyTotal})</span>`);
+                    systemAudit.microSlicing++;
+                }
+
+                // 🚨 10. EVERGREENING (Fake Renewal to hide dead NPA)
+                // Aaj hi renew kiya aur aaj hi instantly usme multiple transactions karke advance dikha diya
+                if (c.isRenewed && c.approvalDate === todayStr && (c.advancePaid > c.cycleEmi || todayReceipts.length > 0)) {
+                    isShady = true;
+                    shadeReasons.push(`<span class="text-cyan-700 font-black bg-cyan-50 px-2 py-1 rounded-lg border border-cyan-200 shadow-sm block mt-1">♻️ Evergreening Suspected: Same-day Renewal + Instant Payments</span>`);
+                    systemAudit.ghostClients++;
+                }
+
+                if (isShady) {
+                    branchAnomalies[b].totalFlags++;
+                    branchAnomalies[b].centres[center].riskyClients.push({
+                        id: c.id, mobile: m, name: c.name, plan: c.planName,
+                        reasons: shadeReasons, emi: c.cycleEmi, out: c.outstanding, od: c.overdue
+                    });
+                }
+            });
+
+            // Build Military-Grade UI Report
+            
+            // Client Breakdown Generator (Cash vs UPI)
+            let cashListHtml = globalCollection.cashClients.map(cl => `<div class="flex justify-between border-b border-slate-200/50 py-1.5"><span class="text-[9px] text-slate-600 font-bold">${cl.name} (${cl.id})</span><span class="text-[9px] font-black text-emerald-600">₹${cl.amt}</span></div>`).join('');
+            let upiListHtml = globalCollection.upiClients.map(cl => `<div class="flex justify-between border-b border-slate-200/50 py-1.5"><span class="text-[9px] text-slate-600 font-bold">${cl.name} (${cl.id})</span><span class="text-[9px] font-black text-blue-600">₹${cl.amt}</span></div>`).join('');
+
+            // Calculate Microfinance Threat Level (100x Strict)
+            let threatScore = (systemAudit.midnightEdits * 20) + (systemAudit.backdatedForges * 25) + (systemAudit.penaltyWaived * 15);
+            threatScore += (systemAudit.zeroDayDefaults * 40); // Highest penalty for ghost clients
+            threatScore += (systemAudit.microSlicing * 10);
+            threatScore += (systemAudit.ghostClients * 30);
+
+            if (globalCollection.cash > 5000 && globalCollection.upi === 0) threatScore += 30; // Cash hoarding adds massive risk
+            
+            let threatLevel = threatScore > 100 ? "LOCKED (DEFCON 1)" : (threatScore > 50 ? "CRITICAL (DEFCON 2)" : (threatScore > 20 ? "ELEVATED (DEFCON 3)" : "NOMINAL (SECURE)"));
+            let threatColor = threatScore > 50 ? "text-rose-500" : (threatScore > 20 ? "text-amber-500" : "text-emerald-500");
+            let threatBg = threatScore > 50 ? "bg-rose-500/10 border-rose-500/30" : (threatScore > 20 ? "bg-amber-500/10 border-amber-500/30" : "bg-emerald-500/10 border-emerald-500/30");
+
+            let html = `
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 bg-rose-100 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto mb-3 text-4xl font-black shadow-2xl shadow-rose-500/30 pulse-glow transform rotate-3 relative">
+                        👁️‍🗨️
+                        ${threatScore > 50 ? '<div class="absolute -top-2 -right-2 w-6 h-6 bg-rose-600 text-white rounded-full text-[10px] flex items-center justify-center animate-ping">!</div>' : ''}
+                    </div>
+                    <h2 class="text-xl font-black text-slate-900 uppercase tracking-widest">OPAS God-Mode Radar</h2>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Micro-Transaction Forensics</p>
+                    
+                    <div class="mt-4 inline-block px-5 py-3 rounded-2xl shadow-lg border ${threatBg} backdrop-blur-sm">
+                        <span class="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mb-1">System Integrity Threat Level</span>
+                        <span class="text-sm font-black ${threatColor} uppercase tracking-widest">${threatLevel}</span>
+                    </div>
+                </div>
+                
+                <!-- 🚨 100x EXTREME RADAR: VETERAN AUDIT METRICS -->
+                <div class="grid grid-cols-3 gap-2 mb-6">
+                    <div class="bg-rose-50 p-3 rounded-2xl text-center border border-rose-200 shadow-inner hover-scale">
+                        <p class="text-xl font-black text-rose-600">${systemAudit.zeroDayDefaults}</p>
+                        <p class="text-[7px] font-black text-rose-500 uppercase mt-1 leading-tight tracking-widest">Zero-Day<br>Defaults</p>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-2xl text-center border border-orange-200 shadow-inner hover-scale">
+                        <p class="text-xl font-black text-orange-600">${systemAudit.backdatedForges}</p>
+                        <p class="text-[7px] font-black text-orange-500 uppercase mt-1 leading-tight tracking-widest">Backdated<br>Forgeries</p>
+                    </div>
+                    <div class="bg-slate-100 p-3 rounded-2xl text-center border border-slate-200 shadow-inner hover-scale">
+                        <p class="text-xl font-black text-slate-800">${systemAudit.midnightEdits}</p>
+                        <p class="text-[7px] font-black text-slate-500 uppercase mt-1 leading-tight tracking-widest">Midnight<br>Operations</p>
+                    </div>
+                    <div class="bg-pink-50 p-3 rounded-2xl text-center border border-pink-200 shadow-inner hover-scale">
+                        <p class="text-xl font-black text-pink-600">${systemAudit.microSlicing}</p>
+                        <p class="text-[7px] font-black text-pink-500 uppercase mt-1 leading-tight tracking-widest">Micro<br>Slicing</p>
+                    </div>
+                    <div class="bg-cyan-50 p-3 rounded-2xl text-center border border-cyan-200 shadow-inner hover-scale">
+                        <p class="text-xl font-black text-cyan-600">${systemAudit.ghostClients}</p>
+                        <p class="text-[7px] font-black text-cyan-500 uppercase mt-1 leading-tight tracking-widest">Evergreen<br>Renewals</p>
+                    </div>
+                    <div class="bg-indigo-50 p-3 rounded-2xl text-center border border-indigo-200 shadow-inner hover-scale">
+                        <p class="text-xl font-black text-indigo-600">${systemAudit.penaltyWaived}</p>
+                        <p class="text-[7px] font-black text-indigo-500 uppercase mt-1 leading-tight tracking-widest">Manual<br>Waivers</p>
+                    </div>
+                </div>
+
+                <!-- 🌟 NAYA: LIVE TODAY'S COLLECTION REPORT -->
+                <div class="bg-slate-900 rounded-[2rem] p-5 shadow-xl mb-6 relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
+                    <h3 class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4 border-b border-white/10 pb-2 relative z-10 flex justify-between">Today's Real-Time Book <span>₹${globalCollection.total}</span></h3>
+                    
+                    <div class="grid grid-cols-2 gap-3 relative z-10 mb-4">
+                        <div class="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
+                            <p class="text-[9px] text-emerald-400 font-bold uppercase">On Cash</p>
+                            <p class="text-lg font-black text-emerald-400 mt-1">₹${globalCollection.cash}</p>
+                        </div>
+                        <div class="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
+                            <p class="text-[9px] text-blue-400 font-bold uppercase">Via UPI (Online)</p>
+                            <p class="text-lg font-black text-blue-400 mt-1">₹${globalCollection.upi}</p>
+                        </div>
+                        <div class="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
+                            <p class="text-[9px] text-amber-400 font-bold uppercase">Advance EMI</p>
+                            <p class="text-lg font-black text-amber-400 mt-1">₹${globalCollection.advance}</p>
+                        </div>
+                        <div class="bg-rose-500/10 p-3 rounded-xl border border-rose-500/20">
+                            <p class="text-[9px] text-rose-400 font-bold uppercase">Bounced (${globalCollection.bouncedCount})</p>
+                            <p class="text-lg font-black text-rose-400 mt-1">₹${globalCollection.bouncedAmt}</p>
+                        </div>
+                    </div>
+
+                    <!-- Client Breakdown Zone -->
+                    <div class="bg-slate-50 rounded-xl p-3 relative z-10 max-h-40 overflow-y-auto">
+                        <p class="text-[9px] font-black text-emerald-600 uppercase mb-2">💵 Cash Payers</p>
+                        ${cashListHtml || '<p class="text-[9px] text-slate-400 italic">No cash payments today.</p>'}
+                        <p class="text-[9px] font-black text-blue-600 uppercase mb-2 mt-3 pt-2 border-t border-slate-200">📱 UPI Payers</p>
+                        ${upiListHtml || '<p class="text-[9px] text-slate-400 italic">No UPI payments today.</p>'}
+                    </div>
+                </div>
+
+                <div class="space-y-4 max-h-[65vh] overflow-y-auto pr-2 pb-4">
+            `;
+
+            let hasThreats = false;
+
+            Object.keys(branchAnomalies).forEach(b => {
+                let branchHtml = '';
+                let hasBranchThreat = false;
+
+                Object.keys(branchAnomalies[b].centres).forEach(center => {
+                    let d = branchAnomalies[b].centres[center];
+                    
+                    // 7. TOXIC CENTRE DETECTION (Macro Level)
+                    let centreToxicAlert = '';
+                    if (d.totalOut > 20000 && d.totalOd > (d.totalOut * 0.20)) {
+                        centreToxicAlert = `<div class="bg-rose-900 text-white p-2 rounded-lg text-[9px] font-black uppercase mb-3 shadow-lg pulse-glow">☠️ TOXIC PORTFOLIO: Overdue is ${(d.totalOd/d.totalOut*100).toFixed(1)}% of Outstanding! Extreme Default Risk.</div>`;
+                        hasBranchThreat = true;
+                    }
+
+                    // 8. WEEKEND HOARDING DETECTION
+                    let weekendAlert = '';
+                    if ((currentDayOfWeek === 5 || currentDayOfWeek === 6 || currentDayOfWeek === 0) && d.bounceCount >= 3) {
+                        weekendAlert = `<div class="bg-amber-100 text-amber-800 p-2 rounded-lg text-[9px] font-black uppercase mb-3 border border-amber-300 shadow-sm animate-pulse">🏖️ WEEKEND HOARDING RISK: ${d.bounceCount} Bounces marked. Staff might be holding weekend cash!</div>`;
+                        hasBranchThreat = true;
+                    } else if (d.bounceCount >= 4) {
+                        weekendAlert = `<div class="bg-rose-50 text-rose-700 p-2 rounded-lg text-[9px] font-black uppercase mb-3 border border-rose-200">⚠️ Suspected Mass Bounces: ${d.bounceCount} clients marked bounced today.</div>`;
+                        hasBranchThreat = true;
+                    }
+
+                    // 9. 🌟 NAYA: SMART UPI vs CASH ANOMALY DETECTION (Upgraded)
+                    let cashAnomalyAlert = '';
+                    let totalCentreCollection = globalCollection.cash + globalCollection.upi;
+                    let cashPercentage = totalCentreCollection > 0 ? (globalCollection.cash / totalCentreCollection) * 100 : 0;
+                    
+                    if (globalCollection.cash > 5000 && globalCollection.upi === 0 && d.bounceCount > 1) {
+                        cashAnomalyAlert = `<div class="bg-fuchsia-100 text-fuchsia-800 p-2 rounded-lg text-[9px] font-black uppercase mb-3 border border-fuchsia-300 shadow-sm animate-pulse">🕵️ CASH HOARDING SUSPICION: 100% Cash collections + Bounces. 0 UPI received! Staff might be rolling cash.</div>`;
+                        hasBranchThreat = true;
+                    } else if (cashPercentage > 85 && totalCentreCollection > 10000) {
+                        // Alert if more than 85% of large collections are forced via Cash (High manipulation risk)
+                        cashAnomalyAlert = `<div class="bg-orange-100 text-orange-800 p-2 rounded-lg text-[9px] font-black uppercase mb-3 border border-orange-300 shadow-sm">⚠️ HIGH CASH DEPENDENCY: ${cashPercentage.toFixed(0)}% collection via Cash today. Risk of cash-in-transit manipulation. Encourage UPI.</div>`;
+                        hasBranchThreat = true;
+                    }
+
+                    if (d.riskyClients.length === 0 && !centreToxicAlert && !weekendAlert && !cashAnomalyAlert) return;
+                    hasBranchThreat = true;
+
+                    let clientListHtml = '';
+                    d.riskyClients.forEach(rc => {
+                        clientListHtml += `
+                            <div class="p-3 bg-white border border-slate-200 rounded-xl mb-2 hover-scale shadow-sm cursor-pointer transition-all hover:bg-slate-50" onclick="showClientFullInfo('${rc.mobile}')">
+                                <div class="flex justify-between items-start mb-1">
+                                    <div>
+                                        <p class="text-[10px] font-black text-slate-900">${rc.name}</p>
+                                        <p class="text-[8px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">${rc.id} | ${rc.mobile}</p>
+                                    </div>
+                                    <span class="text-[8px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-black uppercase">${rc.plan}</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-50 text-[9px]">
+                                    <div><span class="text-slate-400 font-bold block uppercase">Bal</span><span class="font-black text-slate-700">₹${rc.out}</span></div>
+                                    <div><span class="text-slate-400 font-bold block uppercase">OD</span><span class="font-black text-rose-500">₹${rc.od}</span></div>
+                                    <div><span class="text-slate-400 font-bold block uppercase">EMI</span><span class="font-black text-blue-600">₹${rc.emi}</span></div>
+                                </div>
+                                <div class="mt-2 text-[10px] bg-rose-50/50 p-2 rounded-lg border border-rose-100/50 leading-relaxed">
+                                    ${rc.reasons.join("<br>")}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    branchHtml += `
+                        <div class="mb-4">
+                            <h4 class="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 p-2 rounded-lg mb-2 shadow-sm border border-indigo-100 flex items-center justify-between">📍 Centre: ${center} <span class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[8px]">${d.riskyClients.length} Flags</span></h4>
+                            ${centreToxicAlert}
+                            ${weekendAlert}
+                            ${clientListHtml}
+                        </div>
+                    `;
+                });
+
+                if (hasBranchThreat) {
+                    hasThreats = true;
+                    html += `
+                        <div class="bg-slate-100/50 p-4 rounded-3xl border border-slate-200 shadow-md relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-2 h-full bg-slate-800"></div>
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-3">
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">🏢 Branch: ${b}</h3>
+                            </div>
+                            ${branchHtml}
+                        </div>
+                    `;
+                }
+            });
+
+            if (!hasThreats) {
+                html += `
+                    <div class="text-center p-8 bg-emerald-50 rounded-[2rem] border border-emerald-100 shadow-sm hover-scale">
+                        <p class="text-5xl mb-4">🛡️</p>
+                        <p class="text-sm font-black text-emerald-600 uppercase tracking-widest">System Secure</p>
+                        <p class="text-[10px] font-bold text-emerald-500 mt-2">No cash rolling, time-tampering, or ghost bounces detected. Operations are nominal.</p>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+            openGlobalModal(html);
+        }
+
+        // =========================================================================
+        // 🛰️ GEO-FENCING, FACIAL BIOMETRICS & SMART PAYROLL ENGINE
+        // =========================================================================
+        
+        // Exact Earth radius mapping formula (Haversine)
+        function haversineDist(lat1, lon1, lat2, lon2) {
+            let R = 6371e3; // metres
+            let p1 = lat1 * Math.PI/180, p2 = lat2 * Math.PI/180;
+            let dp = (lat2-lat1) * Math.PI/180, dl = (lon2-lon1) * Math.PI/180;
+            let a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function renderStaffAttendanceCalendar() {
+            let u = localStorage.getItem('opas_sess_id');
+            let staff = staffDb[u];
+            if(!staff) return;
+
+            let d = new Date(); let year = d.getFullYear(); let month = d.getMonth();
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            let presentDays = 0; let html = '';
+            for(let i=1; i<=daysInMonth; i++) {
+                // FIX: Match the exact DD-MM-YYYY format saved by the Face Attendance system
+                let dateStr = `${i.toString().padStart(2,'0')}-${(month+1).toString().padStart(2,'0')}-${year}`;
+                let att = staff.attendance && staff.attendance[dateStr];
+                if(att) {
+                    presentDays++;
+                    html += `<div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center hover-scale shadow-sm"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase tracking-widest mt-1">Present</span></div>`;
+                } else {
+                    let isPast = i <= d.getDate();
+                    if(isPast) {
+                        html += `<div class="bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase tracking-widest mt-1">Absent</span></div>`;
+                    } else {
+                        html += `<div class="bg-slate-50 border border-slate-100 text-slate-300 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase mt-1">-</span></div>`;
+                    }
+                }
+            }
+            
+            let b = parseInt(staff.baseSalary)||0; let m = parseInt(staff.meshAllow)||0; let p = parseInt(staff.petrolAllow)||0;
+            let perDay = (b+m+p) / daysInMonth;
+            let totalEarned = perDay * presentDays;
+
+            setHtmlSafe('att-present-count', presentDays); setHtmlSafe('att-absent-count', d.getDate() - presentDays);
+            setHtmlSafe('att-earned-salary', `₹${Math.round(totalEarned).toLocaleString('en-IN')}`);
+            setHtmlSafe('att-total-salary', `₹${(b+m+p).toLocaleString('en-IN')}`);
+            
+            document.getElementById('attendance-calendar-grid').innerHTML = html;
+            
+            let todayStr = formatSysDate(d);
+            if(staff.attendance && staff.attendance[todayStr]) {
+                document.getElementById('btn-mark-attendance').classList.add('hidden');
+                document.getElementById('msg-attendance-done').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-mark-attendance').classList.remove('hidden');
+                document.getElementById('msg-attendance-done').classList.add('hidden');
+            }
+        }
+
+        // =========================================================================
+        // 🧬 ADVANCED BIOMETRIC & TRANSFER ENGINE
+        // =========================================================================
+
+        let isFaceApiLoaded = false;
+        let biometricStream = null;
+        let scanTimeout;
+
+        async function initFaceApi() {
+            if (isFaceApiLoaded) return true;
+            try {
+                let statusText = document.getElementById('face-scan-status');
+                if(statusText) statusText.innerText = "Downloading AI Biometrics... (First Time)";
+                
+                // Hum cloud models use kar rahe hain
+                const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                isFaceApiLoaded = true;
+                return true;
+            } catch(e) {
+                console.error("Face API Error:", e);
+                alert("Failed to load Biometric System. Check Internet.");
+                return false;
+            }
+        }
+
+        async function processFaceScan() {
+            let video = document.getElementById('face-video');
+            let statusText = document.getElementById('face-scan-status');
+            if(!video || !statusText) return;
+            
+            try {
+                const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+                
+                if (!detection) {
+                    statusText.innerText = "No Face Detected. Looking for face...";
+                    scanTimeout = setTimeout(processFaceScan, 1000);
+                    return;
+                }
+
+                let u = localStorage.getItem('opas_sess_id');
+                let staff = staffDb[u];
+
+                if (!staff.faceDescriptor) {
+                    // First time registration
+                    statusText.innerText = "Locking New Face ID Profile... 🔒";
+                    staffDb[u].faceDescriptor = Array.from(detection.descriptor); // Matrix store karliya
+                    
+                    serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+                    await saveDataToCloud("SYSTEM_SETTINGS");
+                    finalizeAttendance();
+                } else {
+                    // Verifying existing face
+                    statusText.innerText = "Analyzing Facial Geometry...";
+                    let storedDesc = new Float32Array(staff.faceDescriptor);
+                    let distance = faceapi.euclideanDistance(storedDesc, detection.descriptor);
+                    
+                    if (distance < 0.55) { // Strict match threshold
+                        finalizeAttendance();
+                    } else {
+                        statusText.innerText = "⛔ FACE MISMATCH! Unauthorized Access.";
+                        statusText.classList.replace('text-emerald-600', 'text-rose-600');
+                        statusText.classList.replace('bg-emerald-50', 'bg-rose-50');
+                        setTimeout(() => {
+                            if(biometricStream) biometricStream.getTracks().forEach(t=>t.stop());
+                            closeGlobalModal();
+                        }, 3000);
+                    }
+                }
+            } catch(e) {
+                scanTimeout = setTimeout(processFaceScan, 1000);
+            }
+        }
+
+        async function openFaceScanner() {
+            let u = localStorage.getItem('opas_sess_id');
+            let staff = staffDb[u];
+            let instruction = staff.faceDescriptor ? "Look directly into the camera to Verify Identity" : "First Time Setup: Registering Permanent Face ID";
+            
+            let html = `
+                <div class="text-center p-2 relative overflow-hidden">
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest mb-1">Face Recognition Core</h3>
+                    <p class="text-[9px] font-bold text-indigo-600 uppercase mb-5 tracking-widest bg-indigo-50 p-2 rounded border border-indigo-100">${instruction}</p>
+                    
+                    <div class="relative w-56 h-56 mx-auto rounded-full overflow-hidden border-4 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)] mb-5">
+                        <video id="face-video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                        <div class="absolute left-0 w-full h-1 bg-emerald-400 shadow-[0_0_15px_#34d399] animate-[faceScan_2s_ease-in-out_infinite] z-10" style="animation-name: faceScan;"></div>
+                    </div>
+                    
+                    <p id="face-scan-status" class="text-[11px] font-black text-emerald-600 uppercase tracking-widest animate-pulse mb-5 bg-emerald-50 py-2 rounded-lg border border-emerald-100">Initializing Camera...</p>
+                    <button onclick="closeGlobalModal(); clearTimeout(scanTimeout); if(biometricStream) biometricStream.getTracks().forEach(t=>t.stop());" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Cancel Operations</button>
+                </div>
+            `;
+            openGlobalModal(html);
+            
+            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    let stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                    biometricStream = stream;
+                    let video = document.getElementById('face-video');
+                    video.srcObject = stream;
+                    
+                    video.onloadedmetadata = async () => {
+                        let loaded = await initFaceApi();
+                        if(loaded) {
+                            document.getElementById('face-scan-status').innerText = "Scanning Active. Keep Still...";
+                            processFaceScan();
+                        }
+                    };
+                } catch(e) {
+                    alert("Camera Access Denied! Cannot mark attendance.");
+                    closeGlobalModal();
+                }
+            } else {
+                alert("Device does not support Camera API.");
+                closeGlobalModal();
+            }
+        }
+
+        function finalizeAttendance() {
+            let statusText = document.getElementById('face-scan-status');
+            statusText.innerText = "Identity Verified ✓";
+            statusText.classList.replace('text-emerald-600', 'text-blue-600');
+            statusText.classList.replace('bg-emerald-50', 'bg-blue-50');
+            statusText.classList.replace('border-emerald-100', 'border-blue-100');
+            statusText.classList.remove('animate-pulse');
+            
+            setTimeout(async () => {
+                if(biometricStream) biometricStream.getTracks().forEach(t=>t.stop());
+                clearTimeout(scanTimeout);
+                closeGlobalModal();
+                
+                let u = localStorage.getItem('opas_sess_id');
+                let todayStr = formatSysDate(new Date());
+                if(!staffDb[u].attendance) staffDb[u].attendance = {};
+                staffDb[u].attendance[todayStr] = { status: 'Present', timestamp: new Date().toLocaleTimeString() };
+                
+                serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+                await saveDataToCloud("SYSTEM_SETTINGS");
+                renderStaffAttendanceCalendar();
+            }, 1000);
+        }
+
+        function markAttendanceStart() {
+            let u = localStorage.getItem('opas_sess_id');
+            let staff = staffDb[u];
+            
+            let html = `<div class="text-center p-8"><div class="text-5xl animate-bounce mb-5">🛰️</div><h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Acquiring GPS Signal</h3><p class="text-[9px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Verifying official perimeter (30m)</p></div>`;
+            openGlobalModal(html);
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let lat = position.coords.latitude;
+                        let lon = position.coords.longitude;
+                        
+                        if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
+                        
+                        // 🔥 Smart Auto-Calibration: Agar branch GPS set nahi hai, to staff ki pehli location ko branch lock maan lo.
+                        // Ye staff ki uski assignment branch ke hisab se set hota hai.
+                        if(!serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch]) {
+                            serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch] = { lat: lat, lon: lon };
+                            saveSystemSettings().then(() => { openFaceScanner(); });
+                        } else {
+                            let bCoords = serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch];
+                            let dist = haversineDist(lat, lon, bCoords.lat, bCoords.lon);
+                            
+                            if(dist <= 30) {
+                                openFaceScanner();
+                            } else {
+                                let errHtml = `
+                                    <div class="text-center p-6">
+                                        <div class="text-5xl mb-4 transform scale-110">⛔</div>
+                                        <h3 class="text-sm font-black text-rose-600 uppercase tracking-widest">Geofence Violation</h3>
+                                        <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl mt-4 shadow-inner">
+                                            <p class="text-[11px] font-black text-rose-700">Distance: ${Math.round(dist)} meters away</p>
+                                            <p class="text-[9px] text-rose-500 font-bold mt-2 leading-relaxed">Attendance blocked. You must be strictly within a 30m radius of the official branch perimeter.</p>
+                                        </div>
+                                        <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close Alarm</button>
+                                    </div>`;
+                                openGlobalModal(errHtml);
+                            }
+                        }
+                    },
+                    (error) => {
+                        // FIX: Differentiate between Timeout and Permission Denied
+                        let msg = error.code === 3 ? "GPS Timeout! Network slow hai ya signal weak hai." : "GPS Access Denied! Location on karein.";
+                        alert(msg);
+                        closeGlobalModal();
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+                closeGlobalModal();
+            }
+        }
+
+        // --- STAFF TRANSFER SYSTEM ---
+
+        function openTransferStaffModal(u) {
+            let s = staffDb[u];
+            let bOpts = '';
+            branchList.forEach(b => { bOpts += `<option value="${b}" ${b === s.branch ? 'selected' : ''}>${b}</option>`; });
+            let html = `
+                <div class="text-center p-5">
+                    <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">🔄</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">Transfer Staff</h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${s.name} (${u})</p>
+                    <div class="mt-5 text-left">
+                        <label class="text-[9px] font-black uppercase text-slate-500 ml-1">Assign New Branch</label>
+                        <select id="transfer-new-branch" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold mt-1 focus:outline-none focus:border-indigo-300">
+                            ${bOpts}
+                        </select>
+                        <p class="text-[8px] font-bold text-rose-500 mt-2 leading-relaxed bg-rose-50 p-2 rounded-lg border border-rose-100">⚠️ Transferring will bind this staff's attendance to the new branch's GPS coordinates.</p>
+                    </div>
+                    <button onclick="executeStaffTransfer('${u}')" class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-lg shadow-indigo-500/30 mt-4 transition-all">Execute Transfer</button>
+                    <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3.5 rounded-xl text-[10px] uppercase transition-colors">Cancel</button>
+                </div>
+            `;
+            openGlobalModal(html);
+        }
+
+        async function executeStaffTransfer(u) {
+            let newB = getSafeValue('transfer-new-branch');
+            staffDb[u].branch = newB; // Branch change hote hi uski mapping new branch ke GPS se ho jayegi
+            serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+            await saveDataToCloud("SYSTEM_SETTINGS");
+            closeGlobalModal();
+            renderStaffList();
+            alert("✅ Staff Transferred Successfully!");
+        }
+
+        function renderHeadPayroll() {
+            let html = '';
+            Object.keys(staffDb).forEach(u => {
+                let s = staffDb[u];
+                let d = new Date(); let year = d.getFullYear(); let month = d.getMonth();
+                let daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                let presentDays = 0;
+                for(let i=1; i<=daysInMonth; i++) {
+                    let dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+                    if(s.attendance && s.attendance[dateStr]) presentDays++;
+                }
+                
+                let b = parseInt(s.baseSalary)||0; let m = parseInt(s.meshAllow)||0; let p = parseInt(s.petrolAllow)||0;
+                let perDay = (b+m+p) / daysInMonth;
+                let totalEarned = perDay * presentDays;
+                
+                html += `<div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm mb-3 hover-scale animate-fade">
+                    <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-3">
+                        <div>
+                            <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest">${s.name}</h4>
+                            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Branch: ${s.branch}</p>
+                        </div>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">${u}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-[9px] font-bold mb-3">
+                        <div class="bg-slate-50 p-2 rounded-xl text-center border border-slate-100"><span class="text-slate-400 block uppercase mb-1">Base</span><span class="text-slate-700">₹${b}</span></div>
+                        <div class="bg-amber-50 text-amber-700 p-2 rounded-xl text-center border border-amber-100"><span class="text-amber-500 block uppercase mb-1">Mess</span>₹${m}</div>
+                        <div class="bg-purple-50 text-purple-700 p-2 rounded-xl text-center border border-purple-100"><span class="text-purple-500 block uppercase mb-1">Fuel</span>₹${p}</div>
+                        <div class="bg-emerald-50 text-emerald-700 p-2 rounded-xl text-center border border-emerald-100"><span class="text-emerald-500 block uppercase mb-1">Pres</span>${presentDays}/${daysInMonth} D</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 rounded-[1rem] shadow-md relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 relative z-10">Total Earned Payable</span>
+                        <span class="text-xl font-black text-emerald-400 relative z-10">₹${Math.round(totalEarned).toLocaleString('en-IN')}</span>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('payroll-list-zone').innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">💸</p><p class="text-[9px] text-slate-400 font-bold uppercase">No staff registered for payroll.</p></div>`;
+        }
+
+        // =========================================================================
+        // 🤖 OPAS AI CORE - DATABASE ANALYTICS & VOICE ENGINE
+        // =========================================================================
+        function toggleAIChat() {
+            const chatBox = document.getElementById('ai-chat-box');
+            chatBox.classList.toggle('hidden');
+        }
+
+        async function sendMsgToAI(userText) {
+            const inputField = document.getElementById('ai-user-input');
+            if(!userText) {
+                userText = inputField.value.trim();
+                inputField.value = '';
+            }
+            if(!userText) return;
+
+            const chatLog = document.getElementById('ai-chat-log');
+            
+            // Add user message to UI
+            chatLog.innerHTML += `<div class="text-right mb-2"><span class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-xl inline-block shadow-sm">${userText}</span></div>`;
+            chatLog.scrollTop = chatLog.scrollHeight;
+            
+            const typingId = "typing-" + Date.now();
+            chatLog.innerHTML += `<div id="${typingId}" class="text-left mb-2 animate-pulse"><span class="bg-slate-200 text-slate-600 font-bold text-[10px] px-3 py-2 rounded-xl inline-block">Fetching database records... 🤖</span></div>`;
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            try {
+                // 1. Prepare Database Snippet (So AI knows current client details without crashing browser limits)
+                let dbSnippet = {};
+                Object.keys(serverDb).forEach(k => {
+                    if (k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].status === "Active") {
+                        dbSnippet[k] = {
+                            name: serverDb[k].name, branch: serverDb[k].branch,
+                            outstanding: serverDb[k].outstanding || 0, overdue: serverDb[k].overdue || 0,
+                            emiAmount: serverDb[k].cycleEmi || 0, nextEmi: serverDb[k].nextEmiDate || "N/A"
+                        };
+                    }
+                });
+
+                // 2. Build Context Prompt for the API
+                let systemContext = `You are an expert Human-like AI assistant for 'OPAS Micro Finance'. You must strictly reply in friendly Hindi/Hinglish language. Act like a helpful financial agent. You have real-time access to the company's active clients data: ${JSON.stringify(dbSnippet)}. Use this data to answer accurately. Question: ${userText}`;
+
+                // 🌟 NAYA: Stateless Payload (Bina history ke, direct current context and question bhej raha hai)
+                let apiPayload = [
+                    { "role": "user", "parts": [{ "text": systemContext }] }
+                ];
+
+                // 3. Make SECURE API Call to Vercel Backend
+                const VERCEL_API_URL = 'https://opas-fronted.vercel.app/api/chat';
+
+                const response = await fetch(VERCEL_API_URL, {
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ contents: apiPayload })
+                });
+
+                if(!response.ok) throw new Error("API Error");
+                const data = await response.json();
+                
+                let aiResponse = data.candidates[0].content.parts[0].text;
+
+                // Update UI (History array me save karna hata diya gaya hai)
+                document.getElementById(typingId).remove();
+                
+                // Convert simple markdown bold (**text**) to HTML for nice rendering
+                let formattedHtml = aiResponse.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+                
+                chatLog.innerHTML += `<div class="text-left mb-2"><span class="bg-indigo-50 text-indigo-900 border border-indigo-100 text-[10px] px-3 py-2 rounded-xl inline-block shadow-sm leading-relaxed">${formattedHtml}</span></div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+
+                // 4. Trigger Voice Output
+                speakText(aiResponse.replace(/\*/g, '')); // Voice padhte waqt asterisks ignore karein
+
+            } catch(e) {
+                console.error(e);
+                document.getElementById(typingId).remove();
+                chatLog.innerHTML += `<div class="text-left mb-2"><span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-2 rounded-xl inline-block">Network Connection Error ya API Key Invalid hai!</span></div>`;
+            }
+        }
+
+        // 🎤 Speech to Text (Mic Input)
+        function startVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SpeechRecognition) { alert("Aapka browser Voice Recognition support nahi karta. Chrome use karein."); return; }
+            
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'hi-IN'; 
+            recognition.interimResults = false;
+            
+            const container = document.getElementById('ai-master-container');
+            const statusText = document.getElementById('ai-status-text');
+
+            recognition.start();
+            
+            // 🌟 NAYA: Trigger Listening Animation (Red/Orange Blob)
+            container.classList.remove('ai-is-speaking');
+            container.classList.add('ai-is-listening');
+            if(statusText) { statusText.innerText = "Listening..."; statusText.classList.add('text-rose-500'); }
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                sendMsgToAI(transcript); 
+            };
+            
+            recognition.onend = function() {
+                container.classList.remove('ai-is-listening');
+                if(statusText) { statusText.innerText = "Processing..."; statusText.classList.remove('text-rose-500'); }
+            };
+
+            recognition.onerror = function() {
+                container.classList.remove('ai-is-listening');
+                if(statusText) { statusText.innerText = "Ready to Assist"; statusText.classList.remove('text-rose-500'); }
+                alert("Microphone Error! Kripya Mic permission allow karein.");
+            }
+        }
+
+        // 🔊 Text to Speech (AI Speaking out loud)
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); 
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.currentUtterance = utterance; // 🌟 BUG FIX: Chrome aawaz ko beech me kaatne se rokne ke liye global lock
+            utterance.lang = 'hi-IN'; 
+            utterance.rate = 1.05; 
+            utterance.pitch = 1.1; 
+            
+            const container = document.getElementById('ai-master-container');
+            const statusText = document.getElementById('ai-status-text');
+
+            // 🌟 NAYA: Trigger Speaking Animation (Purple/Pink Waves)
+            utterance.onstart = () => {
+                container.classList.add('ai-is-speaking');
+                if(statusText) { statusText.innerText = "Speaking..."; statusText.classList.add('text-purple-600'); }
+            };
+            
+            utterance.onend = () => {
+                container.classList.remove('ai-is-speaking');
+                if(statusText) { statusText.innerText = "Ready to Assist"; statusText.classList.remove('text-purple-600'); }
+            };
+
+            window.speechSynthesis.speak(utterance);
+            
+            // Chrome 15s Bug Fix
+            let keepAlive = setInterval(() => {
+                if (!window.speechSynthesis.speaking) clearInterval(keepAlive);
+                else { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }
+            }, 14000);
+        }
+        </script>
 </body>
 </html>
