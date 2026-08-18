@@ -930,6 +930,37 @@
         let loanPlans = []; // 🌟 HYBRID UPGRADE: Store Master Plans
         let serverDb = {}; 
 
+        // 🌟 NAYA: Head Background Notification Radar
+        let headPendingRadar = null;
+        let previousPendingCount = -1;
+
+        async function silentHeadRadar() {
+            if (currentLoggedInRole !== 'head') return;
+            try {
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    let cloudData = await response.json();
+                    let currentPending = 0;
+                    
+                    Object.keys(cloudData).forEach(k => {
+                        if (k !== "SYSTEM_SETTINGS" && cloudData[k] && cloudData[k].status === "Pending Approval") {
+                            currentPending++;
+                        }
+                    });
+
+                    // Agar memory me pehle se count tha aur ab naya form aaya hai
+                    if (previousPendingCount !== -1 && currentPending > previousPendingCount) {
+                        let nayaCount = currentPending - previousPendingCount;
+                        showNotification('New File Received 🚨', `${nayaCount} naya KYC form approval ke liye aaya hai!`, '📋');
+                        
+                        // Data update karke UI refresh kar do taaki Head ko list dikh jaye
+                        loadDataFromCloud().then(() => refreshHeadDashboardStats());
+                    }
+                    previousPendingCount = currentPending; // count memory update
+                }
+            } catch(e) {}
+        }
+
         // 🌟 NAYA: BEAUTIFUL IN-APP NOTIFICATION SYSTEM
         function showNotification(title, message, icon = '🔔', onClickFn = null) {
             const container = document.getElementById('toast-container');
@@ -941,10 +972,20 @@
             if(onClickFn) { toast.onclick = () => { onClickFn(); toast.remove(); }; } 
             else { toast.onclick = () => toast.remove(); }
             
-            container.appendChild(toast);
+          container.appendChild(toast);
             if(navigator.vibrate) navigator.vibrate(200); // Phone vibration (Android)
             setTimeout(() => { if(container.contains(toast)) toast.remove(); }, 6000);
-        }
+
+            // 🌟 NAYA: Native Phone Notification System (WhatsApp/Telegram Style)
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    try {
+                        let sysNotif = new Notification(title, { body: message, icon: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png", vibrate: [200, 100, 200] });
+                        sysNotif.onclick = function() { window.focus(); if(onClickFn) onClickFn(); };
+                    } catch(e) {}
+                }
+            }
+        }  
 
         // =========================================================================
         // 🚀 DUAL SAVING ENGINE
@@ -1108,16 +1149,22 @@
                     }
                     try {
                         // Ek single bulk request bhej kar poora database saaf karenge
-                        await fetch(API_URL + '/bulk', { 
+                        let wipeRes = await fetch(API_URL + '/bulk', { 
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ clients: bulkDeletePayload })
                         });
-                    } catch(e) { console.error("Database wipe error", e); }
-                    serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
-                    await localforage.removeItem('opas_local_db');
-                    localStorage.removeItem('kyc_draft');
-                    alert("✅ Database Completely Wiped! Ab app ekdum nayi ho gayi hai.");
-                    logout(); window.location.reload();
+                        if (!wipeRes.ok) throw new Error("Cloud Wipe Failed");
+                        
+                        serverDb = { "SYSTEM_SETTINGS": serverDb["SYSTEM_SETTINGS"] };
+                        await localforage.removeItem('opas_local_db');
+                        localStorage.removeItem('kyc_draft');
+                        alert("✅ Database Completely Wiped! Ab app ekdum nayi ho gayi hai.");
+                        logout(); window.location.reload();
+                    } catch(e) { 
+                        console.error("Database wipe error", e);
+                        alert("⚠️ Wipe Error: Internet connection check karein! Cloud data delete nahi ho paya."); 
+                        document.getElementById('cloud-status').innerText = "⚠️ Wipe Failed";
+                    }
                 } else { alert("Reset Cancelled."); }
             }
         }
@@ -1236,6 +1283,10 @@
                     } else if (role === 'head') {
                         currentLoggedInRole = 'head';
                         showDashboard('head');
+                        // Radar On (Check every 60 seconds)
+                        if(headPendingRadar) clearInterval(headPendingRadar);
+                        headPendingRadar = setInterval(silentHeadRadar, 60000);
+                        silentHeadRadar(); // Pehli baar turant check kare
                     } else if (role === 'staff') {
                         if(staffDb[id]) {
                             currentLoggedInRole = 'staff'; let staff = staffDb[id];
@@ -1258,7 +1309,11 @@
             let btn = event.currentTarget.querySelector('span');
             btn.classList.add('spin-fast');
             await loadDataFromCloud();
-            if(currentLoggedInRole !== 'customer') { refreshHeadDashboardStats(); }
+            if(currentLoggedInRole !== 'customer') { 
+                refreshHeadDashboardStats(); 
+                syncSetupDropdowns();
+                syncKycPlanDropdown();
+            }
             setTimeout(() => { btn.classList.remove('spin-fast'); }, 500);
         }
 
@@ -1372,9 +1427,7 @@
 
             // BUG FIX: Agar Day-End run nahi hua hai, to active pending amount ka fresh receipt dikhayein
             if (u.emiSettled === 'online_paid' || u.emiSettled === 'received_cash' || u.emiSettled === 'received_upi' || u.emiSettled === 'received') {
-                paidAmt = (u.emiSettled === 'online_paid' || u.emiSettled === 'received_upi') 
-                    ? Math.min((u.outstanding || 0) + (u.overdue || 0), (u.cycleEmi || 0) + (u.overdue || 0))
-                    : Math.min((u.outstanding || 0) + (u.overdue || 0), u.cycleEmi || 0);
+                paidAmt = Math.min((u.outstanding || 0) + (u.overdue || 0), (u.cycleEmi || 0) + (u.overdue || 0));
             } else if (u.advancePaid > 0) {
                 paidAmt = u.advancePaid;
             } else if (u.transactions && u.transactions.length > 0) {
@@ -1487,7 +1540,8 @@
 
             if(confirm("Delete this Master Plan? Existing active loans won't be affected.")) {
                 loanPlans = loanPlans.filter(p => p.id !== id);
-                await saveSystemSettings();
+                serverDb["SYSTEM_SETTINGS"].loanPlans = loanPlans;
+                await saveDataToCloud("SYSTEM_SETTINGS");
                 renderSetupLists(); syncKycPlanDropdown();
             }
         }
@@ -1596,7 +1650,9 @@
             if(confirm(`Delete branch ${name}?`)) { 
                 branchList = branchList.filter(b => b !== name); 
                 centreList = centreList.filter(c => c.branch !== name); 
-                await saveSystemSettings(); 
+                serverDb["SYSTEM_SETTINGS"].branches = branchList;
+                serverDb["SYSTEM_SETTINGS"].centres = centreList;
+                await saveDataToCloud("SYSTEM_SETTINGS");
                 syncSetupDropdowns(); 
             }
         }
@@ -1629,7 +1685,8 @@
 
             if(confirm("Delete this Centre?")) { 
                 centreList = centreList.filter(c => c.id !== id); 
-                await saveSystemSettings(); 
+                serverDb["SYSTEM_SETTINGS"].centres = centreList;
+                await saveDataToCloud("SYSTEM_SETTINGS");
                 syncSetupDropdowns(); 
             }
         }
@@ -1855,6 +1912,7 @@
                 });
 
                 await saveDataToCloud(m);
+                showNotification('Loan Settled 💰', `${serverDb[m].name} ka loan poori tarah close ho gaya hai.`, '🎉');
                 backupSettledClientMobile = m;
                 document.getElementById('settle-interactive-form-block').classList.add('hidden');
                 document.getElementById('settle-success-action-panel').classList.remove('hidden');
@@ -1975,12 +2033,17 @@
                  }
 
                  // Fix: Auto-format dates like 25/06/2026 to 25-06-2026 to prevent Ledger rendering crashes
-                 // Fix: Agar old client ki EMI date undefined hai toh "N/A" fallback use karein, taaki app crash na ho
                  let rawDate = getSafeValue('edit-cust-due-date') || serverDb[m].nextEmiDate || "N/A";
                  let safeDate = rawDate.replace(/\//g, '-').replace(/\./g, '-');
                  let rawDisbDate = getSafeValue('edit-cust-disbursal-date') || "N/A";
                  let safeDisbDate = rawDisbDate.replace(/\//g, '-').replace(/\./g, '-');
+                 
+                 const dateRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
+                 if(safeDate !== "N/A" && safeDate !== "Completed" && !dateRegex.test(safeDate)) { alert("❌ Error: Next Due Date ka format DD-MM-YYYY hona chahiye!"); return; }
+                 if(safeDisbDate !== "N/A" && !dateRegex.test(safeDisbDate)) { alert("❌ Error: Disbursal Date ka format DD-MM-YYYY hona chahiye!"); return; }
+                 
                  let newStatus = getSafeValue('edit-cust-status') || serverDb[m].status;
+                 if (newStatus === 'Deactive' || newStatus === 'Deleted') { newOut = 0; newOd = 0; } // Force ZERO debt on closure
 
                  // 🚨 FIX: Prevent Admin from bypassing NEFT workflow via Edit Data Panel
                  if ((serverDb[m].status === 'Pending Approval' || serverDb[m].status === 'Pending NEFT') && newStatus === 'Active') {
@@ -2013,7 +2076,8 @@
                  
                  serverDb[m].insuranceAmt = Math.max(0, parseInt(getSafeValue('edit-cust-insurance')) || 0);
                  await saveDataToCloud(m); 
-                 alert(`✓ Records Updated!`); document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats(); 
+                 showNotification('Profile Edited ✏️', "Client records have been successfully updated.", '✅');
+                 document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats();
              } catch(e) { alert("Error saving data."); }
         }
         async function deleteClientRecord() {
@@ -2047,12 +2111,9 @@
                 if(!selectedMonthVal) { selectedMonthVal = currentYYYYMM; }
                 let isCurrentMonth = (selectedMonthVal === currentYYYYMM);
 
-                setHtmlSafe('lbl-disburse-today', isCurrentMonth ? "Today's Disbursal" : "Month's Disbursal");
-                setHtmlSafe('lbl-collect-today', isCurrentMonth ? "Today's Collection" : "Month's Collection");
-                setHtmlSafe('lbl-dash-adv', isCurrentMonth ? "Today's Advance" : "Month's Advance");
-                setHtmlSafe('lbl-dash-settle', isCurrentMonth ? "Today's Settle" : "Month's Settle");
+                // FIX: Removed buggy label overriding that caused duplicate "Month's" titles and destroyed "Today" UI when viewing past records.
 
-                let cp = 0, cac = 0, pendingCount = 0; 
+                let cp = 0, cac = 0, pendingCount = 0;
                 let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayBounceAmt = 0; let insT = 0, insM = 0;
@@ -2272,7 +2333,7 @@
                     setHtmlSafe('head-capital-deployed', `₹${Math.round(capitalDeployed).toLocaleString('en-IN')}`);
                     setHtmlSafe('head-monthly-profit', `Projected Monthly Profit: ₹${Math.round(realMonthlyProfit).toLocaleString('en-IN')}`);
                     
-                    let cashflowSign = netCashflow >= 0 ? "+" : "";
+                    let cashflowSign = netCashflow >= 0 ? "+" : "-";
                     let cashflowColor = netCashflow >= 0 ? "text-emerald-400" : "text-rose-400";
                     let cashFlowElement = document.getElementById('head-net-cashflow');
                     if(cashFlowElement) {
@@ -2308,8 +2369,9 @@
         
         async function rejectAndTrashApplication(mobile) {
             if(confirm("❌ Is application ko REJECT karna chahte hain? (Form completely delete ho jayega)")) {
-                // FIX: Soft-Delete override to prevent offline staff devices from re-uploading rejected requests.
-                serverDb[mobile] = { status: "Rejected", lastUpdated: Date.now(), name: "Rejected Request", voterRef: "WIPED / WIPED" };
+                // FIX: Soft-Delete override to prevent offline staff devices from re-uploading rejected requests, while preserving past loans history.
+                let preservedPastLoans = (serverDb[mobile] && serverDb[mobile].pastLoans) ? serverDb[mobile].pastLoans : [];
+                serverDb[mobile] = { status: "Rejected", lastUpdated: Date.now(), name: "Rejected Request", voterRef: "WIPED / WIPED", pastLoans: preservedPastLoans };
                 await localforage.setItem('opas_local_db', serverDb);
                 await saveDataToCloud(mobile);
                 alert("Application Rejected & Removed.");
@@ -2323,11 +2385,41 @@
                 let c = serverDb[mobile];
                 if(!c || c.isApproved || c.status === "Active" || c.status === "Pending NEFT") return; 
                 
-                // 🌟 NAYA LOGIC: Sirf file verify hui hai. EMI dates tabhi start hongi jab NEFT hogi.
-                c.status = "Pending NEFT"; 
-                await saveDataToCloud(mobile);
+                let isBackdated = c.customAppDate && c.customAppDate !== "N/A";
                 
-                showNotification('File Verified!', `${c.name} ki file pass ho gayi hai. Ab Bank Details me NEFT kariye.`, '🏦');
+                if (isBackdated) {
+                    // 🌟 FIX: Imported/Backdated clients bypass NEFT queue and activate directly
+                    c.isApproved = true; 
+                    c.status = "Active"; 
+                    c.approvalDate = c.customAppDate; 
+                    
+                    let appDateObj = parseSysDate(c.customAppDate);
+                    let durDays = c.planType === 'weekly' ? c.duration * 7 : c.duration;
+                    appDateObj.setDate(appDateObj.getDate() + parseInt(durDays));
+                    c.endDate = formatSysDate(appDateObj);
+                    
+                    c.lastPaymentDate = "N/A"; 
+                    c.nextEmiDate = c.customNextEmi; 
+                    
+                    if(!c.transactions) c.transactions = [];
+                    c.transactions.push({ date: c.customAppDate, amount: c.insuranceAmt || 0, type: 'Insurance Fee Deducted (Upfront)' });
+                    
+                    if (c.backdatePaidAmount && c.backdatePaidAmount > 0) {
+                        c.transactions.push({ date: c.customAppDate, amount: c.backdatePaidAmount, type: 'Old System Import (Paid)' });
+                    }
+                    if (c.overdue && c.overdue > 0) {
+                        c.transactions.push({ date: c.customAppDate, amount: c.overdue, type: 'Old System Penalty (Overdue)' });
+                    }
+                    
+                    await saveDataToCloud(mobile);
+                    showNotification('Import Verified! ✅', `${c.name} ka old loan direct Active ho gaya hai (No NEFT needed).`, '✅');
+                } else {
+                    // 🌟 NAYA LOGIC: Naye loan ke liye pehle verify, fir NEFT
+                    c.status = "Pending NEFT"; 
+                    await saveDataToCloud(mobile);
+                    showNotification('File Verified!', `${c.name} ki file pass ho gayi hai. Ab Bank Details me NEFT kariye.`, '🏦');
+                }
+                
                 refreshHeadDashboardStats(); 
             } catch(e) {}
         }
@@ -2427,7 +2519,7 @@
                     if (rt === 'centre' && sc !== "ALL" && c.center !== sc) return;
 
                     // BUG FIX: Name / ID / Mobile Search Logic
-                    if (searchQ && !(c.name && c.name.toLowerCase().includes(searchQ)) && !(c.id && c.id.toLowerCase().includes(searchQ)) && !mobile.includes(searchQ)) return;
+                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !mobile.includes(searchQ)) return;
 
                     let match = false;
                     if (rt === 'total' && c.status === "Active") match = true; 
@@ -2466,7 +2558,7 @@
             const c = serverDb[mobile]; if(!c) return;
             let editBtn = '';
             if(currentLoggedInRole === 'head') {
-                editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-client-select').value='${mobile}'; loadClientForEdit();" class="btn-fluid w-full bg-rose-100 text-rose-600 hover:bg-rose-200 font-black py-4 rounded-xl text-[10px] uppercase mt-4 transition-colors">✏️ Edit Profile</button>`;
+                editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-branch').value='ALL'; syncAdminEditCentre(); syncAdminEditDropdown(); document.getElementById('admin-edit-client-select').value='${mobile}'; loadClientForEdit();" class="btn-fluid w-full bg-rose-100 text-rose-600 hover:bg-rose-200 font-black py-4 rounded-xl text-[10px] uppercase mt-4 transition-colors">✏️ Edit Profile</button>`;
             }
 
             let hybridInfo = c.isHybrid ? `<div class="col-span-2 mt-2 p-2 bg-amber-50 rounded-lg text-amber-700 text-[9px] font-bold">Hybrid Master: ${c.emisPaidCount}/${c.duration} Paid. Current Active EMI: ₹${c.cycleEmi}</div>` : '';
@@ -2568,7 +2660,7 @@
         function clearKycForm() {
             try {
                 // Fix: 'new-cust-branch' ko array se hata diya taaki staff ka active branch reset na ho
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-backdate', 'new-cust-paid-emis', 'new-cust-historic-od'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-backdate', 'new-cust-paid-emis', 'new-cust-historic-od', 'new-cust-bank-name', 'new-cust-bank-acc', 'new-cust-bank-ifsc'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-plan-select').value = '';
                 
                 // Fix: Center dropdown ko disable karne ki bajaye wapas active branch ke hisab se load karein
@@ -2689,7 +2781,7 @@
                     return;
                 }
                 // Aadhaar / ID Reference Duplicate Check
-                if (idRef && idRef.trim() !== "") {
+                if (idRef && idRef.trim().length >= 4) {
                     let isAadhaarDuplicate = Object.keys(serverDb).some(k => {
                         if (k === "SYSTEM_SETTINGS") return false;
                         let client = serverDb[k];
@@ -3034,12 +3126,12 @@
                     if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0)) {
                         
                         // Live Ledger Search Logic Filter
-                        if (searchQ && !(a.name && a.name.toLowerCase().includes(searchQ)) && !(a.id && a.id.toLowerCase().includes(searchQ)) && !m.includes(searchQ)) {
+                        if (searchQ && !(a.name && String(a.name).toLowerCase().includes(searchQ)) && !(a.id && String(a.id).toLowerCase().includes(searchQ)) && !m.includes(searchQ)) {
                             return; // Search match na hone par skip kar dega
                         }
 
                         let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
-                        if(a.emiSettled==='received') { bc = 'bg-emerald-100 text-emerald-800'; bt = 'Received'; }
+                        if(a.emiSettled==='received' || a.emiSettled==='received_cash' || a.emiSettled==='received_upi') { bc = 'bg-emerald-100 text-emerald-800'; bt = a.emiSettled==='received_upi' ? 'UPI Received' : (a.emiSettled==='received_cash' ? 'Cash Received' : 'Received'); }
                         if(a.emiSettled==='bounce') { bc = 'bg-rose-100 text-rose-800'; bt = 'Bounced'; }
                         if(a.emiSettled==='online_paid') { bc = 'bg-blue-100 text-blue-800'; bt = 'ONLINE PAID'; }
 
@@ -3051,7 +3143,7 @@
                         let activeOverdueAmount = a.overdue || 0;
                         
                         // Naya Smart QR Button
-                        let safeName = (a.name || 'Unknown Client').replace(/'/g, "\\'");
+                        let safeName = (a.name || 'Unknown Client').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${safeName}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
 
                         if(a.emiSettled === 'online_paid') { 
@@ -3085,7 +3177,7 @@
                             </div>
                             <div class="flex gap-1.5">${aB}</div>
                             <div class="flex items-center gap-2">
-                                <input type="number" id="adv-input-${m}" placeholder="Overdue / Advance Amt" class="w-2/3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:border-blue-300" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''} ${a.advancePaid > 0 ? `value="${a.advancePaid}" readonly` : ''}>
+                                <input type="number" id="adv-input-${m}" oninput="serverDb['${m}'].tempAdv = this.value;" placeholder="Overdue / Advance Amt" class="w-2/3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:border-blue-300" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''} ${a.advancePaid > 0 ? `value="${a.advancePaid}" readonly` : `value="${a.tempAdv || ''}"`}>
                                 <button onclick="submitAdvanceSettlementAmount('${m}')" class="w-1/3 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase rounded-lg shadow-md transition-all" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''}>${a.advancePaid > 0 ? 'Locked' : 'Settle'}</button>
                             </div>
                         </div>`;
@@ -3125,16 +3217,20 @@
                     let c = serverDb[m]; if(!c || c.branch !== staffBranch) return; // Fix: Dusri branch ke clients ko process hone se rokein
                     if(!c.transactions) c.transactions = [];
                     
-                    // UX FIX: Agar staff ne "Advance" box me amount type kiya par "Settle" button dabana bhool gaya, toh usko auto-grab karein taaki bounce penalty na lage
+                    // UX FIX: Agar staff ne "Advance" box me amount type kiya par "Settle" dabana bhool kar tab switch kar diya, toh memory (tempAdv) se auto-grab karein
                     try {
+                        let rawAdvVal = c.tempAdv;
                         let advInput = document.getElementById(`adv-input-${m}`);
-                        if (advInput && advInput.value && !advInput.disabled && !c.emiSettled && !c.advancePaid) {
-                            let amt = parseInt(advInput.value) || 0; // Added fallback to 0
+                        if (advInput && !advInput.disabled) rawAdvVal = advInput.value; // Prefer live DOM if visible
+                        
+                        if (rawAdvVal && !c.emiSettled && !c.advancePaid) {
+                            let amt = parseInt(rawAdvVal) || 0;
                             let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
                             if (amt > 0 && amt <= totalDebt) {
                                 c.advancePaid = amt;
                             }
                         }
+                        c.tempAdv = ""; // Clear temporary memory after grab
                     } catch(e) {}
                     
                     let isClientDue = false;
@@ -3145,7 +3241,7 @@
                         isClientDue = true; 
                     }
 
-                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.date === todayStr);
+                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
                     if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
                     if (isClientDue && c.status === "Active" && c.outstanding > 0) {
@@ -3214,7 +3310,7 @@
 
                         while (remainingAdv > 0) {
                             let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
-                            if (!currentPhaseEmi) break;
+                            if (!currentPhaseEmi || currentPhaseEmi <= 0) break;
 
                             if (remainingAdv >= currentPhaseEmi) {
                                 remainingAdv -= currentPhaseEmi;
@@ -3289,13 +3385,14 @@
                 } catch(e) {
                     console.error("Bulk sync error:", e);
                     if (btn) btn.innerText = `Sync Failed ⚠️`;
+                    throw e; // 🚨 ERROR THROW KARNA ZAROORI HAI TAAKI FAKE SUCCESS NA DIKHE
                 }
 
-                alert("Ledger uploaded & Synced to Cloud Successfully! ✅"); 
+                showNotification('Day-End Synced ☁️', "Ledger uploaded & Synced to Cloud Successfully!", '✅');
                 refreshHeadDashboardStats(); 
                 renderStaffLedgerSheets();
                 
-                if(btn) { btn.innerText = "Upload Day-End 📤"; btn.disabled = false; } 
+                if(btn) { btn.innerText = "Upload Day-End 📤"; btn.disabled = false; }
             } catch(e) {
                 console.error(e);
                 let btn = document.getElementById('upload-day-btn');
@@ -3354,7 +3451,8 @@
                 a.cycleEmi = plan.isHybrid ? plan.phase1Emi : plan.baseEmi;
                 
                 await saveDataToCloud(m); 
-                alert(`✓ Loan Renewed with Plan: ${plan.name} & Synced!`); routePanelSection('dashboard');
+                showNotification('Loan Renewed 🔄', `Client renewed with Plan: ${plan.name} & Synced!`, '✅');
+                routePanelSection('dashboard');
             } catch(e) {}
         }
         
@@ -3465,7 +3563,11 @@
                     currentLoggedInRole = 'head'; 
                     setAuthSession('head', u); // NEW: Save device session
                     showDashboard('head'); 
-                } 
+                    // Radar On (Check every 60 seconds)
+                    if(headPendingRadar) clearInterval(headPendingRadar);
+                    headPendingRadar = setInterval(silentHeadRadar, 60000);
+                    silentHeadRadar(); // Pehli baar turant check kare
+                }
                 else if (staffDb[u] && staffDb[u].pass === p) { 
                     currentLoggedInRole = 'staff'; let staff = staffDb[u];
                     setAuthSession('staff', u); // NEW: Save device session
@@ -3492,9 +3594,9 @@
 
                const pZ = document.getElementById('cust-self-pay-zone');
                 if (u.status === "Active" && (u.outstanding||0) > 0) {
-                    if (u.emiSettled === 'online_paid' || u.emiSettled === 'received') { 
+                    if (u.emiSettled === 'online_paid' || u.emiSettled === 'received' || u.emiSettled === 'received_cash' || u.emiSettled === 'received_upi') { 
                         if(pZ) pZ.innerHTML = `<div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[2rem] text-center shadow-inner hover-scale"><p class="text-4xl mb-3">✅</p><p class="text-sm font-black text-emerald-700 uppercase tracking-widest">EMI Paid!</p></div>`; 
-                    } 
+                    }
                     else { 
                         let payAmount = Math.min((u.outstanding || 0) + (u.overdue || 0), (u.cycleEmi || 0) + (u.overdue || 0));
                         if(pZ) pZ.innerHTML = `<button onclick="customerSelfPayEmi()" class="btn-fluid w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-5 rounded-[2.5rem] text-sm uppercase shadow-xl cursor-pointer pulse-glow">Pay EMI Online (₹${payAmount}) 💳</button>`; 
@@ -3514,9 +3616,9 @@
                 if(confirm(`Pay EMI + Overdue (₹${cEmi}) via Online Gateway?`)) { 
                     u.emiSettled = 'online_paid'; 
                     await saveDataToCloud(currentlyLoggedInMobile); 
-                    alert("✅ Payment Processed Successfully!\n(Aapka Outstanding Balance shaam ko Day-End settlement ke baad update hoga)"); 
+                    showNotification('Payment Successful ✅', "Aapka EMI payment ho gaya hai. Balance shaam tak update hoga.", '💳');
                     renderCustomerDashboard(); 
-                } 
+                }
             } catch(e) {}
         }
 
@@ -3542,7 +3644,12 @@
 
         function showDashboard(role) { 
             try {
-                document.getElementById('auth-container')?.classList.add('hidden'); 
+                // 🌟 NAYA: Request Notification Permission on Login (Sirf ek baar poochhega)
+                if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
+
+                document.getElementById('auth-container')?.classList.add('hidden');
                 document.getElementById('main-views-container')?.classList.remove('hidden'); 
                 document.getElementById('app-header')?.classList.remove('hidden');
 
@@ -3567,8 +3674,11 @@
 
         function logout() { 
             try {
+                if(headPendingRadar) clearInterval(headPendingRadar); // Radar Off
+                previousPendingCount = -1;
+                
                 // Clear state variables
-                currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = ''; 
+                currentlyLoggedInMobile = ''; currentLoggedInRole = ''; backupSettledClientMobile = '';
                 
                 // NEW: Clear saved 48-hour authentications
                 localStorage.removeItem('opas_sess_role');
@@ -3694,7 +3804,7 @@
                         } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
                             isDue = true; 
                         }
-                        let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr);
+                        let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
                         if ((isDue || c.overdue > 0) && !c.emiSettled && !c.advancePaid && !hasTxToday) {
                             match = true; 
                             amount = Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
@@ -4304,12 +4414,9 @@
                 let isPastOrToday = i <= d.getDate();
                 let att = staff.attendance && staff.attendance[dateStr];
                 
-                let cutoffDate = new Date(2026, 7, 14); // 14th Aug 2026 (Auto-present till today)
-                let isAutoPresentCutoff = currentDayObj <= cutoffDate && isPastOrToday;
-
-                if(att || isAutoPresentCutoff) {
+                if(att) {
                     if (isPastOrToday) presentDays++;
-                    let lbl = att ? "Present" : "Present (Auto)";
+                    let lbl = "Present";
                     html += `<div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center hover-scale shadow-sm"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase tracking-widest mt-1">${lbl}</span></div>`;
                 } else {
                     if(isPastOrToday) {
@@ -4353,10 +4460,29 @@
             if (isFaceApiLoaded) return true;
             try {
                 let statusText = document.getElementById('face-scan-status');
-                if(statusText) statusText.innerText = "Downloading AI Biometrics... (First Time)";
+                if(statusText) statusText.innerText = "Loading AI Biometrics...";
                 
-                // FUNCTIONAL FIX: Using jsDelivr CDN which serves models with correct MIME types
-                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models/';
+
+                // 🚀 NAYA FIX: Permanent Offline Caching (Bina internet bhi fast load ke liye)
+                faceapi.env.monkeyPatch({
+                    fetch: async (url, options) => {
+                        try {
+                            const cache = await caches.open('opas-face-models-v1');
+                            let cachedResponse = await cache.match(url);
+                            // Agar memory me pehle se hai, toh turant de do (No internet needed)
+                            if (cachedResponse) return cachedResponse; 
+                            
+                            // Agar nahi hai, toh internet se download karke save kar lo
+                            let networkResponse = await fetch(url, options);
+                            cache.put(url, networkResponse.clone());
+                            return networkResponse;
+                        } catch(err) {
+                            return fetch(url, options); // Fallback
+                        }
+                    }
+                });
+
                 await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
@@ -4400,7 +4526,7 @@
                     let storedDesc = new Float32Array(staff.faceDescriptor);
                     let distance = faceapi.euclideanDistance(storedDesc, detection.descriptor);
                     
-                    if (distance < 0.55) { // Strict match threshold
+                    if (distance <= 0.60) { // Strict match threshold (Relaxed for field staff)
                         finalizeAttendance();
                     } else {
                         statusText.innerText = "⛔ FACE MISMATCH! Unauthorized Access.";
@@ -4422,13 +4548,26 @@
             let staff = staffDb[u];
             let instruction = staff.faceDescriptor ? "Look directly into the camera to Verify Identity" : "First Time Setup: Registering Permanent Face ID";
             
+            // 🌟 IN-APP PERMISSION PROMPT FOR CAMERA
+            let promptHtml = `
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-pulse">📸</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">Camera Permission</h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">Face Scan ke liye Camera ka access zaroori hai. Kripya popup aane par 'Allow' par click karein.</p>
+                    <button onclick="executeCameraFetch('${instruction}')" class="btn-fluid w-full mt-5 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-md transition-colors pulse-glow">Allow Camera & Scan</button>
+                    <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase transition-colors">Cancel</button>
+                </div>`;
+            openGlobalModal(promptHtml);
+        }
+
+        async function executeCameraFetch(instruction) {
             let html = `
                 <div class="text-center p-2 relative overflow-hidden">
                     <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest mb-1">Face Recognition Core</h3>
                     <p class="text-[9px] font-bold text-indigo-600 uppercase mb-5 tracking-widest bg-indigo-50 p-2 rounded border border-indigo-100">${instruction}</p>
                     
                     <div class="relative w-56 h-56 mx-auto rounded-full overflow-hidden border-4 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)] mb-5">
-                        <video id="face-video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                        <video id="face-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
                         <div class="absolute left-0 w-full h-1 bg-emerald-400 shadow-[0_0_15px_#34d399] animate-[faceScan_2s_ease-in-out_infinite] z-10" style="animation-name: faceScan;"></div>
                     </div>
                     
@@ -4436,16 +4575,18 @@
                     <button onclick="closeGlobalModal(); clearTimeout(scanTimeout); if(biometricStream) biometricStream.getTracks().forEach(t=>t.stop());" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Cancel Operations</button>
                 </div>
             `;
-            openGlobalModal(html);
+            document.getElementById('modal-injection-zone').innerHTML = html;
             
             if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 try {
-                    let stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                    // FIX: Low-End Device Optimization. Caps camera to 320x240 @ 15fps. Drops CPU usage by 80%.
+                    let stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } } });
                     biometricStream = stream;
                     let video = document.getElementById('face-video');
                     video.srcObject = stream;
                     
                     video.onloadedmetadata = async () => {
+                        await video.play(); 
                         let loaded = await initFaceApi();
                         if(loaded) {
                             document.getElementById('face-scan-status').innerText = "Scanning Active. Keep Still...";
@@ -4487,11 +4628,23 @@
         }
 
         function markAttendanceStart() {
+            // 🌟 IN-APP PERMISSION PROMPT FOR GPS
+            let html = `
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-pulse">📍</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">Location Permission</h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">Attendance lagane ke liye GPS Location zaroori hai taaki aapki branch verify ho sake. Kripya permission Allow karein.</p>
+                    <button onclick="executeGpsFetch()" class="btn-fluid w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-md transition-colors pulse-glow">Allow Location & Continue</button>
+                    <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase transition-colors">Cancel</button>
+                </div>`;
+            openGlobalModal(html);
+        }
+
+        function executeGpsFetch() {
             let u = localStorage.getItem('opas_sess_id');
             let staff = staffDb[u];
-            
-            let html = `<div class="text-center p-8"><div class="text-5xl animate-bounce mb-5">🛰️</div><h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Acquiring GPS Signal</h3><p class="text-[9px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Verifying official perimeter (30m)</p></div>`;
-            openGlobalModal(html);
+
+            document.getElementById('modal-injection-zone').innerHTML = `<div class="text-center p-8"><div class="text-5xl animate-bounce mb-5">🛰️</div><h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Acquiring GPS Signal</h3><p class="text-[9px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Please Wait... Fetching Location</p></div>`;
 
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
@@ -4510,7 +4663,7 @@
                             let bCoords = serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch];
                             let dist = haversineDist(lat, lon, bCoords.lat, bCoords.lon);
                             
-                            if(dist <= 30) {
+                            if(dist <= 300) {
                                 openFaceScanner();
                             } else {
                                 let errHtml = `
@@ -4519,7 +4672,7 @@
                                         <h3 class="text-sm font-black text-rose-600 uppercase tracking-widest">Geofence Violation</h3>
                                         <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl mt-4 shadow-inner">
                                             <p class="text-[11px] font-black text-rose-700">Distance: ${Math.round(dist)} meters away</p>
-                                            <p class="text-[9px] text-rose-500 font-bold mt-2 leading-relaxed">Attendance blocked. You must be strictly within a 30m radius of the official branch perimeter.</p>
+                                            <p class="text-[9px] text-rose-500 font-bold mt-2 leading-relaxed">Attendance blocked. You must be strictly within a 300m radius of the official branch perimeter.</p>
                                         </div>
                                         <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close Alarm</button>
                                     </div>`;
@@ -4534,7 +4687,7 @@
                         closeGlobalModal();
                     },
                     // LOGIC FIX: Increased timeout and allowed cached GPS (up to 15s) for better rural area stability
-                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 }
+                    { enableHighAccuracy: true, timeout: 40000, maximumAge: 30000 }
                 );
             } else {
                 alert("Geolocation is not supported by your browser.");
@@ -4601,16 +4754,13 @@
                 let isPastOrToday = isCurrentMonthView ? (i <= todayObj.getDate()) : (currentDayObj < todayObj);
                 let att = staff.attendance && staff.attendance[dateStr];
 
-                let cutoffDate = new Date(2026, 7, 14); // 14th Aug 2026
-                let isAutoPresentCutoff = currentDayObj <= cutoffDate && isPastOrToday;
-
-                if(att || isAutoPresentCutoff) {
+                let action = `onclick="toggleStaffAttendance('${u}', '${dateStr}')" class="cursor-pointer transition-all hover:scale-95`;
+                if(att) {
                     if(isPastOrToday) presentDays++;
-                    let lbl = att ? "Present" : "Present (Auto)";
-                    calHtml += `<div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">${lbl}</span></div>`;
+                    calHtml += `<div ${action} bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">Present</span></div>`;
                 } else if(isPastOrToday) {
                     absentDays++;
-                    calHtml += `<div class="bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">Absent</span></div>`;
+                    calHtml += `<div ${action} bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">Absent</span></div>`;
                 } else {
                     calHtml += `<div class="bg-slate-50 border border-slate-100 text-slate-300 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">-</span></div>`;
                 }
@@ -4627,6 +4777,23 @@
                 </div>
             `;
             openGlobalModal(html);
+        }
+
+        async function toggleStaffAttendance(empId, dateStr) {
+            if (currentLoggedInRole !== 'head') return; // Sirf Head edit kar sakta hai
+            if (!staffDb[empId].attendance) staffDb[empId].attendance = {};
+            
+            if (staffDb[empId].attendance[dateStr]) {
+                delete staffDb[empId].attendance[dateStr]; // Pehle present tha, ab Absent kar diya
+            } else {
+                staffDb[empId].attendance[dateStr] = { status: 'Present', timestamp: 'Manual Admin Override' }; // Absent tha, ab Present kar diya
+            }
+            
+            serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+            await saveDataToCloud("SYSTEM_SETTINGS");
+            viewStaffAttendanceFromPayroll(empId); // Live modal update
+            renderHeadPayroll(); // Background salary auto-update
+            showNotification('Attendance Updated', `${dateStr} ka record update ho gaya!`, '📝');
         }
 
         function renderHeadPayroll() {
@@ -4650,8 +4817,6 @@
                 let daysInMonth = new Date(year, month + 1, 0).getDate();
                 
                 let presentDays = 0;
-                let cutoffDate = new Date(2026, 7, 14); // 14th Aug 2026
-                
                 let todayObj = new Date();
                 let isCurrentMonthView = (year === todayObj.getFullYear() && month === todayObj.getMonth());
 
@@ -4659,9 +4824,8 @@
                     let dateStr = `${i.toString().padStart(2,'0')}-${(month+1).toString().padStart(2,'0')}-${year}`;
                     let currentDayObj = new Date(year, month, i);
                     let isPastOrToday = isCurrentMonthView ? (i <= todayObj.getDate()) : (currentDayObj < todayObj);
-                    let isAutoPresentCutoff = currentDayObj <= cutoffDate && isPastOrToday;
                     
-                    if((s.attendance && s.attendance[dateStr]) || isAutoPresentCutoff) {
+                    if(s.attendance && s.attendance[dateStr]) {
                         if(isPastOrToday) presentDays++;
                     }
                 }
@@ -4720,45 +4884,64 @@
             chatLog.scrollTop = chatLog.scrollHeight;
 
             try {
-                // 1. Prepare Database Snippet (So AI knows current client details without crashing browser limits)
+                // 1. Prepare Database Snippet (Limiting Data to prevent Vercel Timeout & Token Limits)
                 let dbSnippet = {};
+                let clientCount = 0;
+                
+                // 🚀 FIX: Sirf top 15-20 active clients ki basic details bhejenge
                 Object.keys(serverDb).forEach(k => {
-                    if (k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].status === "Active") {
+                    if (k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].status === "Active" && clientCount < 20) {
                         dbSnippet[k] = {
-                            name: serverDb[k].name, branch: serverDb[k].branch,
-                            outstanding: serverDb[k].outstanding || 0, overdue: serverDb[k].overdue || 0,
-                            emiAmount: serverDb[k].cycleEmi || 0, nextEmi: serverDb[k].nextEmiDate || "N/A"
+                            name: serverDb[k].name,
+                            outstanding: serverDb[k].outstanding || 0, 
+                            overdue: serverDb[k].overdue || 0
                         };
+                        clientCount++;
                     }
                 });
 
                 // 2. Build Context Prompt for the API
-                let systemContext = `You are an expert Human-like AI assistant for 'OPAS Micro Finance'. You must strictly reply in friendly Hindi/Hinglish language. Act like a helpful financial agent. You have real-time access to the company's active clients data: ${JSON.stringify(dbSnippet)}. Use this data to answer accurately. Question: ${userText}`;
+                let systemContext = `You are an AI assistant for 'OPAS Micro Finance'. Reply in friendly Hindi/Hinglish. You have partial access to client data: ${JSON.stringify(dbSnippet)}. Answer briefly. Question: ${userText}`;
 
-                // 🌟 NAYA: Stateless Payload (Bina history ke, direct current context and question bhej raha hai)
                 let apiPayload = [
                     { "role": "user", "parts": [{ "text": systemContext }] }
                 ];
 
-                // 3. Make SECURE API Call to Vercel Backend
                 const VERCEL_API_URL = 'https://opas-fronted.vercel.app/api/chat';
 
+                // 🚀 FIX: Vercel 10-second timeout controller
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 9500); // Abort exactly before Vercel kills it
+
+                // 3. Make SECURE API Call
                 const response = await fetch(VERCEL_API_URL, {
                     method: 'POST', 
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ contents: apiPayload })
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ contents: apiPayload }),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
 
-                if(!response.ok) throw new Error("API Error");
+                // 🚀 FIX: Proper Backend Error Reading
+                if(!response.ok) {
+                    let errMsg = `Server Error: ${response.status}`;
+                    try { let errData = await response.json(); errMsg = errData.error || errMsg; } catch(e){}
+                    throw new Error(errMsg);
+                }
+                
                 const data = await response.json();
                 
+                // 🚀 FIX: Safe JSON Parsing (Crashes se bachane ke liye)
+                if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error("Invalid format received from Backend.");
+                }
+
                 let aiResponse = data.candidates[0].content.parts[0].text;
 
-                // Update UI (History array me save karna hata diya gaya hai)
-                document.getElementById(typingId).remove();
+                // Update UI
+                const typingIndicator = document.getElementById(typingId);
+                if (typingIndicator) typingIndicator.remove();
                 
                 // SECURITY FIX: Escape HTML tags to prevent XSS before formatting Markdown
                 let sanitizedResponse = aiResponse.replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -4778,9 +4961,19 @@
                 }
 
             } catch(e) {
-                console.error(e);
-                document.getElementById(typingId).remove();
-                chatLog.innerHTML += `<div class="text-left mb-2"><span class="bg-rose-100 text-rose-800 text-[10px] px-3 py-2 rounded-xl inline-block">Network Connection Error ya API Key Invalid hai!</span></div>`;
+                console.error("AI API System Error:", e);
+                let indicator = document.getElementById(typingId);
+                if (indicator) indicator.remove();
+                
+                // Asli error nikal kar screen par print karega
+                let realError = e.message || "Unknown Fetch/CORS Error";
+                
+                chatLog.innerHTML += `<div class="text-left mb-3 flex flex-col gap-1">
+                    <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-3 py-2 rounded-xl inline-block shadow-sm">⚠️ AI Backend Error:</span>
+                    <span class="bg-slate-900 text-rose-400 text-[10px] font-mono px-3 py-2 rounded-xl inline-block border border-rose-900/50">${realError}</span>
+                    <span class="text-[8px] text-slate-500 font-bold ml-1 mt-1">Hint: Vercel logs check karein ya F12 dabakar Console dekhein.</span>
+                </div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
             }
         }
 
@@ -4788,6 +4981,20 @@
         let isVoiceModeActive = false;
 
         function openVoiceMode() {
+            // 🌟 IN-APP PERMISSION PROMPT FOR MICROPHONE
+            let html = `
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-pulse">🎤</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">Microphone Permission</h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">AI Voice Assistant se baat karne ke liye Microphone permission allow karein.</p>
+                    <button onclick="executeVoiceMode()" class="btn-fluid w-full mt-5 bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-md transition-colors pulse-glow">Allow Mic & Speak</button>
+                    <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase transition-colors">Cancel</button>
+                </div>`;
+            openGlobalModal(html);
+        }
+
+        function executeVoiceMode() {
+            closeGlobalModal();
             isVoiceModeActive = true;
             const overlay = document.getElementById('ai-voice-mode-overlay');
             if(overlay) {
