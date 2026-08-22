@@ -198,7 +198,14 @@
 
                 <button onclick="routePanelSection('dashboard')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-600 hover:bg-blue-500 text-white shadow-md hidden transition-colors"><span class="text-lg mr-2">📊</span> Dashboard</button>
                 <button onclick="routePanelSection('requests')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-indigo-300 flex items-center justify-between hidden transition-colors"><div><span class="text-lg mr-2">📥</span> Requests</div><span class="bg-indigo-600 text-white rounded-md px-2 py-0.5 text-[9px]" id="req-count-badge">0</span></button>
+                
+                <!-- 🌟 NAYA: Menu Approvals & NEFT (Head) -->
+                <button onclick="routePanelSection('approvals')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-purple-300 flex items-center justify-between hidden transition-colors"><div><span class="text-lg mr-2">✅</span> Approvals</div><span class="bg-purple-600 text-white rounded-md px-2 py-0.5 text-[9px]" id="menu-app-badge">0</span></button>
+                <button onclick="routePanelSection('neft')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-blue-300 flex items-center justify-between hidden transition-colors"><div><span class="text-lg mr-2">🏦</span> NEFT Queue</div><span class="bg-blue-600 text-white rounded-md px-2 py-0.5 text-[9px]" id="menu-neft-badge">0</span></button>
+                
                 <button onclick="routePanelSection('clients')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">👥</span> Client Directory</button>
+                
+                
                 <button onclick="routePanelSection('ledger')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">💵</span> Collection Ledger</button>
                 <button onclick="routePanelSection('kyc')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">📑</span> KYC Form</button>
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-amber-400 mt-4 hidden transition-colors"><span class="text-lg mr-2">💰</span> Direct Settle</button>
@@ -207,6 +214,11 @@
                 <button onclick="routePanelSection('weekly-bind')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-400 border border-indigo-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">📅</span> Centre Binding</button>
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit Data</button>
                 
+                <!-- 🌟 NAYA: Ultra Premium Staff Profile Button -->
+                <button onclick="routePanelSection('staff-profile')" class="menu-item role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white mt-4 shadow-lg shadow-fuchsia-500/30 hidden transition-all hover-scale relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    <span class="text-lg mr-2 inline-block group-hover:scale-110 transition-transform relative z-10">👤</span> <span class="relative z-10">My Smart Profile</span>
+                </button>
                 <button onclick="routePanelSection('attendance')" class="menu-item role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 hover:bg-emerald-500 text-white mt-4 shadow-md hidden transition-colors"><span class="text-lg mr-2">🤳</span> Smart Attendance</button>
                 <button onclick="routePanelSection('leave-manage')" class="menu-item role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-amber-600 hover:bg-amber-500 text-white mt-2 shadow-md hidden transition-colors"><span class="text-lg mr-2">🏖️</span> Apply Leave</button>
                 <button onclick="routePanelSection('leave-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-amber-900/20 hover:bg-amber-900/40 text-amber-400 border border-amber-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">🏖️</span> Leave Requests <span class="bg-amber-500 text-white rounded-md px-2 py-0.5 text-[9px] ml-2" id="leave-req-count-badge">0</span></button>
@@ -317,6 +329,18 @@
                 </div>
 
                 <div id="head-exclusive-stats" class="hidden space-y-4 animate-slide-up mb-4">
+                    <!-- 🌟 NAYA: Quick Pending Approvals Alert Panel -->
+                    <div id="head-pending-alert-box" onclick="routePanelSection('approvals')" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 rounded-3xl shadow-lg hover-scale cursor-pointer hidden items-center justify-between relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-6xl opacity-20">⏳</div>
+                        <div class="relative z-10">
+                            <p class="text-[10px] font-black uppercase tracking-widest opacity-90">Action Required</p>
+                            <p class="text-sm font-black mt-0.5"><span id="head-top-pending-count" class="text-xl">0</span> Files Pending Approval</p>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-sm px-3 py-2 rounded-xl text-[10px] font-black uppercase relative z-10 shadow-sm border border-white/30">
+                            Review →
+                        </div>
+                    </div>
+
                     <!-- Top Controls & Clients -->
                     <div class="glass-card p-4 rounded-3xl flex justify-between items-center shadow-sm hover-scale">
                         <div class="flex-1 mr-4">
@@ -385,24 +409,28 @@
                         <span class="text-slate-400 text-xl font-bold relative z-10 group-hover:translate-x-1 transition-transform">→</span>
                     </div>
 
+                    <!-- 🌟 NAYA: Minimal Branch Performance Grid -->
+                    <div class="mt-4">
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Live Branch Performance</p>
+                        <div id="head-branch-progress-zone" class="flex gap-3 overflow-x-auto pb-3 pt-1 snap-x scrollbar-hide pr-4"></div>
+                    </div>
                 </div>
 
-                <div id="shared-approval-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-purple-200 bg-purple-50/20">
-                    <h3 class="text-[10px] font-black text-purple-800 uppercase flex items-center justify-between">
-                        Approval Verification Queue 
-                        <span class="bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg text-[9px] font-black shadow-sm" id="queue-count-badge">0 Pending</span>
-                    </h3>
-                    <div id="global-approval-zone" class="space-y-3"></div>
-                </div>
-
-                <!-- 🌟 NAYA: NEFT DISBURSEMENT QUEUE -->
-                <div id="shared-neft-queue-block" class="glass-card p-5 rounded-3xl mb-4 space-y-4 animate-slide-up border-blue-200 bg-blue-50/40 hidden">
-                    <h3 class="text-[10px] font-black text-blue-800 uppercase flex items-center justify-between">
-                        Bank Transfer (NEFT) Queue 
-                        <span class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black shadow-md" id="neft-count-badge">0 Waiting</span>
-                    </h3>
-                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-tight">Client ke a/c me NEFT bhejkar Mark karein taaki uski EMI date start ho sake.</p>
-                    <div id="global-neft-zone" class="space-y-3"></div>
+                <!-- 🌟 NAYA: Staff Dashboard Mission Target -->
+                <div id="staff-mission-dashboard" class="role-staff hidden glass-card p-5 rounded-[2rem] shadow-lg hover-scale mb-4 border-fuchsia-200/50 bg-gradient-to-br from-white to-fuchsia-50/30 relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest mb-4 flex justify-between items-center relative z-10 border-b border-slate-200/60 pb-2">🎯 Today's Mission <span id="dash-sp-bonus" class="text-fuchsia-600 font-bold bg-fuchsia-50 px-2 py-0.5 rounded shadow-sm border border-fuchsia-100">Pending</span></h3>
+                    
+                    <div class="space-y-4 relative z-10">
+                        <div>
+                            <div class="flex justify-between text-[9px] font-bold text-slate-500 mb-1.5"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>Collection Target</span><span id="dash-sp-col-pct" class="font-black text-emerald-600 text-xs">0%</span></div>
+                            <div class="w-full bg-slate-200/50 rounded-full h-2 shadow-inner"><div class="bg-gradient-to-r from-emerald-400 to-emerald-500 h-2 rounded-full transition-all duration-1000 shadow-[0_0_5px_rgba(52,211,153,0.4)]" id="dash-sp-col-bar" style="width: 0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[9px] font-bold text-slate-500 mb-1.5"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span>Disburse Target</span><span id="dash-sp-tar-text" class="font-black text-blue-600 text-[10px]">₹0 / ₹0</span></div>
+                            <div class="w-full bg-slate-200/50 rounded-full h-2 shadow-inner"><div class="bg-gradient-to-r from-blue-400 to-cyan-500 h-2 rounded-full transition-all duration-1000 shadow-[0_0_5px_rgba(56,189,248,0.4)]" id="dash-sp-tar-bar" style="width: 0%"></div></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 animate-slide-up" style="animation-delay: 0.1s;">
@@ -435,6 +463,75 @@
                     
                     <div onclick="showDashboardList('new-month')" class="glass-card p-5 rounded-[1.5rem] text-center bg-purple-50/40 border-purple-100 hover-scale cursor-pointer"><p class="text-[9px] font-black text-purple-600 uppercase">New Loans (Month)</p><p class="text-2xl font-black text-purple-700 mt-2" id="m-new-clients">0</p></div>
                     <div onclick="showDashboardList('renew-month')" class="glass-card p-5 rounded-[1.5rem] text-center bg-amber-50/40 border-amber-100 hover-scale cursor-pointer"><p class="text-[9px] font-black text-amber-600 uppercase">Renewed (Month)</p><p class="text-2xl font-black text-amber-700 mt-2" id="m-renew-clients">0</p></div>
+                </div>
+            </div>
+
+            <!-- 🌟 NAYA: Standalone Approvals & NEFT Views -->
+            <div id="view-node-approvals" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card p-5 rounded-[2rem] space-y-4 border-purple-200 bg-purple-50/20">
+                    <h3 class="text-[10px] font-black text-purple-800 uppercase flex items-center justify-between border-b border-purple-200/50 pb-3">Approval Verification Queue <span class="bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg text-[9px] font-black shadow-sm" id="queue-count-badge">0 Pending</span></h3>
+                    <div id="global-approval-zone" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <div id="view-node-neft" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card p-5 rounded-[2rem] space-y-4 border-blue-200 bg-blue-50/40">
+                    <h3 class="text-[10px] font-black text-blue-800 uppercase flex items-center justify-between border-b border-blue-200/50 pb-3">Bank Transfer (NEFT) Queue <span class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black shadow-md" id="neft-count-badge">0 Waiting</span></h3>
+                    <div id="global-neft-zone" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- 🌟 NAYA: Ultra Premium Staff Profile & Gamified Target UI -->
+                <div class="glass-card rounded-[2rem] p-6 relative overflow-hidden">
+                    <div class="absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
+                    <div class="flex items-center gap-4 relative z-10">
+                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl text-white font-black shadow-lg shadow-indigo-500/40 border-2 border-white/50" id="sp-avatar">S</div>
+                        <div>
+                            <h2 class="text-xl font-black text-slate-900" id="sp-name">Staff Name</h2>
+                            <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 bg-indigo-50 px-2 py-0.5 rounded-md inline-block border border-indigo-100" id="sp-role">Role | Branch</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mt-6 relative z-10 border-t border-slate-200/60 pt-5">
+                        <div class="text-center"><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Base Pay</span><span class="text-sm font-black text-slate-800" id="sp-base">₹0</span></div>
+                        <div class="text-center border-l border-slate-200/60"><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mess</span><span class="text-sm font-black text-slate-800" id="sp-mess">₹0</span></div>
+                        <div class="text-center border-l border-slate-200/60"><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Petrol</span><span class="text-sm font-black text-slate-800" id="sp-petrol">₹0</span></div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-[2rem] p-6 relative overflow-hidden bg-slate-900 text-white shadow-2xl hover-scale">
+                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <h3 class="text-[10px] font-black uppercase text-fuchsia-400 tracking-widest mb-4 flex justify-between relative z-10 border-b border-white/10 pb-2">🎯 Daily Mission <span>Today</span></h3>
+                    <div class="space-y-5 relative z-10">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-slate-300 mb-1.5"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> 1. Collection Target</span><span id="sp-col-pct" class="font-black text-emerald-400 text-sm">0%</span></div>
+                            <div class="w-full bg-slate-800 rounded-full h-3 shadow-inner"><div class="bg-gradient-to-r from-emerald-500 to-emerald-300 h-3 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(52,211,153,0.5)]" id="sp-col-bar" style="width: 0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-slate-300 mb-1.5"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> 2. Disburse Target</span><span id="sp-tar-text" class="font-black text-blue-400">₹0 / ₹0</span></div>
+                            <div class="w-full bg-slate-800 rounded-full h-3 shadow-inner"><div class="bg-gradient-to-r from-blue-600 to-cyan-400 h-3 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(56,189,248,0.5)]" id="sp-tar-bar" style="width: 0%"></div></div>
+                            <p class="text-[8px] text-slate-500 mt-1.5 text-right font-bold uppercase tracking-wider">Calculated on Yesterday's Performance</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-5 border-t border-white/10 flex justify-between items-center relative z-10">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Today's Bonus Reward</p>
+                            <p class="text-3xl font-black text-white mt-1 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]" id="sp-bonus-amt">₹0</p>
+                        </div>
+                        <div id="sp-bonus-status" class="bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-inner">Processing...</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="glass-card p-5 rounded-[1.5rem] border border-emerald-100 bg-emerald-50/30 text-center hover-scale shadow-sm">
+                        <div class="text-3xl mb-2 drop-shadow-sm">✅</div>
+                        <span class="block text-2xl font-black text-emerald-600" id="sp-present">0</span>
+                        <span class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Days Present</span>
+                    </div>
+                    <div class="glass-card p-5 rounded-[1.5rem] border border-amber-100 bg-amber-50/30 text-center hover-scale shadow-sm">
+                        <div class="text-3xl mb-2 drop-shadow-sm">🏖️</div>
+                        <span class="block text-2xl font-black text-amber-600" id="sp-leaves">0</span>
+                        <span class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Leaves Taken</span>
+                    </div>
                 </div>
             </div>
 
@@ -561,7 +658,12 @@
                             <select id="settle-branch-filter" onchange="syncSettleCentreFilter()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none"><option value="">-- Branch --</option></select>
                             <select id="settle-center-filter" onchange="syncSettlementClientsDropdown()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none" disabled><option value="">-- Centre --</option></select>
                         </div>
-                        <select id="settle-client-mobile-select" onchange="syncDirectSettlementViewLabels()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
+                        <!-- Custom Search Panel for Settlement -->
+                        <div class="space-y-2">
+                            <input type="text" id="settle-search-input" onkeyup="syncSettlementClientsDropdown()" placeholder="🔍 Search Client Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
+                            <div id="settle-search-results" class="max-h-[35vh] overflow-y-auto space-y-2 pr-1"></div>
+                            <input type="hidden" id="settle-client-mobile-select" value="">
+                        </div>
                         
                         <div id="settle-math-receipt-box" class="hidden bg-slate-900 p-5 rounded-2xl space-y-3 text-xs font-medium text-slate-300 animate-fade relative overflow-hidden"><div class="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-xl"></div><div class="flex justify-between relative z-10"><span>ID:</span><span class="font-bold text-white font-mono" id="lbl-s-id">-</span></div><div class="flex justify-between relative z-10"><span>Plan:</span><span class="text-blue-400 font-bold" id="lbl-s-plan">-</span></div><div class="border-t border-slate-700/50 pt-4 mt-2 flex justify-between font-bold items-end relative z-10"><span class="text-[9px] uppercase text-slate-400">Total Payable</span><span class="text-emerald-400 font-black text-2xl" id="lbl-s-outstanding">₹0</span></div></div>
                         <button onclick="executeFullDirectLoanClosure(event)" class="btn-fluid w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4.5 rounded-xl text-[11px] uppercase shadow-lg shadow-emerald-500/30 mt-2">Confirm & Settle</button>
@@ -577,10 +679,14 @@
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center mb-5"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold hover-scale">🔄</div><h3 class="text-sm font-black text-slate-900 uppercase">Loan Renewal</h3></div>
                     <div class="space-y-4">
-                        <select id="renew-client-mobile-select" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
-                        <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4 mt-2">
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Master Plan</label><select id="renew-loan-plan-select" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-blue-700"><option value="">-- Choose Master Plan --</option></select></div>
+                        <!-- Custom Search Panel for Renew -->
+                        <div class="space-y-2">
+                            <input type="text" id="renew-search-input" onkeyup="syncRenewalClientsDropdown()" placeholder="🔍 Search Closed Client Name, ID..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
+                            <div id="renew-search-results" class="max-h-[35vh] overflow-y-auto space-y-2 pr-1"></div>
+                            <input type="hidden" id="renew-client-mobile-select" value="">
                         </div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Master Plan</label><select id="renew-loan-plan-select" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-blue-700"><option value="">-- Choose Master Plan --</option></select></div>
+                        
                         <button onclick="executeLoanRenewalSubmission()" class="btn-fluid w-full bg-slate-900 text-white font-black py-4.5 rounded-xl text-xs uppercase shadow-lg shadow-slate-900/20 mt-4">Inject Renewal Profile</button>
                     </div>
                 </div>
@@ -740,6 +846,45 @@
                         <div class="flex gap-2"><input type="text" id="setup-centre-name" placeholder="Centre Name" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold"><button onclick="createNewCentre()" class="bg-slate-800 text-white font-black px-4 rounded-lg text-xs shadow-md">Add</button></div>
                         <div id="setup-centre-list" class="mt-2 space-y-2 max-h-[150px] overflow-y-auto"></div>
                     </div>
+                    
+
+                    <!-- 🌟 NAYA: Target & Bonus Controller Dashboard -->
+                    <div class="glass-card p-5 rounded-[2rem] border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50/50 to-purple-50/50 mt-6 relative overflow-hidden shadow-sm hover-scale">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                        <h4 class="text-[10px] font-black uppercase text-fuchsia-700 mb-4 border-b border-fuchsia-200/50 pb-2 flex justify-between items-center relative z-10">
+                            🎯 Daily Target & Bonus System
+                            <label class="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" id="bonus-toggle-switch" onchange="saveBonusConfig()" class="sr-only peer" checked>
+                              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-fuchsia-600 shadow-inner"></div>
+                            </label>
+                        </h4>
+                        
+                        <div class="grid grid-cols-2 gap-3 relative z-10">
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Min Collection %</label>
+                                <input type="number" id="bonus-min-pct" value="85" onchange="saveBonusConfig()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none text-fuchsia-700 shadow-sm transition-all focus:border-fuchsia-400">
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Bonus Pay (₹)</label>
+                                <input type="number" id="bonus-amt" value="80" onchange="saveBonusConfig()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none text-emerald-600 shadow-sm transition-all focus:border-emerald-400">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Target Multiplier (Yesterday EMI x ?)</label>
+                                <input type="number" step="0.1" id="bonus-multiplier" value="1.0" onchange="saveBonusConfig()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-black focus:outline-none text-blue-600 shadow-sm transition-all focus:border-blue-400" placeholder="e.g., 1.0 = 100% of Yesterday's Collection">
+                            </div>
+                        </div>
+                        <p class="text-[8px] font-bold text-fuchsia-800/70 mt-3 leading-tight relative z-10 bg-white/50 p-2 rounded-lg">Rule: Agar branch par Collection Set % se zyada rha AND Aaj ka loan disbursal target (Yesterday EMI × Multiplier) poora hua, toh Day-End par branch ke sabhi staff ki salary me auto-bonus jud jayega.</p>
+                    </div>
+
+                    <!-- 🚀 FIX: Dynamic UPI Update Panel -->
+                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-200 mt-6">
+                        <p class="text-[9px] font-black uppercase text-blue-600 border-b border-blue-200/50 pb-2 mb-3">Update Company UPI ID</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="setup-company-upi" placeholder="e.g. 9876543210@ybl" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                            <button onclick="updateCompanyUpi()" class="bg-blue-600 hover:bg-blue-500 text-white font-black px-4 rounded-lg text-xs shadow-md transition-colors">Save</button>
+                        </div>
+                    </div>
+
                     <div class="bg-rose-50 p-4 rounded-2xl border border-rose-200 mt-6">
                         <h4 class="text-[10px] font-black uppercase text-rose-600 mb-2">Danger Zone</h4>
                         <p class="text-[9px] font-bold text-rose-500 mb-3">Ye button dabane se cloud ka saara purana data hamesha ke liye delete ho jayega. (Sirf Staff, Branch, Plans safe rahenge).</p>
@@ -785,6 +930,68 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 🌟 NAYA: Ultra Premium Staff Profile & Target UI -->
+            <div id="view-node-staff-profile" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 relative overflow-hidden">
+                    <div class="absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
+                    
+                    <div class="flex items-center gap-4 relative z-10">
+                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl text-white font-black shadow-lg shadow-indigo-500/40 border-2 border-white/50" id="sp-avatar">S</div>
+                        <div>
+                            <h2 class="text-xl font-black text-slate-900" id="sp-name">Staff Name</h2>
+                            <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 bg-indigo-50 px-2 py-0.5 rounded-md inline-block border border-indigo-100" id="sp-role">Role | Branch</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 mt-6 relative z-10 border-t border-slate-200/60 pt-5">
+                        <div class="text-center"><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Base Pay</span><span class="text-sm font-black text-slate-800" id="sp-base">₹0</span></div>
+                        <div class="text-center border-l border-slate-200/60"><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mess</span><span class="text-sm font-black text-slate-800" id="sp-mess">₹0</span></div>
+                        <div class="text-center border-l border-slate-200/60"><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Petrol</span><span class="text-sm font-black text-slate-800" id="sp-petrol">₹0</span></div>
+                    </div>
+                </div>
+
+                <!-- Gamified Target & Bonus Section -->
+                <div class="glass-card rounded-[2rem] p-6 relative overflow-hidden bg-slate-900 text-white shadow-2xl hover-scale">
+                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <h3 class="text-[10px] font-black uppercase text-fuchsia-400 tracking-widest mb-4 flex justify-between relative z-10 border-b border-white/10 pb-2">🎯 Daily Mission <span>Today</span></h3>
+                    
+                    <div class="space-y-5 relative z-10">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-slate-300 mb-1.5"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> 1. Collection Target</span><span id="sp-col-pct" class="font-black text-emerald-400 text-sm">0%</span></div>
+                            <div class="w-full bg-slate-800 rounded-full h-3 shadow-inner"><div class="bg-gradient-to-r from-emerald-500 to-emerald-300 h-3 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(52,211,153,0.5)]" id="sp-col-bar" style="width: 0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-slate-300 mb-1.5"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> 2. Disburse Target</span><span id="sp-tar-text" class="font-black text-blue-400">₹0 / ₹0</span></div>
+                            <div class="w-full bg-slate-800 rounded-full h-3 shadow-inner"><div class="bg-gradient-to-r from-blue-600 to-cyan-400 h-3 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(56,189,248,0.5)]" id="sp-tar-bar" style="width: 0%"></div></div>
+                            <p class="text-[8px] text-slate-500 mt-1.5 text-right font-bold uppercase tracking-wider" id="sp-yesterday-hint">Calculated on Yesterday's Performance</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-5 border-t border-white/10 flex justify-between items-center relative z-10">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Today's Bonus Reward</p>
+                            <p class="text-3xl font-black text-white mt-1 drop-shadow-[0_0_8px_rgba(232,121,249,0.8)]" id="sp-bonus-amt">₹0</p>
+                        </div>
+                        <div id="sp-bonus-status" class="bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-inner">Processing...</div>
+                    </div>
+                </div>
+
+                <!-- Leave Stats -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="glass-card p-5 rounded-[1.5rem] border border-emerald-100 bg-emerald-50/30 text-center hover-scale shadow-sm">
+                        <div class="text-3xl mb-2 drop-shadow-sm">✅</div>
+                        <span class="block text-2xl font-black text-emerald-600" id="sp-present">0</span>
+                        <span class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Days Present</span>
+                    </div>
+                    <div class="glass-card p-5 rounded-[1.5rem] border border-amber-100 bg-amber-50/30 text-center hover-scale shadow-sm">
+                        <div class="text-3xl mb-2 drop-shadow-sm">🏖️</div>
+                        <span class="block text-2xl font-black text-amber-600" id="sp-leaves">0</span>
+                        <span class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Leaves Taken</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="view-node-attendance" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center border-b border-slate-100 pb-4 mb-4">
@@ -1200,8 +1407,50 @@
             } catch(e) { console.error("Sync merge error"); }
             
             if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
-            serverDb["SYSTEM_SETTINGS"] = { branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans, branchCoords: serverDb["SYSTEM_SETTINGS"].branchCoords };
+            // 🚀 FIX: Preserve Custom Fields during updates
+            let currentUpi = serverDb["SYSTEM_SETTINGS"].companyUpi || "opasmicrofinancepvt@sbi";
+            let bConfig = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
+            let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
+            let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
+
+            serverDb["SYSTEM_SETTINGS"] = { 
+                branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans, 
+                branchCoords: serverDb["SYSTEM_SETTINGS"].branchCoords, companyUpi: currentUpi,
+                bonusConfig: bConfig, branchStats: bStats, leaves: leaves
+            };
             await saveDataToCloud("SYSTEM_SETTINGS");
+        }
+
+        // 🌟 NAYA: Save & Load Bonus Configurations
+        function loadBonusConfig() {
+            let config = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
+            document.getElementById('bonus-toggle-switch').checked = config.enabled;
+            document.getElementById('bonus-min-pct').value = config.minCollectionPct;
+            document.getElementById('bonus-amt').value = config.bonusAmount;
+            document.getElementById('bonus-multiplier').value = config.targetMultiplier;
+        }
+
+        async function saveBonusConfig() {
+            if(!serverDb["SYSTEM_SETTINGS"]) serverDb["SYSTEM_SETTINGS"] = {};
+            serverDb["SYSTEM_SETTINGS"].bonusConfig = {
+                enabled: document.getElementById('bonus-toggle-switch').checked,
+                minCollectionPct: parseFloat(getSafeValue('bonus-min-pct')) || 85,
+                bonusAmount: parseInt(getSafeValue('bonus-amt')) || 80,
+                targetMultiplier: parseFloat(getSafeValue('bonus-multiplier')) || 1.0
+            };
+            await saveSystemSettings();
+            showNotification("Bonus Settings Saved", "Rules successfully updated across all staff terminals.", "🎯");
+        }
+
+        // 🚀 FIX: Function to save the new UPI ID to cloud
+        async function updateCompanyUpi() {
+            let newUpi = document.getElementById('setup-company-upi').value.trim();
+            if(!newUpi || !newUpi.includes('@')) { alert("Please enter a valid UPI ID (e.g., name@bank)"); return; }
+            if(!serverDb["SYSTEM_SETTINGS"]) serverDb["SYSTEM_SETTINGS"] = {};
+            serverDb["SYSTEM_SETTINGS"].companyUpi = newUpi;
+            await saveSystemSettings();
+            alert("✅ Company UPI ID updated successfully! Naye QR codes ab is ID par banenge.");
+            document.getElementById('setup-company-upi').value = '';
         }
 
         async function factoryResetDatabase() {
@@ -1220,7 +1469,8 @@
                     }
                     try {
                         const token = localStorage.getItem('opas_jwt_token');
-                        let wipeRes = await fetch(API_URL + '/bulk', { 
+                        // 🚀 FIX: Correctly routing to /api/bulk
+                    let wipeRes = await fetch(API_URL.replace('/clients', '/bulk'), {
                             method: 'POST', 
                             headers: { 
                                 'Content-Type': 'application/json',
@@ -1395,6 +1645,13 @@
         function setHtmlSafe(id, val) { try { const el = document.getElementById(id); if(el) el.innerText = (val !== undefined && val !== null && val !== "") ? val : "-"; } catch (e) {} }
         function getSafeValue(id) { try { const el = document.getElementById(id); return el ? el.value : ""; } catch (e) { return ""; } }
 
+        // 🚀 FIX: Prevent ReferenceErrors for Leave and Payroll modules
+        function submitLeaveRequest() { alert("Leave application logic will be implemented here."); }
+        function renderStaffMyLeaves() { const z = document.getElementById('staff-my-leaves-list'); if(z) z.innerHTML = "<p class='text-[10px] text-slate-400'>No recent leaves.</p>"; }
+        function renderHeadLeaveRequests() { const z = document.getElementById('head-leave-requests-list'); if(z) z.innerHTML = "<p class='text-[10px] text-slate-400'>No pending approvals.</p>"; }
+        function updateLeaveRequestBadge() { setHtmlSafe('leave-req-count-badge', '0'); }
+        function renderHeadPayroll() { const z = document.getElementById('payroll-list-zone'); if(z) z.innerHTML = "<p class='text-[10px] text-slate-400 text-center py-4'>Payroll module active. Waiting for attendance data...</p>"; }
+
         function formatSysDate(dateObj) {
             let d = dateObj.getDate().toString().padStart(2,'0'); let m = (dateObj.getMonth()+1).toString().padStart(2,'0'); let y = dateObj.getFullYear(); return `${d}-${m}-${y}`;
         }
@@ -1431,6 +1688,10 @@
             if (typeof biometricStream !== 'undefined' && biometricStream) {
                 biometricStream.getTracks().forEach(t => t.stop());
                 biometricStream = null;
+            }
+            if (typeof kycVideoStream !== 'undefined' && kycVideoStream) {
+                kycVideoStream.getTracks().forEach(t => t.stop());
+                kycVideoStream = null;
             }
             if (typeof scanTimeout !== 'undefined') {
                 clearTimeout(scanTimeout);
@@ -1543,12 +1804,14 @@
                 if(panelId === 'renew') { syncRenewalClientsDropdown(); syncKycPlanDropdown(); }
                 if(panelId === 'settlement') syncSettleCentreFilter();
                 if(panelId === 'requests') renderPendingRequestsBox();
+                if(panelId === 'approvals' || panelId === 'neft') refreshHeadDashboardStats(); // 🌟 NAYA: Auto fetch
                 if(panelId === 'cust-portal') renderCustomerDashboard();
                 if(panelId === 'cust-passbook') renderCustomerPassbook();
                 if(panelId === 'cust-profile') { if(serverDb[currentlyLoggedInMobile]) { const ab = document.getElementById('cust-edit-address'); if (ab) ab.value = serverDb[currentlyLoggedInMobile].address || ""; } }
                 if(panelId === 'staff-manage') renderStaffList();
                 if(panelId === 'admin-edit') syncAdminEditDropdown();
-                if(panelId === 'setup') renderSetupLists();
+                if(panelId === 'setup') { renderSetupLists(); loadBonusConfig(); } // 🌟 NAYA: Load Target settings
+                if(panelId === 'staff-profile') renderStaffProfile(); // 🌟 NAYA: Staff Profile Engine
                 if(panelId === 'weekly-bind') syncWeeklyBindDropdowns();
                 if(panelId === 'attendance') renderStaffAttendanceCalendar();
                 if(panelId === 'payroll') renderHeadPayroll();
@@ -1939,26 +2202,105 @@
 
         function syncSettlementClientsDropdown() {
             const center = document.getElementById('settle-center-filter').value;
-            const clientSelect = document.getElementById('settle-client-mobile-select');
-            let opts = '<option value="">-- Select Client --</option>';
+            const resultBox = document.getElementById('settle-search-results');
+            const searchQ = getSafeValue('settle-search-input').toLowerCase();
+            let html = '';
+            
             Object.keys(serverDb).forEach(m => {
-                if (m !== "SYSTEM_SETTINGS" && serverDb[m] && serverDb[m].center === center && serverDb[m].status === "Active") {
-                    opts += `<option value="${m}">${serverDb[m].name} (${m})</option>`;
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (c && c.center === center && c.status === "Active") {
+                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !m.includes(searchQ)) return;
+                    
+                    let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
+                    html += `
+                    <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover-scale transition-colors">
+                        <div>
+                            <p class="text-xs font-black text-slate-900">${c.name}</p>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
+                            <p class="text-[9px] font-black text-rose-500 mt-1 uppercase tracking-widest bg-rose-50 inline-block px-1.5 py-0.5 rounded">Due: ₹${totalDebt}</p>
+                        </div>
+                        <button onclick="selectSettlementClient('${m}')" class="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all">Select</button>
+                    </div>`;
                 }
             });
-            clientSelect.innerHTML = opts;
+            
+            if(resultBox) resultBox.innerHTML = html || `<p class="text-[10px] text-center text-slate-400 p-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed uppercase font-bold tracking-widest">No matching active clients.</p>`;
+            
+            // Clear backend selection value until they click select
+            document.getElementById('settle-client-mobile-select').value = "";
             document.getElementById('settle-math-receipt-box').classList.add('hidden');
         }
 
+        function selectSettlementClient(mobile) {
+            let c = serverDb[mobile];
+            document.getElementById('settle-client-mobile-select').value = mobile;
+            document.getElementById('settle-search-results').innerHTML = `
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-black">✓</div>
+                        <div>
+                            <p class="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Target Locked</p>
+                            <p class="text-xs font-black text-slate-900">${c.name} <span class="text-slate-500">(${mobile})</span></p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('settle-search-input').value=''; syncSettlementClientsDropdown()" class="text-[9px] font-black text-slate-500 underline hover:text-slate-800 uppercase">Change</button>
+                </div>`;
+            syncDirectSettlementViewLabels(); // Trigger the math display
+        }
+
         function syncRenewalClientsDropdown() {
-            const clientSelect = document.getElementById('renew-client-mobile-select');
-            let opts = '<option value="">-- Select Deactive Client --</option>';
+            const resultBox = document.getElementById('renew-search-results');
+            const searchQ = getSafeValue('renew-search-input').toLowerCase();
+            
+            // 🛠️ BUG FIX: Staff ke liye Branch Lock
+            const activeBranch = currentLoggedInRole === 'head' ? "ALL" : getSafeValue('dashboard-active-branch-select');
+            
+            let html = '';
+            
             Object.keys(serverDb).forEach(m => {
-                if (m !== "SYSTEM_SETTINGS" && serverDb[m] && serverDb[m].status === "Deactive") {
-                    opts += `<option value="${m}">${serverDb[m].name} (${m})</option>`;
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                
+                if (c && c.status === "Deactive") {
+                    
+                    // 🛡️ SECURITY Check: Agar Head nahi hai, to sirf apni branch dekhe
+                    if (activeBranch !== "ALL" && c.branch !== activeBranch) return;
+
+                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !m.includes(searchQ)) return;
+                    
+                    html += `
+                    <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover-scale transition-colors">
+                        <div>
+                            <p class="text-xs font-black text-slate-900">${c.name}</p>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
+                            <p class="text-[9px] font-black text-indigo-600 mt-1 uppercase tracking-widest bg-indigo-50 inline-block px-1.5 py-0.5 rounded border border-indigo-100 shadow-sm">Prev: ${c.planName || 'N/A'} | ${c.branch || 'NA'}</p>
+                        </div>
+                        <button onclick="selectRenewClient('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all">Select</button>
+                    </div>`;
                 }
             });
-            clientSelect.innerHTML = opts;
+            
+            if(resultBox) resultBox.innerHTML = html || `<p class="text-[10px] text-center text-slate-400 p-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed uppercase font-bold tracking-widest">No closed/deactive clients found for your branch.</p>`;
+            
+            // Clear value until selected
+            document.getElementById('renew-client-mobile-select').value = "";
+        }
+
+        function selectRenewClient(mobile) {
+            let c = serverDb[mobile];
+            document.getElementById('renew-client-mobile-select').value = mobile;
+            document.getElementById('renew-search-results').innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-black">✓</div>
+                        <div>
+                            <p class="text-[9px] font-black text-blue-800 uppercase tracking-widest">Client Ready</p>
+                            <p class="text-xs font-black text-slate-900">${c.name} <span class="text-slate-500">(${mobile})</span></p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('renew-search-input').value=''; syncRenewalClientsDropdown()" class="text-[9px] font-black text-slate-500 underline hover:text-slate-800 uppercase">Change</button>
+                </div>`;
         }
 
         function syncDirectSettlementViewLabels() {
@@ -1968,10 +2310,11 @@
             setHtmlSafe('lbl-s-id', serverDb[m].id);
             setHtmlSafe('lbl-s-plan', serverDb[m].planName);
             
-            // BUG FIX: Secure calculation to prevent negative debt values
+            // BUG FIX: UI me Advance Paid subtract karna zaroori tha warna total galat dikhta hai
             let safeOutstanding = Math.max(0, parseInt(serverDb[m].outstanding) || 0);
             let safeOverdue = Math.max(0, parseInt(serverDb[m].overdue) || 0);
-            let totalSettleAmt = safeOutstanding + safeOverdue;
+            let safeAdvance = parseInt(serverDb[m].advancePaid) || 0;
+            let totalSettleAmt = Math.max(0, (safeOutstanding + safeOverdue) - safeAdvance);
             
             setHtmlSafe('lbl-s-outstanding', `₹${totalSettleAmt}`);
             box.classList.remove('hidden');
@@ -2709,6 +3052,7 @@
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Total Payable</span><span class="font-black text-emerald-600">₹${(c.totalPayable||0).toLocaleString()}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Active Cycle EMI</span><span class="font-black text-slate-800">₹${c.cycleEmi||0}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Overdue</span><span class="font-black text-rose-500">₹${c.overdue||0}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Approval Date</span><span class="font-black text-slate-800">${(c.approvalDate && c.approvalDate !== "N/A") ? c.approvalDate : "Pending"}</span></div>
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Insurance Charge</span><span class="font-black text-indigo-600">₹${c.insuranceAmt||0}</span></div>
                             ${hybridInfo}
                         </div>
@@ -2851,7 +3195,8 @@
                 setHtmlSafe('math-insurance', `₹${(m.insuranceAmt || 0).toLocaleString('en-IN')}`); 
                 
                 // Live adjust Final Payable if user types paid EMIs in backdate section
-                let rawTypedEmis = parseInt(getSafeValue('new-cust-paid-emis')) || 0;
+                let rawTypedEmis = parseInt(getSafeValue('new-cust-paid-emis'));
+                if (isNaN(rawTypedEmis) || rawTypedEmis < 0) rawTypedEmis = 0;
                 // RUNTIME FIX: Hard cap the iterations at 1000 to prevent browser freezing
                 let typedPaidEmis = Math.min(rawTypedEmis, 1000);
                 let activeOutstanding = m.totalPayable;
@@ -3197,8 +3542,10 @@
 
         // NAYA FUNCTION: Original Working Locked UPI QR Code
         function showUpiQrCode(mobile, amount, name, type) {
-            // 🔥 WARNING: YAHAN APNI COMPANY KI ASLI UPI ID DAALEN (e.g., 9876543210@ybl, opas@sbi)
-            let companyUpi = "opasmicrofinancepvt@sbi";
+            // 🚀 FIX: Dynamic UPI fetch from Cloud Settings with safe fallback
+            let companyUpi = (serverDb["SYSTEM_SETTINGS"] && serverDb["SYSTEM_SETTINGS"].companyUpi) 
+                             ? serverDb["SYSTEM_SETTINGS"].companyUpi 
+                             : "opasmicrofinancepvt@sbi";
             
             // Standard UPI Deep Link (Locked Amount & Locked Account)
             let upiLink = `upi://pay?pa=${companyUpi}&pn=OPAS+MICROFINANCE+PVT+LTD&am=${amount}&cu=INR&tn=${encodeURIComponent(type + " - " + mobile)}`;
@@ -3500,6 +3847,54 @@
 
                 await localforage.setItem('opas_local_db', serverDb);
 
+                // 🌟 NAYA: DYNAMIC TARGET & BONUS LOCK IN SYSTEM
+                let bConfig = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
+                let branchCollected = 0; let branchExpected = 0; let branchDisbursed = 0;
+                
+                Object.keys(serverDb).forEach(m => {
+                    if(m==="SYSTEM_SETTINGS") return;
+                    let c = serverDb[m];
+                    if(!c || c.branch !== staffBranch) return;
+
+                    if(c.isApproved && c.approvalDate === todayStr) branchDisbursed += (c.principal||0);
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if(t.date === todayStr && ['Received','Online App','Advance','Direct Settle'].includes(t.type)) branchCollected += t.amount;
+                        });
+                    }
+                    if(c.status === "Active") {
+                        let isDue = false;
+                        if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                            let emiDateObj = parseSysDate(c.nextEmiDate);
+                            if(todayDateObj >= emiDateObj) isDue = true;
+                        } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                            isDue = true; 
+                        }
+                        if(isDue || c.overdue > 0) { branchExpected += Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0); }
+                    }
+                });
+
+                let yesterdayObj = new Date(); yesterdayObj.setDate(yesterdayObj.getDate()-1);
+                let yStr = formatSysDate(yesterdayObj);
+                let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
+                let yCollected = bStats[staffBranch]?.[yStr]?.collected || 0;
+                
+                // Set target rounded to nearest 500
+                let todayTarget = Math.round((yCollected * bConfig.targetMultiplier) / 500) * 500;
+                if(todayTarget === 0 && bConfig.enabled) todayTarget = 10000; // Base failsafe
+
+                let colPct = branchExpected > 0 ? (branchCollected / branchExpected) * 100 : (branchCollected > 0 ? 100 : 0);
+                let bonusAchieved = bConfig.enabled && (colPct >= bConfig.minCollectionPct) && (branchDisbursed >= todayTarget);
+
+                if(!serverDb["SYSTEM_SETTINGS"].branchStats) serverDb["SYSTEM_SETTINGS"].branchStats = {};
+                if(!serverDb["SYSTEM_SETTINGS"].branchStats[staffBranch]) serverDb["SYSTEM_SETTINGS"].branchStats[staffBranch] = {};
+                
+                serverDb["SYSTEM_SETTINGS"].branchStats[staffBranch][todayStr] = {
+                    expected: branchExpected, collected: branchCollected, disbursed: branchDisbursed, 
+                    target: todayTarget, colPct: colPct, bonusAchieved: bonusAchieved
+                };
+                // === BONUS LOCK IN COMPLETE ===
+
                 // Fix: Sirf usi branch ke accounts fetch karein taaki bandwidth bache aur dusri branches ka data overwrite na ho
                 let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch);
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
@@ -3512,7 +3907,8 @@
                     
                     // Backend par ek single request bhejenge (Apne API URL mein zarurat anusar '/bulk' add karein)
                     const token = localStorage.getItem('opas_jwt_token');
-                    let res = await fetch(API_URL + '/bulk', { 
+                    // 🚀 FIX: Correctly routing to /api/bulk for day-end
+                    let res = await fetch(API_URL.replace('/clients', '/bulk'), {
                         method: 'POST', 
                         headers: { 
                             'Content-Type': 'application/json',
@@ -4294,7 +4690,7 @@
                 let center = c.center || "Unknown Centre";
                 
                 if (!branchAnomalies[b]) branchAnomalies[b] = { totalFlags: 0, centres: {} };
-                if (!branchAnomalies[b].centres[center]) branchAnomalies[b].centres[center] = { bounceCount: 0, totalOut: 0, totalOd: 0, riskyClients: [] };
+                if (!branchAnomalies[b].centres[center]) branchAnomalies[b].centres[center] = { bounceCount: 0, totalOut: 0, totalOd: 0, riskyClients: [], centerCash: 0, centerUpi: 0 };
 
                 branchAnomalies[b].centres[center].totalOut += (c.outstanding || 0);
                 branchAnomalies[b].centres[center].totalOd += (c.overdue || 0);
@@ -4331,15 +4727,18 @@
                             } else if (t.type === 'Received' || t.type === 'Direct Settle') {
                                 globalCollection.cash += t.amount;
                                 globalCollection.total += t.amount;
+                                branchAnomalies[b].centres[center].centerCash += t.amount;
                                 globalCollection.cashClients.push({ name: c.name, id: c.id, amt: t.amount, type: c.planType });
                             } else if (t.type === 'Online App') {
                                 globalCollection.upi += t.amount;
                                 globalCollection.total += t.amount;
+                                branchAnomalies[b].centres[center].centerUpi += t.amount;
                                 globalCollection.upiClients.push({ name: c.name, id: c.id, amt: t.amount, type: c.planType });
                             } else if (t.type === 'Advance') {
                                 globalCollection.advance += t.amount;
                                 globalCollection.cash += t.amount; // Advance mostly staff via cash hi leta hai
                                 globalCollection.total += t.amount;
+                                branchAnomalies[b].centres[center].centerCash += t.amount;
                                 globalCollection.cashClients.push({ name: c.name + " (Adv)", id: c.id, amt: t.amount, type: c.planType });
                             }
                         }
@@ -4553,10 +4952,10 @@
 
                     // 9. 🌟 NAYA: SMART UPI vs CASH ANOMALY DETECTION (Upgraded)
                     let cashAnomalyAlert = '';
-                    let totalCentreCollection = globalCollection.cash + globalCollection.upi;
-                    let cashPercentage = totalCentreCollection > 0 ? (globalCollection.cash / totalCentreCollection) * 100 : 0;
+                    let totalCentreCollection = d.centerCash + d.centerUpi;
+                    let cashPercentage = totalCentreCollection > 0 ? (d.centerCash / totalCentreCollection) * 100 : 0;
                     
-                    if (globalCollection.cash > 5000 && globalCollection.upi === 0 && d.bounceCount > 1) {
+                    if (d.centerCash > 5000 && d.centerUpi === 0 && d.bounceCount > 1) {
                         cashAnomalyAlert = `<div class="bg-fuchsia-100 text-fuchsia-800 p-2 rounded-lg text-[9px] font-black uppercase mb-3 border border-fuchsia-300 shadow-sm animate-pulse">🕵️ CASH HOARDING SUSPICION: 100% Cash collections + Bounces. 0 UPI received! Staff might be rolling cash.</div>`;
                         hasBranchThreat = true;
                     } else if (cashPercentage > 85 && totalCentreCollection > 10000) {
@@ -4728,7 +5127,11 @@
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 640 } } })
             .then(stream => {
                 kycVideoStream = stream;
-                document.getElementById('kyc-video').srcObject = stream;
+                let video = document.getElementById('kyc-video');
+                video.srcObject = stream;
+                
+                // 🛠️ BUG FIX: Force video play to prevent Black Screen / Freeze on iOS Safari & Android Chrome
+                video.onloadedmetadata = () => { video.play().catch(e => console.error("Video Play Error:", e)); };
                 
                 // Fetch GPS
                 if (navigator.geolocation) {
@@ -4823,7 +5226,8 @@
                 let statusText = document.getElementById('face-scan-status');
                 if(statusText) statusText.innerText = "Loading AI Biometrics...";
                 
-                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models/';
+                // 🚀 FIX: Using stable CDN matching your @vladmandic/face-api version
+                const MODEL_URL = 'https://vladmandic.github.io/face-api/model/';
 
                 // 🚀 NAYA FIX: Permanent Offline Caching (Bina internet bhi fast load ke liye)
                 faceapi.env.monkeyPatch({
@@ -4932,7 +5336,7 @@
                     <p class="text-[9px] font-bold text-indigo-600 uppercase mb-5 tracking-widest bg-indigo-50 p-2 rounded border border-indigo-100">${instruction}</p>
                     
                     <div class="relative w-56 h-56 mx-auto rounded-full overflow-hidden border-4 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)] mb-5">
-                        <video id="face-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+                        <video id="face-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
                         <div class="absolute left-0 w-full h-1 bg-emerald-400 shadow-[0_0_15px_#34d399] animate-[faceScan_2s_ease-in-out_infinite] z-10" style="animation-name: faceScan;"></div>
                     </div>
                     
@@ -4951,7 +5355,7 @@
                     video.srcObject = stream;
                     
                     video.onloadedmetadata = async () => {
-                        await video.play(); 
+                        video.play().catch(e => console.error("Play Error:", e));
                         let loaded = await initFaceApi();
                         if(loaded) {
                             document.getElementById('face-scan-status').innerText = "Scanning Active. Keep Still...";
@@ -5005,6 +5409,245 @@
             openGlobalModal(html);
         }
 
+        // =========================================================================
+        // 🌟 STAFF PROFILE, PAYROLL & LEAVE MANAGEMENT MODULE
+        // =========================================================================
+
+        function renderStaffProfile() {
+            let u = localStorage.getItem('opas_sess_id');
+            let staff = staffDb[u];
+            if(!staff) return;
+
+            setHtmlSafe('sp-name', staff.name);
+            setHtmlSafe('sp-role', `${staff.role} | ${staff.branch}`);
+            setHtmlSafe('sp-avatar', staff.name ? staff.name.substring(0,2).toUpperCase() : 'S');
+            setHtmlSafe('sp-base', `₹${staff.baseSalary||0}`);
+            setHtmlSafe('sp-mess', `₹${staff.meshAllow||0}`);
+            setHtmlSafe('sp-petrol', `₹${staff.petrolAllow||0}`);
+
+            // Get Real-Time Live Daily Stats
+            let config = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
+            let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
+            if(!bStats[staff.branch]) bStats[staff.branch] = {};
+
+            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+            let todayStr = formatSysDate(todayObj);
+            
+            let yesterdayObj = new Date(); yesterdayObj.setDate(yesterdayObj.getDate()-1);
+            let yStr = formatSysDate(yesterdayObj);
+            
+            let yCollected = bStats[staff.branch][yStr]?.collected || 0;
+            let todayTarget = Math.round((yCollected * config.targetMultiplier) / 500) * 500;
+            if(todayTarget === 0 && config.enabled) todayTarget = 10000;
+
+            let collected = 0; let disbursed = 0; let expected = 0;
+            Object.keys(serverDb).forEach(m => {
+                if(m==="SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if(!c || c.branch !== staff.branch) return;
+
+                if(c.isApproved && c.approvalDate === todayStr) disbursed += (c.principal||0);
+                if(c.transactions) {
+                    c.transactions.forEach(t => {
+                        if(t.date === todayStr && ['Received','Online App','Advance','Direct Settle'].includes(t.type)) collected += t.amount;
+                    });
+                }
+                if(c.status === "Active") {
+                   let isDue = false;
+                   if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                       let emiDateObj = parseSysDate(c.nextEmiDate);
+                       if(todayObj >= emiDateObj) isDue = true;
+                   } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                       isDue = true; 
+                   }
+                   if(isDue || c.overdue > 0) expected += Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
+                }
+            });
+
+            let colPct = expected > 0 ? (collected / expected) * 100 : (collected > 0 ? 100 : 0);
+            if(colPct > 100) colPct = 100;
+
+            setHtmlSafe('sp-col-pct', `${colPct.toFixed(1)}%`);
+            document.getElementById('sp-col-bar').style.width = `${colPct}%`;
+
+            let tarPct = todayTarget > 0 ? (disbursed / todayTarget) * 100 : (disbursed > 0 ? 100 : 0);
+            if(tarPct > 100) tarPct = 100;
+            
+            setHtmlSafe('sp-tar-text', `₹${disbursed.toLocaleString()} / ₹${todayTarget.toLocaleString()}`);
+            document.getElementById('sp-tar-bar').style.width = `${tarPct}%`;
+            setHtmlSafe('sp-bonus-amt', `₹${config.bonusAmount}`);
+
+            let bStatusEl = document.getElementById('sp-bonus-status');
+            if(!config.enabled) {
+                bStatusEl.innerText = "System Disabled";
+                bStatusEl.className = "bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-inner";
+            } else if (bStats[staff.branch][todayStr] && bStats[staff.branch][todayStr].bonusAchieved) {
+                bStatusEl.innerText = "Bonus Locked 🏆";
+                bStatusEl.className = "bg-fuchsia-500/20 border border-fuchsia-400/50 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-fuchsia-400 shadow-[0_0_15px_rgba(232,121,249,0.3)] animate-pulse";
+            } else if (colPct >= config.minCollectionPct && disbursed >= todayTarget) {
+                bStatusEl.innerText = "Goal Met! Sync Day-End ⏳";
+                bStatusEl.className = "bg-emerald-500/20 border border-emerald-400/50 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.3)]";
+            } else {
+                bStatusEl.innerText = "Target Pending";
+                bStatusEl.className = "bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-inner";
+            }
+
+            // Attendance Data
+            let d = new Date(); let month = d.getMonth(); let year = d.getFullYear();
+            let presentDays = 0; let leavesTaken = 0;
+            let prefix = `${(month+1).toString().padStart(2,'0')}-${year}`;
+
+            if(staff.attendance) { Object.keys(staff.attendance).forEach(dt => { if(dt.endsWith(prefix)) presentDays++; }); }
+            let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
+            leaves.forEach(l => { if(l.staffId === u && l.status === "Approved" && l.date.includes(prefix)) leavesTaken++; });
+
+            setHtmlSafe('sp-present', presentDays); setHtmlSafe('sp-leaves', leavesTaken);
+        }
+
+        function renderHeadPayroll() {
+            let filter = document.getElementById('payroll-month-filter').value;
+            if(!filter) {
+                let d = new Date();
+                filter = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
+                document.getElementById('payroll-month-filter').value = filter;
+            }
+            let [yearStr, monthStr] = filter.split('-');
+            let year = parseInt(yearStr); let month = parseInt(monthStr) - 1;
+
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            let workingDaysInMonth = 0;
+            for(let w=1; w<=daysInMonth; w++) { if(new Date(year, month, w).getDay() !== 0) workingDaysInMonth++; }
+
+            let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
+            let config = serverDb["SYSTEM_SETTINGS"].bonusConfig || { bonusAmount: 80 };
+
+            let html = '';
+            Object.keys(staffDb).forEach(u => {
+                let staff = staffDb[u];
+                let presentDays = 0; let totalBonus = 0; let bonusDays = 0;
+
+                for(let i=1; i<=daysInMonth; i++) {
+                    let dateStr = `${i.toString().padStart(2,'0')}-${(month+1).toString().padStart(2,'0')}-${year}`;
+                    if (staff.attendance && staff.attendance[dateStr]) presentDays++;
+                    
+                    if (bStats[staff.branch] && bStats[staff.branch][dateStr] && bStats[staff.branch][dateStr].bonusAchieved) {
+                        if (staff.attendance && staff.attendance[dateStr]) { // Sirf present staff ko bonus
+                            totalBonus += config.bonusAmount;
+                            bonusDays++;
+                        }
+                    }
+                }
+
+                let b = parseInt(staff.baseSalary)||0; let m = parseInt(staff.meshAllow)||0; let p = parseInt(staff.petrolAllow)||0;
+                let totalFixed = b + m + p;
+                let perDay = totalFixed / workingDaysInMonth;
+                let earnedFixed = perDay * presentDays;
+                let finalPayout = earnedFixed + totalBonus;
+
+                html += `
+                <div class="bg-white border border-slate-200 p-4 rounded-[1.5rem] mb-3 shadow-sm hover-scale transition-all">
+                    <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-3">
+                        <div>
+                            <h4 class="font-black text-slate-800">${staff.name} <span class="text-[9px] text-slate-400 font-bold ml-1">(${u})</span></h4>
+                            <p class="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md inline-block uppercase mt-1 border border-indigo-100">${staff.branch}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-black text-emerald-600">₹${Math.round(finalPayout).toLocaleString()}</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Net Monthly Payout</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div class="bg-slate-50 rounded-xl p-2"><p class="text-[10px] font-black text-slate-700">${presentDays}/${workingDaysInMonth}</p><p class="text-[7px] font-bold text-slate-400 uppercase mt-1">Days</p></div>
+                        <div class="bg-blue-50 border border-blue-100 rounded-xl p-2"><p class="text-[10px] font-black text-blue-700">₹${b}</p><p class="text-[7px] font-bold text-blue-400 uppercase mt-1">Base</p></div>
+                        <div class="bg-amber-50 border border-amber-100 rounded-xl p-2"><p class="text-[10px] font-black text-amber-700">₹${m+p}</p><p class="text-[7px] font-bold text-amber-400 uppercase mt-1">Allows</p></div>
+                        <div class="bg-fuchsia-50 border border-fuchsia-100 shadow-inner rounded-xl p-2"><p class="text-[10px] font-black text-fuchsia-700">₹${totalBonus}</p><p class="text-[7px] font-bold text-fuchsia-400 uppercase mt-1">${bonusDays}x Bonus</p></div>
+                    </div>
+                </div>`;
+            });
+
+            const z = document.getElementById('payroll-list-zone');
+            if(z) z.innerHTML = html || "<p class='text-xs text-slate-400 text-center py-6 uppercase font-bold bg-slate-50 border border-slate-100 border-dashed rounded-2xl'>No staff data available.</p>";
+        }
+
+        async function submitLeaveRequest() {
+            let dt = getSafeValue('leave-apply-date');
+            let res = getSafeValue('leave-apply-reason');
+            if(!dt || !res) { alert("Complete details first."); return; }
+
+            let dObj = parseSysDate(dt.split('-').reverse().join('-'));
+            let fDate = formatSysDate(dObj);
+            
+            let u = localStorage.getItem('opas_sess_id');
+            if(!serverDb["SYSTEM_SETTINGS"].leaves) serverDb["SYSTEM_SETTINGS"].leaves = [];
+            
+            serverDb["SYSTEM_SETTINGS"].leaves.push({
+                id: Date.now().toString(), staffId: u, name: staffDb[u].name,
+                branch: staffDb[u].branch, date: fDate, reason: res, status: 'Pending'
+            });
+            await saveSystemSettings();
+            showNotification('Leave Applied', "Application sent to Head for approval.", "🏖️");
+            document.getElementById('leave-apply-date').value = ''; document.getElementById('leave-apply-reason').value = '';
+            renderStaffMyLeaves();
+        }
+
+        function renderStaffMyLeaves() {
+            let u = localStorage.getItem('opas_sess_id');
+            let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
+            let html = '';
+            
+            leaves.slice().reverse().forEach(l => {
+                if(l.staffId === u) {
+                    let color = l.status==='Approved' ? 'text-emerald-600 bg-emerald-50' : (l.status==='Rejected'?'text-rose-600 bg-rose-50':'text-amber-600 bg-amber-50');
+                    html += `<div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center"><div class="flex-1"><p class="text-[10px] font-black text-slate-800 uppercase tracking-widest">${l.date}</p><p class="text-[9px] text-slate-500 font-bold mt-1 line-clamp-1">${l.reason}</p></div><span class="text-[8px] font-black uppercase px-2 py-1 rounded-md ${color}">${l.status}</span></div>`;
+                }
+            });
+            document.getElementById('staff-my-leaves-list').innerHTML = html || `<p class='text-[10px] text-slate-400 text-center py-4 bg-slate-50 rounded-xl'>No leave applications.</p>`;
+        }
+
+        function renderHeadLeaveRequests() {
+            let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
+            let html = ''; let count = 0;
+            
+            leaves.slice().reverse().forEach(l => {
+                if(l.status === 'Pending') {
+                    count++;
+                    html += `<div class="bg-white p-4 rounded-xl border border-amber-200 shadow-sm hover-scale animate-fade">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><p class="text-xs font-black text-slate-900">${l.name}</p><p class="text-[9px] text-amber-600 font-black uppercase tracking-widest mt-0.5 bg-amber-50 px-2 py-0.5 rounded-md inline-block">Req Date: ${l.date}</p></div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${l.branch}</p>
+                        </div>
+                        <p class="text-[10px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 italic">"${l.reason}"</p>
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                            <button onclick="approveOrRejectLeave('${l.id}', 'Approved')" class="btn-fluid flex-1 bg-emerald-600 text-white font-black py-2.5 rounded-xl text-[10px] uppercase shadow-sm">Approve ✓</button>
+                            <button onclick="approveOrRejectLeave('${l.id}', 'Rejected')" class="btn-fluid flex-1 bg-rose-100 text-rose-600 font-black py-2.5 rounded-xl text-[10px] uppercase">Reject ✕</button>
+                        </div>
+                    </div>`;
+                }
+            });
+            document.getElementById('head-leave-requests-list').innerHTML = html || `<p class='text-[10px] text-slate-400 text-center py-6 bg-slate-50 border border-slate-100 border-dashed rounded-2xl'>All caught up! No pending leaves.</p>`;
+            setHtmlSafe('leave-req-count-badge', count.toString());
+        }
+
+        async function approveOrRejectLeave(id, status) {
+            let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
+            let idx = leaves.findIndex(l => l.id === id);
+            if(idx > -1) {
+                leaves[idx].status = status;
+                serverDb["SYSTEM_SETTINGS"].leaves = leaves;
+                await saveSystemSettings();
+                showNotification(`Leave ${status}`, `Staff application has been ${status.toLowerCase()}.`, status === 'Approved' ? '✅' : '❌');
+                renderHeadLeaveRequests();
+                updateLeaveRequestBadge();
+            }
+        }
+
+        function updateLeaveRequestBadge() {
+            let count = 0;
+            let leaves = serverDb["SYSTEM_SETTINGS"]?.leaves || [];
+            leaves.forEach(l => { if(l.status === 'Pending') count++; });
+            setHtmlSafe('leave-req-count-badge', count.toString());
+        }
+
         function executeGpsFetch() {
             let u = localStorage.getItem('opas_sess_id');
             let staff = staffDb[u];
@@ -5019,8 +5662,6 @@
                         
                         if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
                         
-                        // 🔥 Smart Auto-Calibration: Agar branch GPS set nahi hai, to staff ki pehli location ko branch lock maan lo.
-                        // Ye staff ki uski assignment branch ke hisab se set hota hai.
                         if(!serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch]) {
                             serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch] = { lat: lat, lon: lon };
                             saveSystemSettings().then(() => { openFaceScanner(); });
@@ -5028,7 +5669,6 @@
                             let bCoords = serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch];
                             let dist = haversineDist(lat, lon, bCoords.lat, bCoords.lon);
                             
-                            // ULTRA-FIX: Radius sidha 3000 meter (3 KM) kar diya. Ab gaav/khet me bhi fail nahi hoga!
                             if(dist <= 3000) {
                                 openFaceScanner();
                             } else {
@@ -5038,24 +5678,31 @@
                                         <h3 class="text-sm font-black text-rose-600 uppercase tracking-widest">Geofence Violation</h3>
                                         <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl mt-4 shadow-inner">
                                             <p class="text-[11px] font-black text-rose-700">Distance: ${Math.round(dist)} meters away</p>
-                                            <p class="text-[9px] text-rose-500 font-bold mt-2 leading-relaxed">Attendance blocked. You must be strictly within a 3000m radius of the official branch perimeter.</p>
+                                            <p class="text-[9px] font-bold text-rose-500 mt-1">Aap apne assigned branch (3KM radius) se bahar hain!</p>
                                         </div>
-                                        <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close Alarm</button>
-                                    </div>`;
-                                openGlobalModal(errHtml);
+                                        <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close</button>
+                                    </div>
+                                `;
+                                document.getElementById('modal-injection-zone').innerHTML = errHtml;
                             }
                         }
                     },
                     (error) => {
-                        let msg = error.code === 3 ? "GPS Timeout! Network slow hai, thoda khule aasman me try karein." : "GPS Access Denied! Phone ki location on karein.";
-                        alert(msg);
-                        closeGlobalModal();
+                        // 🛠️ BUG FIX: Infinite loader rokne ke liye Error Fallback
+                        let errHtml = `
+                            <div class="text-center p-6">
+                                <div class="text-5xl mb-4">⚠️</div>
+                                <h3 class="text-sm font-black text-rose-600 uppercase tracking-widest">GPS Failed</h3>
+                                <p class="text-[10px] font-bold text-slate-500 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200">Location fetch nahi ho payi. GPS on karein aur permission dobara allow karein.</p>
+                                <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-5 bg-slate-900 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md">Close</button>
+                            </div>
+                        `;
+                        document.getElementById('modal-injection-zone').innerHTML = errHtml;
                     },
-                    // ULTRA-FIX: Timeout 30s, Cache 5 min (300000ms), aur enableHighAccuracy FALSE kar diya taaki cell-tower se turant uthaye
-                    { enableHighAccuracy: false, timeout: 30000, maximumAge: 300000 }
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                alert("Geolocation is not supported by your browser.");
+                alert("Geolocation not supported.");
                 closeGlobalModal();
             }
         }
@@ -5126,19 +5773,20 @@
                 let isPastOrToday = isCurrentMonthView ? (i <= todayObj.getDate()) : (currentDayObj < todayObj);
                 let att = staff.attendance && staff.attendance[dateStr];
 
-                let action = `onclick="toggleStaffAttendance('${u}', '${dateStr}')" class="cursor-pointer transition-all hover:scale-95"`;
-                
-                if (isSunday) {
-                    calHtml += `<div class="bg-indigo-50 border border-indigo-100 text-indigo-400 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Holiday</span></div>`;
-                } else if(att) {
-                    if(isPastOrToday) presentDays++;
-                    calHtml += `<div ${action} bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Present</span></div>`;
-                } else if(isPastOrToday) {
-                    absentDays++;
-                    calHtml += `<div ${action} bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Absent</span></div>`;
-                } else {
-                    calHtml += `<div class="bg-slate-50 border border-slate-100 text-slate-400 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1">-</span></div>`;
-                }
+                let action = `onclick="toggleStaffAttendance('${u}', '${dateStr}')"`;
+            let hoverClass = `cursor-pointer transition-all hover:scale-95`;
+            
+            if (isSunday) {
+                calHtml += `<div class="bg-indigo-50 border border-indigo-100 text-indigo-400 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Holiday</span></div>`;
+            } else if(att) {
+                if(isPastOrToday) presentDays++;
+                calHtml += `<div ${action} class="${hoverClass} bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Present</span></div>`;
+            } else if(isPastOrToday) {
+                absentDays++;
+                calHtml += `<div ${action} class="${hoverClass} bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Absent</span></div>`;
+            } else {
+                calHtml += `<div class="bg-slate-50 border border-slate-100 text-slate-400 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">-</span></div>`;
+            }
             }
 
             let html = `
