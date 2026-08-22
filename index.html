@@ -204,10 +204,12 @@
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-amber-400 mt-4 hidden transition-colors"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">🔄</span> Renew Client</button>
                 
-                <button onclick="routePanelSection('weekly-bind')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-400 border border-indigo-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">📅</span> Weekly Binding</button>
+                <button onclick="routePanelSection('weekly-bind')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-400 border border-indigo-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">📅</span> Centre Binding</button>
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit Data</button>
                 
                 <button onclick="routePanelSection('attendance')" class="menu-item role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-emerald-600 hover:bg-emerald-500 text-white mt-4 shadow-md hidden transition-colors"><span class="text-lg mr-2">🤳</span> Smart Attendance</button>
+                <button onclick="routePanelSection('leave-manage')" class="menu-item role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-amber-600 hover:bg-amber-500 text-white mt-2 shadow-md hidden transition-colors"><span class="text-lg mr-2">🏖️</span> Apply Leave</button>
+                <button onclick="routePanelSection('leave-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-amber-900/20 hover:bg-amber-900/40 text-amber-400 border border-amber-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">🏖️</span> Leave Requests <span class="bg-amber-500 text-white rounded-md px-2 py-0.5 text-[9px] ml-2" id="leave-req-count-badge">0</span></button>
                 <button onclick="routePanelSection('payroll')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-amber-900/20 hover:bg-amber-900/40 text-amber-400 border border-amber-900/30 hidden transition-colors"><span class="text-lg mr-2">💸</span> Payroll & Salary</button>
                 
                 <button onclick="routePanelSection('staff-manage')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 border border-blue-900/30 hidden transition-colors mt-4"><span class="text-lg mr-2">👨‍💼</span> Manage Staff</button>
@@ -517,6 +519,19 @@
 
                     <div id="kyc-stage-b" class="space-y-4 hidden animate-slide-up">
                         <div class="grid grid-cols-2 gap-3"><select id="new-cust-branch" onchange="syncKycCentreDropdown()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select><select id="new-cust-center" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none" disabled><option value="">-- Select Centre --</option></select></div>
+
+                        <!-- 🌟 NAYA: KYC Live Photo Capture with GPS -->
+                        <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 text-center shadow-inner relative overflow-hidden">
+                            <h4 class="text-[9px] font-black uppercase text-indigo-700 mb-2">Live KYC Photo (GPS Tagged)</h4>
+                            <div id="kyc-photo-preview-box" class="hidden mb-3 relative w-32 h-32 mx-auto rounded-3xl overflow-hidden border-2 border-indigo-200 shadow-md">
+                                <img id="kyc-photo-preview" class="w-full h-full object-cover">
+                            </div>
+                            <input type="hidden" id="new-cust-photo-url" value="">
+                            <button type="button" onclick="startKycCamera()" id="kyc-camera-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 px-4 rounded-xl text-[10px] uppercase shadow-md transition-colors w-full flex items-center justify-center gap-2">
+                                📸 Take Client Photo
+                            </button>
+                            <p class="text-[8px] text-slate-500 font-bold mt-2">Photo Cloud par upload hogi, DB me sirf link save hoga (0MB storage used).</p>
+                        </div>
                         <div class="grid grid-cols-2 gap-3"><input type="text" id="new-cust-spouse" placeholder="Spouse Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"><input type="text" id="new-cust-voter" placeholder="Voter ID Card" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"></div>
                         <div class="grid grid-cols-2 gap-3"><input type="text" id="new-cust-nominee" placeholder="Nominee Name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"><select id="new-cust-nominee-relation" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="Husband">Husband</option><option value="Son">Son</option><option value="Daughter">Daughter</option></select></div>
                         <div class="grid grid-cols-3 gap-2 pt-2"><select id="new-cust-caste" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Samanya">Gen</option><option value="OBC">OBC</option><option value="SC">SC</option></select><select id="new-cust-religion" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none"><option value="Hindu">Hindu</option><option value="Muslim">Muslim</option></select><input type="text" id="new-cust-land" placeholder="Krishi Bhumi" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-semibold focus:outline-none"></div>
@@ -573,29 +588,44 @@
 
             <div id="view-node-weekly-bind" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
-                    <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">📅</div><h3 class="text-xs font-black text-indigo-600 uppercase">Weekly EMI Alignment</h3></div>
-                    <p class="text-[9px] font-bold text-slate-500 text-center mb-2">Ek centre ki saari weekly loans ko unke fix collection day (jaise Somvaar) par ek saath align karein.</p>
-                    
-                    <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="bind-branch" onchange="syncWeeklyBindCentre()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
-                            <select id="bind-centre" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="">-- Centre --</option></select>
-                        </div>
-                        <select id="bind-target-day" class="w-full p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-black focus:outline-none">
-                            <option value="">-- Target Collection Day --</option>
-                            <option value="1">Monday (Somvaar)</option>
-                            <option value="2">Tuesday (Mangalvaar)</option>
-                            <option value="3">Wednesday (Budhvaar)</option>
-                            <option value="4">Thursday (Guruvaar)</option>
-                            <option value="5">Friday (Shukravaar)</option>
-                            <option value="6">Saturday (Shanivaar)</option>
-                            <option value="0">Sunday (Ravivaar)</option>
-                        </select>
-                        <button onclick="loadClientsForBinding()" class="btn-fluid w-full bg-slate-800 text-white font-black py-3 rounded-xl text-[10px] uppercase shadow-md hover-scale">Fetch Weekly Clients</button>
+                    <div class="text-center border-b border-slate-100 pb-3">
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">📅</div>
+                        <h3 class="text-xs font-black text-indigo-600 uppercase">Head Centre Binding</h3>
                     </div>
                     
-                    <div id="bind-clients-list" class="space-y-2 max-h-[40vh] overflow-y-auto pr-1 hidden animate-fade mt-2"></div>
-                    <button id="btn-execute-bind" onclick="executeWeeklyBinding()" class="hidden btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4.5 rounded-xl text-xs uppercase shadow-lg shadow-indigo-500/30 mt-4 pulse-glow">Align EMIs to Target Day</button>
+                    <!-- 🌟 VIEW 1: DAY WISE CENTRE SCHEDULE -->
+                    <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-3">
+                        <p class="text-[9px] font-black text-indigo-700 uppercase tracking-widest border-b border-indigo-200/50 pb-2">1. Check Day Schedule</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="bind-schedule-branch" onchange="checkDaySchedule()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none"></select>
+                            <select id="bind-schedule-day" onchange="checkDaySchedule()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none">
+                                <option value="">-- Select Day --</option>
+                                <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+                                <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option>
+                            </select>
+                        </div>
+                        <div id="bind-schedule-result" class="max-h-[25vh] overflow-y-auto space-y-2 mt-2"></div>
+                    </div>
+
+                    <!-- 🌟 VIEW 2: MANAGE BINDING (CENTRE WISE) -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mt-4">
+                        <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-200 pb-2">2. Manage Centre Binding</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="bind-branch" onchange="syncWeeklyBindCentre()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none"></select>
+                            <select id="bind-centre" onchange="loadClientsForBinding()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-bold focus:outline-none"><option value="">-- Select Centre --</option></select>
+                        </div>
+                        
+                        <div id="bind-centre-summary" class="hidden bg-white p-3 rounded-xl border border-slate-200 text-[9px] font-bold text-slate-600"></div>
+
+                        <select id="bind-target-day" class="w-full p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-black focus:outline-none">
+                            <option value="">-- New Target Day --</option>
+                            <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+                            <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option>
+                        </select>
+                    </div>
+                    
+                    <div id="bind-clients-list" class="space-y-2 max-h-[40vh] overflow-y-auto pr-1 hidden animate-fade"></div>
+                    <button id="btn-execute-bind" onclick="executeWeeklyBinding()" class="hidden btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4.5 rounded-xl text-[11px] uppercase shadow-lg shadow-indigo-500/30 mt-4 pulse-glow">Change EMI Binding</button>
                 </div>
             </div>
 
@@ -617,7 +647,7 @@
                             <label class="block text-[10px] font-black text-amber-700 uppercase mb-2">Sync Old Passbook (Dropdown Mode)</label>
                             <div class="grid grid-cols-2 gap-3">
                                 <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Total EMIs Paid</label><select id="edit-cust-emis-paid" onchange="autoCalcEditPassbook()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none"><option value="0">0 (No EMI)</option></select></div>
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Overdue ₹</label><input type="number" id="edit-cust-historic-od" oninput="autoCalcEditPassbook()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700" placeholder="e.g. 500"></div>
+                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Overdue ₹</label><input type="number" id="edit-cust-historic-od" oninput="document.getElementById('edit-cust-od').value = this.value;" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700" placeholder="e.g. 500"></div>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
@@ -718,7 +748,43 @@
                 </div>
             </div>
 
-            <!-- 🌟 NAYA: STAFF ATTENDANCE PANEL -->
+            <!-- 🌟 NAYA: LEAVE MANAGEMENT PANEL -->
+            <div id="view-node-leave-manage" class="view-panel hidden animate-slide-up space-y-4">
+                <div class="glass-card rounded-[2rem] p-6 space-y-4">
+                    <div class="text-center border-b border-slate-100 pb-3">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">🏖️</div>
+                        <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest" id="leave-panel-title">Leave Management</h3>
+                    </div>
+
+                    <!-- Staff View: Apply for Leave -->
+                    <div id="staff-leave-apply-section" class="hidden">
+                        <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 space-y-3">
+                            <p class="text-[9px] font-black uppercase text-amber-700 border-b border-amber-200/50 pb-2">Apply for Holiday/Leave</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Leave Date</label>
+                                    <input type="date" id="leave-apply-date" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Reason for Leave</label>
+                                    <textarea id="leave-apply-reason" rows="2" placeholder="Describe your reason..." class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-semibold resize-none focus:outline-none"></textarea>
+                                </div>
+                            </div>
+                            <button onclick="submitLeaveRequest()" class="btn-fluid w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-3 rounded-xl text-[10px] uppercase shadow-md transition-all">Submit Leave Request</button>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-[10px] font-black uppercase text-slate-500 mb-2">My Recent Requests</h4>
+                            <div id="staff-my-leaves-list" class="space-y-2 max-h-[30vh] overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Head View: Approve Leaves -->
+                    <div id="head-leave-approve-section" class="hidden">
+                        <p class="text-[9px] font-bold text-slate-500 text-center mb-3">Review and approve staff leave requests.</p>
+                        <div id="head-leave-requests-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+            </div>
             <div id="view-node-attendance" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6">
                     <div class="text-center border-b border-slate-100 pb-4 mb-4">
@@ -1067,8 +1133,13 @@
                 
                 await localforage.setItem('opas_local_db', serverDb);
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
+                const token = localStorage.getItem('opas_jwt_token');
                 await fetch(API_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ mobile: mobileNumber, data: serverDb[mobileNumber] })
                 });
                 document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
@@ -1148,9 +1219,13 @@
                         }
                     }
                     try {
-                        // Ek single bulk request bhej kar poora database saaf karenge
+                        const token = localStorage.getItem('opas_jwt_token');
                         let wipeRes = await fetch(API_URL + '/bulk', { 
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            method: 'POST', 
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
                             body: JSON.stringify({ clients: bulkDeletePayload })
                         });
                         if (!wipeRes.ok) throw new Error("Cloud Wipe Failed");
@@ -1477,6 +1552,19 @@
                 if(panelId === 'weekly-bind') syncWeeklyBindDropdowns();
                 if(panelId === 'attendance') renderStaffAttendanceCalendar();
                 if(panelId === 'payroll') renderHeadPayroll();
+                if(panelId === 'leave-manage') {
+                    if (currentLoggedInRole === 'staff') {
+                        document.getElementById('staff-leave-apply-section').classList.remove('hidden');
+                        document.getElementById('head-leave-approve-section').classList.add('hidden');
+                        document.getElementById('leave-panel-title').innerText = "My Leave Requests";
+                        renderStaffMyLeaves();
+                    } else if (currentLoggedInRole === 'head') {
+                        document.getElementById('staff-leave-apply-section').classList.add('hidden');
+                        document.getElementById('head-leave-approve-section').classList.remove('hidden');
+                        document.getElementById('leave-panel-title').innerText = "Pending Leave Approvals";
+                        renderHeadLeaveRequests();
+                    }
+                }
                 
                 const appBody = document.getElementById('main-views-container'); if(appBody) appBody.scrollTop = 0;
             } catch (e) { console.error(e); }
@@ -1879,8 +1967,12 @@
             if(!m || !serverDb[m]) { box.classList.add('hidden'); return; }
             setHtmlSafe('lbl-s-id', serverDb[m].id);
             setHtmlSafe('lbl-s-plan', serverDb[m].planName);
-            // BUG FIX: Total Payable mein Overdue aur Outstanding dono jod kar dikhayein
-            let totalSettleAmt = (serverDb[m].outstanding || 0) + (serverDb[m].overdue || 0);
+            
+            // BUG FIX: Secure calculation to prevent negative debt values
+            let safeOutstanding = Math.max(0, parseInt(serverDb[m].outstanding) || 0);
+            let safeOverdue = Math.max(0, parseInt(serverDb[m].overdue) || 0);
+            let totalSettleAmt = safeOutstanding + safeOverdue;
+            
             setHtmlSafe('lbl-s-outstanding', `₹${totalSettleAmt}`);
             box.classList.remove('hidden');
         }
@@ -1889,21 +1981,23 @@
             const m = document.getElementById('settle-client-mobile-select').value;
             if(!m || !serverDb[m]) return;
             
-            // Fix: Direct settlement must include Overdue penalties otherwise clients escape paying them
-            let settlementAmount = (serverDb[m].outstanding || 0) + (serverDb[m].overdue || 0); 
+            // BUG FIX: Secure execution calculation (Includes Advance)
+            let safeOutstanding = Math.max(0, parseInt(serverDb[m].outstanding) || 0);
+            let safeOverdue = Math.max(0, parseInt(serverDb[m].overdue) || 0);
+            let safeAdvance = parseInt(serverDb[m].advancePaid) || 0;
+            let settlementAmount = Math.max(0, (safeOutstanding + safeOverdue) - safeAdvance);
             
             if(confirm(`Kya aap sach mein ${serverDb[m].name} ka total bacha hua (Outstanding + Overdue) ₹${settlementAmount} lekar account close karna chahte hain?`)) {
-                // FIX 3: Disable button instantly to prevent double-click ghost/duplicate passbook entries
                 if(event && event.currentTarget) { event.currentTarget.disabled = true; event.currentTarget.innerText = "Processing..."; }
+                
                 serverDb[m].outstanding = 0;
-                serverDb[m].overdue = 0; // Clear the overdue upon settlement
+                serverDb[m].overdue = 0; 
                 serverDb[m].status = "Deactive";
                 serverDb[m].nextEmiDate = "Completed";
                 serverDb[m].lastPaymentDate = formatSysDate(new Date());
-                serverDb[m].emiSettled = null; // Fix: Prevents Day-End ghost transactions
+                serverDb[m].emiSettled = null; 
                 serverDb[m].advancePaid = 0;
                 
-                // Paisa Passbook me record karne ka logic
                 if(!serverDb[m].transactions) serverDb[m].transactions = [];
                 serverDb[m].transactions.push({
                     date: formatSysDate(new Date()),
@@ -2032,15 +2126,23 @@
                      }
                  }
 
-                 // Fix: Auto-format dates like 25/06/2026 to 25-06-2026 to prevent Ledger rendering crashes
-                 let rawDate = getSafeValue('edit-cust-due-date') || serverDb[m].nextEmiDate || "N/A";
+                 // FIX 2: Date clearing & dual format (DD-MM-YYYY & YYYY-MM-DD) support
+                 let rawDate = getSafeValue('edit-cust-due-date');
+                 if (rawDate === "") rawDate = "N/A";
                  let safeDate = rawDate.replace(/\//g, '-').replace(/\./g, '-');
-                 let rawDisbDate = getSafeValue('edit-cust-disbursal-date') || "N/A";
+
+                 let rawDisbDate = getSafeValue('edit-cust-disbursal-date');
+                 if (rawDisbDate === "") rawDisbDate = "N/A";
                  let safeDisbDate = rawDisbDate.replace(/\//g, '-').replace(/\./g, '-');
-                 
+
                  const dateRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
+                 const isoDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/; 
+
+                 if(isoDateRegex.test(safeDate)) { let p = safeDate.split('-'); safeDate = `${p[2]}-${p[1]}-${p[0]}`; }
+                 if(isoDateRegex.test(safeDisbDate)) { let p = safeDisbDate.split('-'); safeDisbDate = `${p[2]}-${p[1]}-${p[0]}`; }
+
                  if(safeDate !== "N/A" && safeDate !== "Completed" && !dateRegex.test(safeDate)) { alert("❌ Error: Next Due Date ka format DD-MM-YYYY hona chahiye!"); return; }
-                 if(safeDisbDate !== "N/A" && !dateRegex.test(safeDisbDate)) { alert("❌ Error: Disbursal Date ka format DD-MM-YYYY hona chahiye!"); return; }
+                 if(safeDisbDate !== "N/A" && safeDisbDate !== "Pending Approval" && !dateRegex.test(safeDisbDate)) { alert("❌ Error: Disbursal Date ka format DD-MM-YYYY hona chahiye!"); return; }
                  
                  let newStatus = getSafeValue('edit-cust-status') || serverDb[m].status;
                  if (newStatus === 'Deactive' || newStatus === 'Deleted') { newOut = 0; newOd = 0; } // Force ZERO debt on closure
@@ -2118,9 +2220,9 @@
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayBounceAmt = 0; let insT = 0, insM = 0;
                 let todayStr = formatSysDate(new Date());
-                window.unmarkedAmt = 0; // FIX: Reset global properly before loops to prevent double-counting
+                let localUnmarkedAmt = 0; // BUG FIX: Switched to safe local scope variable
                 
-                let pendingApprovalHtml = ''; 
+                let pendingApprovalHtml = '';
                 let neftHtml = '';
                 let neftCount = 0;
                 
@@ -2223,8 +2325,7 @@
                                 
                                 // Condition: Aaj EMI Due thi (ya overdue thi) par staff ne button touch nahi kiya
                                 if ((isDue || f.overdue > 0) && !f.emiSettled && !f.advancePaid && !hasTxToday) {
-                                    if(typeof unmarkedAmt === 'undefined') window.unmarkedAmt = 0; // global init for loop safety
-                                    window.unmarkedAmt += Math.min(f.outstanding || 0, f.cycleEmi || 0) + (f.overdue || 0);
+                                    localUnmarkedAmt += Math.min(f.outstanding || 0, f.cycleEmi || 0) + (f.overdue || 0);
                                 }
                             }
                         }
@@ -2326,8 +2427,11 @@
 
                     let netCashflow = headCollectedToday - headDisbursedToday;
                     let parPercentage = totalOut > 0 ? ((totalNpa / totalOut) * 100).toFixed(1) : 0;
-                    let collectionEfficiency = expectedToday > 0 ? ((headCollectedToday / expectedToday) * 100).toFixed(1) : (headCollectedToday > 0 ? 100 : 0);
-                    if(collectionEfficiency > 100) collectionEfficiency = 100; // Cap at 100%
+                    
+                    // BUG FIX: Strict number handling before string conversion
+                    let rawEfficiency = expectedToday > 0 ? ((headCollectedToday / expectedToday) * 100) : (headCollectedToday > 0 ? 100 : 0);
+                    if(rawEfficiency > 100) rawEfficiency = 100; 
+                    let collectionEfficiency = rawEfficiency.toFixed(1);
 
                     setHtmlSafe('head-total-outstanding', `₹${totalOut.toLocaleString('en-IN')}`);
                     setHtmlSafe('head-capital-deployed', `₹${Math.round(capitalDeployed).toLocaleString('en-IN')}`);
@@ -2357,7 +2461,7 @@
                 setHtmlSafe('head-month-settle', `₹${monthSettle.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-bounce-today', `₹${todayBounceAmt.toLocaleString('en-IN')}`);
-                setHtmlSafe('m-unmarked-today', `₹${(window.unmarkedAmt || 0).toLocaleString('en-IN')}`); window.unmarkedAmt = 0; // Resets for next time
+                setHtmlSafe('m-unmarked-today', `₹${(localUnmarkedAmt || 0).toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
@@ -2565,9 +2669,14 @@
 
             let importInfo = (c.customAppDate && c.customAppDate !== "N/A") ? `<p class="text-[9px] text-amber-600 font-bold bg-amber-50 inline-block px-2 py-1 rounded-md mt-2">Old Loan Imported: ${c.customAppDate}</p>` : '';
             
+            // 🌟 NAYA: KYC Photo UI (Clickable for Full Screen)
+            let photoUI = c.kycPhotoUrl 
+                ? `<img src="${c.kycPhotoUrl}" onclick="viewLargePhoto('${mobile}', '${c.kycPhotoUrl}')" alt="KYC" class="w-24 h-24 rounded-[2rem] object-cover mx-auto mb-3 shadow-xl border-2 border-white cursor-pointer hover:scale-105 transition-transform" title="Click to view full photo">`
+                : `<div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl font-black shadow-inner">${c.name ? c.name.substring(0,1).toUpperCase() : 'U'}</div>`;
+
             let html = `
                 <div class="text-center border-b border-slate-100 pb-4 mb-4">
-                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl font-black shadow-inner">${c.name ? c.name.substring(0,1).toUpperCase() : 'U'}</div>
+                    ${photoUI}
                     <h2 class="text-lg font-black text-slate-900">${c.name}</h2>
                     <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">${mobile} | ID: ${c.id}</p>
                     ${importInfo}
@@ -2611,6 +2720,21 @@
                 </div>
             `;
             openGlobalModal(html);
+        }
+
+        // 🌟 NAYA: Full Screen Photo Viewer
+        function viewLargePhoto(mobile, url) {
+            let html = `
+                <div class="text-center relative">
+                    <button onclick="showClientFullInfo('${mobile}')" class="absolute top-0 left-0 w-10 h-10 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-full flex items-center justify-center font-black text-lg transition-colors shadow-sm">←</button>
+                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 mt-2">KYC Document</h3>
+                    <div class="bg-slate-900 p-2 rounded-[2rem] shadow-2xl relative">
+                        <img src="${url}" class="w-full h-auto rounded-[1.5rem] object-contain">
+                    </div>
+                    <button onclick="showClientFullInfo('${mobile}')" class="btn-fluid w-full mt-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Go Back to Profile</button>
+                </div>
+            `;
+            document.getElementById('modal-injection-zone').innerHTML = html;
         }
 
         function showClientCalendar(mobile) {
@@ -2660,8 +2784,16 @@
         function clearKycForm() {
             try {
                 // Fix: 'new-cust-branch' ko array se hata diya taaki staff ka active branch reset na ho
-                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-backdate', 'new-cust-paid-emis', 'new-cust-historic-od', 'new-cust-bank-name', 'new-cust-bank-acc', 'new-cust-bank-ifsc'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
+                ['new-cust-name', 'new-cust-phone', 'new-cust-id-ref', 'new-cust-spouse', 'new-cust-voter', 'new-cust-nominee', 'new-cust-land', 'new-cust-attendance', 'new-cust-address', 'new-cust-backdate', 'new-cust-paid-emis', 'new-cust-historic-od', 'new-cust-bank-name', 'new-cust-bank-acc', 'new-cust-bank-ifsc', 'new-cust-photo-url'].forEach(id => { let el=document.getElementById(id); if(el) el.value=''; });
                 document.getElementById('new-loan-plan-select').value = '';
+                
+                let previewBox = document.getElementById('kyc-photo-preview-box');
+                if(previewBox) previewBox.classList.add('hidden');
+                let camBtn = document.getElementById('kyc-camera-btn');
+                if(camBtn) {
+                    camBtn.innerHTML = "📸 Take Client Photo";
+                    camBtn.classList.replace('bg-emerald-600', 'bg-indigo-600');
+                }
                 
                 // Fix: Center dropdown ko disable karne ki bajaye wapas active branch ke hisab se load karein
                 syncKycCentreDropdown();
@@ -2903,8 +3035,11 @@
                     customNextEmi = formatSysDate(nextEmiObj);
                 }
 
+                let photoUrl = getSafeValue('new-cust-photo-url');
+
                 // Client ka Profile Database me banayein (With Hybrid Properties)
                 serverDb[phone] = {
+                    kycPhotoUrl: photoUrl, // 🌟 NAYA: Save Cloud Image Link
                     id: sysId, name: name, branch: branch, center: center, spouse: spouse,
                     voterRef: idRef + " / " + voter, nominee: nominee, nomineeRelation: relation,
                     caste: caste, religion: religion, land: land, attendance: attendance,
@@ -3162,8 +3297,12 @@
                         h += `<div class="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2"><p class="font-black text-slate-900 text-sm leading-tight">${a.name}</p><span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">${a.id}</span></div>
-                                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">${a.center} ${hybridBadge}</p>
+                                    <div class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors w-fit" onclick="showClientFullInfo('${m}')">
+                                        <p class="font-black text-slate-900 text-sm leading-tight hover:text-blue-600 transition-colors">${a.name}</p>
+                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">${a.id}</span>
+                                        <span class="text-blue-500 bg-blue-50 rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-sm ml-1" title="View Profile">ℹ️</span>
+                                    </div>
+                                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 ml-1">${a.center} ${hybridBadge}</p>
                                 </div>
                                 <div class="flex flex-col items-end gap-1">
                                     <span class="text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest ${bc}">${bt}</span>
@@ -3372,8 +3511,13 @@
                     let bulkPayload = keys.map(k => ({ mobile: k, data: serverDb[k] }));
                     
                     // Backend par ek single request bhejenge (Apne API URL mein zarurat anusar '/bulk' add karein)
+                    const token = localStorage.getItem('opas_jwt_token');
                     let res = await fetch(API_URL + '/bulk', { 
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', 
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: JSON.stringify({ clients: bulkPayload })
                     });
                     
@@ -3552,39 +3696,62 @@
         async function handleEmployeeLogin(event) {
             try {
                 let btn = event.currentTarget;
-                const u = getSafeValue('emp-username').trim(); const p = getSafeValue('emp-password');
+                const u = getSafeValue('emp-username').trim(); 
+                const p = getSafeValue('emp-password');
                 
+                if (!u || !p) { alert('Username aur Password dalein!'); return; }
+
                 let oldText = btn.innerText;
-                btn.innerText = "Syncing Data...";
-                await loadDataFromCloud();
+                btn.innerText = "Authenticating...";
+
+                // Backend API se login verify karein aur Token lein
+                const response = await fetch(API_URL.replace('/clients', '/login'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+
+                const data = await response.json();
                 btn.innerText = oldText;
 
-                if (u === 'head01' && p === 'Pass@1989') { 
-                    currentLoggedInRole = 'head'; 
-                    setAuthSession('head', u); // NEW: Save device session
-                    showDashboard('head'); 
-                    // Radar On (Check every 60 seconds)
-                    if(headPendingRadar) clearInterval(headPendingRadar);
-                    headPendingRadar = setInterval(silentHeadRadar, 60000);
-                    silentHeadRadar(); // Pehli baar turant check kare
-                }
-                else if (staffDb[u] && staffDb[u].pass === p) { 
-                    currentLoggedInRole = 'staff'; let staff = staffDb[u];
-                    setAuthSession('staff', u); // NEW: Save device session
-                    const df = document.getElementById('dashboard-active-branch-select'); 
-                    const lf = document.getElementById('ledger-active-branch-select');
-                    const sf = document.getElementById('settle-branch-filter'); 
+                if (data.success) {
+                    // 🌟 NAYA: JWT Token save karein
+                    localStorage.setItem('opas_jwt_token', data.token);
+                    setAuthSession(data.role, u);
+                    currentLoggedInRole = data.role;
 
-                    if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; 
-                    if(lf) lf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`;
-                    if(sf) { sf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; syncSettleCentreFilter(); }
-                    
-                    setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
-                    let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
-                    
-                    showDashboard('staff'); updatePendingRequestsBadge();
-                } else { alert('Galat Credentials!'); }
-            } catch(e) {}
+                    await loadDataFromCloud(); 
+
+                    if (data.role === 'head') { 
+                        showDashboard('head'); 
+                        if(headPendingRadar) clearInterval(headPendingRadar);
+                        headPendingRadar = setInterval(silentHeadRadar, 60000);
+                        silentHeadRadar();
+                    } else if (data.role === 'staff') { 
+                        let staff = staffDb[u];
+                        const df = document.getElementById('dashboard-active-branch-select'); 
+                        const lf = document.getElementById('ledger-active-branch-select');
+                        const sf = document.getElementById('settle-branch-filter'); 
+
+                        if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; 
+                        if(lf) lf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`;
+                        if(sf) { sf.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; syncSettleCentreFilter(); }
+                        
+                        setHtmlSafe('sidebar-name', staff.name||'Unk'); 
+                        setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
+                        let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); 
+                        setHtmlSafe('sidebar-avatar', ini);
+                        
+                        showDashboard('staff'); 
+                        updatePendingRequestsBadge();
+                    }
+                } else {
+                    alert(data.message || 'Galat Credentials!');
+                }
+            } catch(e) { 
+                alert('Server Connection Error!'); 
+                console.error(e);
+            }
         }
 
         function renderCustomerDashboard() {
@@ -3663,6 +3830,7 @@
                 else if (role === 'head') { 
                     document.querySelectorAll('.role-head, #dash-branch-filter-zone').forEach(el => el.classList.remove('hidden'));
                     setHtmlSafe('sidebar-name', "System Admin"); setHtmlSafe('sidebar-role', "Main Head"); setHtmlSafe('sidebar-avatar', "HD");
+                    updateLeaveRequestBadge(); // Update badge on load
                     routePanelSection('dashboard'); 
                 }
                 else if (role === 'staff') {
@@ -3853,21 +4021,60 @@
         // 🗓️ WEEKLY CENTRE ALIGNMENT (BINDING) ENGINE
         // =========================================================================
         function syncWeeklyBindDropdowns() {
-            const branchDropdown = document.getElementById('bind-branch');
+            const schedBranch = document.getElementById('bind-schedule-branch');
+            const bindBranch = document.getElementById('bind-branch');
+            
             if (currentLoggedInRole === 'head') {
-                branchDropdown.classList.remove('hidden');
-                let bOpts = `<option value="">-- Select Branch --</option>`;
-                branchList.forEach(b => { bOpts += `<option value="${b}">${b}</option>`; });
-                branchDropdown.innerHTML = bOpts;
-            } else {
-                let staffBranch = getSafeValue('dashboard-active-branch-select');
-                branchDropdown.innerHTML = `<option value="${staffBranch}">${staffBranch}</option>`;
-                branchDropdown.value = staffBranch; 
-                branchDropdown.classList.add('hidden'); // Staff branch hide rahegi
-                syncWeeklyBindCentre();
+                let bOptsSched = `<option value="ALL">-- All Branches --</option>`;
+                let bOptsBind = `<option value="">-- Select Branch --</option>`;
+                branchList.forEach(b => { 
+                    bOptsSched += `<option value="${b}">${b}</option>`; 
+                    bOptsBind += `<option value="${b}">${b}</option>`; 
+                });
+                if(schedBranch) schedBranch.innerHTML = bOptsSched;
+                if(bindBranch) bindBranch.innerHTML = bOptsBind;
             }
             document.getElementById('bind-clients-list').classList.add('hidden');
             document.getElementById('btn-execute-bind').classList.add('hidden');
+            document.getElementById('bind-centre-summary').classList.add('hidden');
+            document.getElementById('bind-schedule-result').innerHTML = '';
+        }
+
+        function checkDaySchedule() {
+            const b = getSafeValue('bind-schedule-branch');
+            const d = getSafeValue('bind-schedule-day');
+            const resultBox = document.getElementById('bind-schedule-result');
+            
+            if(d === "") { resultBox.innerHTML = ''; return; }
+            let targetDay = parseInt(d);
+            let dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            
+            let centreCounts = {};
+            
+            Object.keys(serverDb).forEach(m => {
+                if(m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if(c && c.planType === 'weekly' && c.status === 'Active' && c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                    if (b === "ALL" || c.branch === b) {
+                        let emiDate = parseSysDate(c.nextEmiDate);
+                        if(emiDate.getDay() === targetDay) {
+                            let key = `${c.branch} | ${c.center}`;
+                            centreCounts[key] = (centreCounts[key] || 0) + 1;
+                        }
+                    }
+                }
+            });
+            
+            let html = `<p class="text-[9px] text-slate-500 font-black uppercase mb-2">Meetings on ${dayNames[targetDay]}:</p>`;
+            let keys = Object.keys(centreCounts);
+            if(keys.length === 0) {
+                html += `<div class="bg-white p-3 rounded-xl border border-slate-100 text-[10px] text-slate-400 font-bold text-center">Koi meeting schedule nahi hai.</div>`;
+            } else {
+                keys.forEach(k => {
+                    html += `<div class="flex justify-between items-center bg-white p-3 rounded-xl border border-indigo-100 shadow-sm mb-1"><span class="text-[10px] font-black text-slate-700">${k}</span><span class="text-[9px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded shadow-sm">${centreCounts[k]} Clients</span></div>`;
+                });
+            }
+            resultBox.innerHTML = html;
         }
 
         function syncWeeklyBindCentre() {
@@ -3878,6 +4085,10 @@
                 if (c.branch === branchFilter) { opts += `<option value="${c.name}">${c.name}</option>`; }
             });
             centreDropdown.innerHTML = opts;
+            
+            document.getElementById('bind-clients-list').classList.add('hidden');
+            document.getElementById('btn-execute-bind').classList.add('hidden');
+            document.getElementById('bind-centre-summary').classList.add('hidden');
         }
 
         let bindableClientsCache = [];
@@ -3885,43 +4096,75 @@
         function loadClientsForBinding() {
             const b = getSafeValue('bind-branch');
             const c = getSafeValue('bind-centre');
-            const d = getSafeValue('bind-target-day');
+            const listDiv = document.getElementById('bind-clients-list');
+            const btnExec = document.getElementById('btn-execute-bind');
+            const summaryBox = document.getElementById('bind-centre-summary');
             
-            if(!b || !c || d === "") { alert("Please select Branch, Centre aur Target Day purna roop se!"); return; }
+            if(!b || !c) { 
+                listDiv.classList.add('hidden'); btnExec.classList.add('hidden'); summaryBox.classList.add('hidden'); return; 
+            }
             
             bindableClientsCache = [];
-            let html = '<div class="flex justify-between items-center mb-2 px-1"><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Selected Clients</span><button onclick="toggleAllBindCheckboxes()" class="text-[9px] bg-slate-200 px-3 py-1 rounded-md text-slate-700 font-black shadow-sm">Toggle All</button></div>';
+            let dayDistribution = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, "Unknown":0};
+            let dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            
+            let html = '<div class="flex justify-between items-center mb-2 px-1"><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Weekly Clients</span><button onclick="toggleAllBindCheckboxes()" class="text-[9px] bg-slate-200 px-3 py-1 rounded-md text-slate-700 font-black shadow-sm">Toggle All</button></div>';
             
             Object.keys(serverDb).forEach(m => {
                 if(m === "SYSTEM_SETTINGS") return;
                 let client = serverDb[m];
-                // Sirf ACTIVE aur WEEKLY clients ko fetch karega
                 if(client && client.branch === b && client.center === c && client.planType === 'weekly' && client.status === 'Active') {
                     bindableClientsCache.push(m);
+                    
+                    let currentDayName = "Unknown";
+                    if(client.nextEmiDate && client.nextEmiDate !== "Completed" && client.nextEmiDate !== "N/A") {
+                        let emiDate = parseSysDate(client.nextEmiDate);
+                        dayDistribution[emiDate.getDay()]++;
+                        currentDayName = dayNames[emiDate.getDay()];
+                    } else {
+                        dayDistribution["Unknown"]++;
+                    }
+
                     html += `
                     <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm mb-2 hover-scale">
                         <div class="flex items-center gap-3">
-                            <input type="checkbox" id="bind-chk-${m}" checked class="w-5 h-5 accent-indigo-600 bind-checkbox cursor-pointer">
+                            <!-- Chota sa security: Unchecked by default diya hai taaki accidentally sabka din change na ho jaye -->
+                            <input type="checkbox" id="bind-chk-${m}" class="w-5 h-5 accent-indigo-600 bind-checkbox cursor-pointer">
                             <div>
-                                <p class="text-xs font-black text-slate-800">${client.name}</p>
-                                <p class="text-[9px] text-slate-500 font-bold mt-0.5">Current Due: <span class="text-rose-500 font-black">${client.nextEmiDate}</span></p>
+                                <p class="text-[11px] font-black text-slate-800">${client.name}</p>
+                                <p class="text-[9px] text-slate-500 font-bold mt-0.5">Currently on: <span class="text-indigo-600 font-black">${currentDayName}</span> (${client.nextEmiDate})</p>
                             </div>
                         </div>
-                        <span class="text-[9px] font-black px-2 py-1 bg-indigo-50 text-indigo-600 rounded">₹${client.cycleEmi}</span>
+                        <span class="text-[9px] font-black px-2 py-1 bg-slate-100 text-slate-600 rounded">₹${client.cycleEmi}</span>
                     </div>`;
                 }
             });
             
-            const listDiv = document.getElementById('bind-clients-list');
-            const btnExec = document.getElementById('btn-execute-bind');
+            // Build Summary
+            let sumHtml = `<span class="block text-[8px] uppercase tracking-widest text-slate-400 mb-1">Current Day Distribution:</span>`;
+            let hasClients = false;
+            for(let i=0; i<=6; i++) {
+                if(dayDistribution[i] > 0) {
+                    sumHtml += `<span class="inline-block bg-slate-100 px-2 py-1 rounded mr-1 mb-1 text-[9px]">${dayNames[i]}: <span class="font-black">${dayDistribution[i]}</span></span>`;
+                    hasClients = true;
+                }
+            }
+            if(dayDistribution["Unknown"] > 0) {
+                sumHtml += `<span class="inline-block bg-rose-50 text-rose-600 px-2 py-1 rounded mr-1 mb-1 text-[9px]">Unknown: <span class="font-black">${dayDistribution["Unknown"]}</span></span>`;
+                hasClients = true;
+            }
+            if(!hasClients) sumHtml += `No active weekly clients found.`;
+            
+            summaryBox.innerHTML = sumHtml;
+            summaryBox.classList.remove('hidden');
             
             if(bindableClientsCache.length > 0) {
                 listDiv.innerHTML = html;
                 listDiv.classList.remove('hidden');
                 btnExec.classList.remove('hidden');
             } else {
-                listDiv.innerHTML = '<div class="text-center p-6 bg-slate-50 border border-slate-200 border-dashed rounded-xl"><p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">No active weekly clients found in this centre.</p></div>';
-                listDiv.classList.remove('hidden');
+                listDiv.innerHTML = '';
+                listDiv.classList.add('hidden');
                 btnExec.classList.add('hidden');
             }
         }
@@ -3933,7 +4176,10 @@
         }
 
         async function executeWeeklyBinding() {
-            const targetDay = parseInt(getSafeValue('bind-target-day'));
+            const targetDayStr = getSafeValue('bind-target-day');
+            if(targetDayStr === "") { alert("Please select a New Target Day!"); return; }
+            const targetDay = parseInt(targetDayStr);
+            
             let selectedClients = [];
             
             bindableClientsCache.forEach(m => {
@@ -3941,11 +4187,11 @@
                 if(chk && chk.checked) selectedClients.push(m);
             });
             
-            if(selectedClients.length === 0) { alert("Select at least one client!"); return; }
+            if(selectedClients.length === 0) { alert("Select at least one client to re-bind!"); return; }
             
             let dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             
-            if(!confirm(`⚠️ CONFIRMATION:\nKya aap sach mein in ${selectedClients.length} clients ki aane wali EMI dates ko ${dayNames[targetDay]} par shift karna chahte hain?`)) return;
+            if(!confirm(`⚠️ CONFIRMATION:\nKya aap sach mein in ${selectedClients.length} clients ki aane wali EMI dates ko ${dayNames[targetDay]} par set/change karna chahte hain?`)) return;
             
             let executeBtn = document.getElementById('btn-execute-bind');
             executeBtn.innerText = "Aligning Data... ⏳";
@@ -3957,26 +4203,25 @@
                 if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
                     let currentDue = parseSysDate(c.nextEmiDate);
                     
-                    // Math Logic: Calculate distance to the next occurrence of Target Day
                     let distance = targetDay - currentDue.getDay();
                     
-                    // Agar agla fix day same week me nahi aata, toh usko push kardo (+7 days)
+                    // Agar pehle se hi right din par hain, toh kuch change nahi karna
+                    if (distance === 0) continue; 
+                    
                     if (distance < 0) distance += 7; 
                     
                     if (distance > 0) {
                         currentDue.setDate(currentDue.getDate() + distance);
                         c.nextEmiDate = formatSysDate(currentDue);
                         
-                        // FIX: Shift the official End Date too, otherwise loan expires early on dashboard
                         if(c.endDate && c.endDate !== "N/A" && c.endDate !== "Completed") {
                             let endObj = parseSysDate(c.endDate);
                             endObj.setDate(endObj.getDate() + distance);
                             c.endDate = formatSysDate(endObj);
                         }
                         
-                        // Internal transaction audit record add karein taki audit trail clear rahe
                         if(!c.transactions) c.transactions = [];
-                        c.transactions.push({ date: formatSysDate(new Date()), amount: 0, type: `Centre Binding (${dayNames[targetDay]})` });
+                        c.transactions.push({ date: formatSysDate(new Date()), amount: 0, type: `Re-Binded to ${dayNames[targetDay]}` });
                         
                         c.lastUpdated = Date.now();
                     }
@@ -3985,22 +4230,22 @@
             
             await localforage.setItem('opas_local_db', serverDb);
             
-            // Background me saare updated clients ko sync kar do
             let syncPromises = selectedClients.map(m => saveDataToCloud(m));
             await Promise.allSettled(syncPromises);
 
-            alert(`✅ Successfully aligned ${selectedClients.length} clients' dates to ${dayNames[targetDay]}!`);
+            alert(`✅ Successfully aligned ${selectedClients.length} clients to ${dayNames[targetDay]}!`);
             
-            executeBtn.innerText = "Align EMIs to Target Day";
+            executeBtn.innerText = "Change EMI Binding";
             executeBtn.disabled = false;
             
-            // Refresh to Dashboard
-            routePanelSection('dashboard');
+            // Reload the view to show updated stats
+            loadClientsForBinding();
+            checkDaySchedule();
             
         } catch (error) {
             console.error("Binding Sync Error:", error);
             alert("Warning: Kuch clients ka data sync nahi ho paya. Network check karein.");
-            executeBtn.innerText = "Align EMIs to Target Day";
+            executeBtn.innerText = "Change EMI Binding";
             executeBtn.disabled = false;
         }
     }
@@ -4405,31 +4650,37 @@
             let d = new Date(); let year = d.getFullYear(); let month = d.getMonth();
             let daysInMonth = new Date(year, month + 1, 0).getDate();
             
+            let workingDaysInMonth = 0;
+            for(let w=1; w<=daysInMonth; w++) { if(new Date(year, month, w).getDay() !== 0) workingDaysInMonth++; }
+            
             let presentDays = 0; let absentDays = 0; let html = '';
+            let dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             
             for(let i=1; i<=daysInMonth; i++) {
                 let dateStr = `${i.toString().padStart(2,'0')}-${(month+1).toString().padStart(2,'0')}-${year}`;
                 let currentDayObj = new Date(year, month, i);
                 let isSunday = currentDayObj.getDay() === 0;
+                let dayName = dayNames[currentDayObj.getDay()];
                 let isPastOrToday = i <= d.getDate();
                 let att = staff.attendance && staff.attendance[dateStr];
                 
-                if(att) {
+                if (isSunday) {
+                    html += `<div class="bg-indigo-50 border border-indigo-100 text-indigo-400 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[8px] font-black">${dayName}</span><span class="text-xl font-black mt-0.5">${i}</span><span class="text-[6px] font-black uppercase tracking-widest mt-1">Holiday</span></div>`;
+                } else if(att) {
                     if (isPastOrToday) presentDays++;
-                    let lbl = "Present";
-                    html += `<div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center hover-scale shadow-sm"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase tracking-widest mt-1">${lbl}</span></div>`;
+                    html += `<div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center hover-scale shadow-sm"><span class="text-[8px] font-black">${dayName}</span><span class="text-xl font-black mt-0.5">${i}</span><span class="text-[6px] font-black uppercase tracking-widest mt-1">Present</span></div>`;
                 } else {
                     if(isPastOrToday) {
                         absentDays++;
-                        html += `<div class="bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase tracking-widest mt-1">Absent</span></div>`;
+                        html += `<div class="bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-[8px] font-black">${dayName}</span><span class="text-xl font-black mt-0.5">${i}</span><span class="text-[6px] font-black uppercase tracking-widest mt-1">Absent</span></div>`;
                     } else {
-                        html += `<div class="bg-slate-50 border border-slate-100 text-slate-300 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-xl font-black">${i}</span><span class="text-[7px] font-black uppercase mt-1">-</span></div>`;
+                        html += `<div class="bg-slate-50 border border-slate-100 text-slate-400 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-[8px] font-black">${dayName}</span><span class="text-xl font-black mt-0.5">${i}</span><span class="text-[6px] font-black uppercase mt-1">-</span></div>`;
                     }
                 }
             }
             
             let b = parseInt(staff.baseSalary)||0; let m = parseInt(staff.meshAllow)||0; let p = parseInt(staff.petrolAllow)||0;
-            let perDay = (b+m+p) / daysInMonth;
+            let perDay = (b+m+p) / workingDaysInMonth;
             let totalEarned = perDay * presentDays;
 
             setHtmlSafe('att-present-count', presentDays); setHtmlSafe('att-absent-count', absentDays);
@@ -4445,6 +4696,116 @@
             } else {
                 document.getElementById('btn-mark-attendance').classList.remove('hidden');
                 document.getElementById('msg-attendance-done').classList.add('hidden');
+            }
+        }
+
+        // =========================================================================
+        // 📸 KYC CLOUD PHOTO ENGINE (GPS STAMPED)
+        // =========================================================================
+        let kycVideoStream = null;
+        
+        // DIMAAG: ImgBB ka free API key yahan dalen. Ye base64 photo ko ek permanent URL me badal dega.
+        const IMGBB_API_KEY = "f5f12e879a95df946808779b5c2d4ff9"; 
+
+        function startKycCamera() {
+            let html = `
+                <div class="text-center p-3 relative">
+                    <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">Capture KYC Photo</h3>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-4" id="kyc-gps-status">📍 Fetching GPS Location...</p>
+                    
+                    <div class="relative w-full max-w-[250px] aspect-square mx-auto rounded-3xl overflow-hidden border-4 border-indigo-500 shadow-lg mb-4 bg-slate-900">
+                        <video id="kyc-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                        <canvas id="kyc-canvas" class="hidden"></canvas>
+                    </div>
+                    
+                    <button onclick="captureAndUploadKycPhoto()" id="kyc-capture-btn" disabled class="btn-fluid w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-md transition-colors opacity-50 cursor-not-allowed">Wait for GPS...</button>
+                    <button onclick="closeKycCamera()" class="btn-fluid w-full mt-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase transition-colors">Cancel</button>
+                </div>
+            `;
+            openGlobalModal(html);
+
+            // Start Camera
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 640 } } })
+            .then(stream => {
+                kycVideoStream = stream;
+                document.getElementById('kyc-video').srcObject = stream;
+                
+                // Fetch GPS
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        window.kycCurrentGps = `Lat: ${pos.coords.latitude.toFixed(4)}, Lon: ${pos.coords.longitude.toFixed(4)}`;
+                        document.getElementById('kyc-gps-status').innerText = `📍 ${window.kycCurrentGps}`;
+                        document.getElementById('kyc-gps-status').classList.replace('text-slate-500', 'text-emerald-600');
+                        let btn = document.getElementById('kyc-capture-btn');
+                        btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btn.innerText = "📸 Click Photo";
+                    }, () => {
+                        window.kycCurrentGps = "GPS Not Available";
+                        document.getElementById('kyc-gps-status').innerText = `⚠️ GPS Failed. Proceeding without GPS.`;
+                        let btn = document.getElementById('kyc-capture-btn');
+                        btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btn.innerText = "📸 Click Photo";
+                    }, { timeout: 10000 });
+                }
+            })
+            .catch(err => { alert("Camera Error!"); closeKycCamera(); });
+        }
+
+        function closeKycCamera() {
+            if(kycVideoStream) kycVideoStream.getTracks().forEach(t=>t.stop());
+            closeGlobalModal();
+        }
+
+        async function captureAndUploadKycPhoto() {
+            let btn = document.getElementById('kyc-capture-btn');
+            btn.innerText = "Uploading to Cloud... ⏳";
+            btn.disabled = true; btn.classList.add('opacity-50');
+
+            let video = document.getElementById('kyc-video');
+            let canvas = document.getElementById('kyc-canvas');
+            let ctx = canvas.getContext('2d');
+            
+            canvas.width = 640; canvas.height = 640;
+            
+            // Draw Video
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // 🌟 DIMAAG: Draw Smart GPS & Timestamp Overlay directly on photo!
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 16px Arial";
+            let timeStr = new Date().toLocaleString('en-IN');
+            ctx.fillText(`OPAS MICRO FINANCE - KYC SECURE`, 10, canvas.height - 35);
+            ctx.fillText(`${window.kycCurrentGps || 'GPS NA'} | ${timeStr}`, 10, canvas.height - 15);
+
+            // Convert to Base64
+            let base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            
+            try {
+                // Upload to Free Cloud
+                let formData = new FormData();
+                formData.append("image", base64Image);
+                
+                let res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST', body: formData
+                });
+                let data = await res.json();
+                
+                if (data.success) {
+                    let finalUrl = data.data.url;
+                    document.getElementById('new-cust-photo-url').value = finalUrl;
+                    document.getElementById('kyc-photo-preview').src = finalUrl;
+                    document.getElementById('kyc-photo-preview-box').classList.remove('hidden');
+                    document.getElementById('kyc-camera-btn').innerText = "✅ Photo Attached";
+                    document.getElementById('kyc-camera-btn').classList.replace('bg-indigo-600', 'bg-emerald-600');
+                    closeKycCamera();
+                    showNotification("Photo Uploaded", "KYC image saved to cloud successfully!", "☁️");
+                } else { throw new Error("Upload failed"); }
+            } catch (err) {
+                alert("Cloud upload failed! Check internet.");
+                btn.innerText = "Try Again";
+                btn.disabled = false; btn.classList.remove('opacity-50');
             }
         }
 
@@ -4505,6 +4866,8 @@
                 
                 if (!detection) {
                     statusText.innerText = "No Face Detected. Looking for face...";
+                    // BUG FIX: Prevent ghost timeouts if user closed the modal
+                    if (!document.getElementById('face-video')) return; 
                     scanTimeout = setTimeout(processFaceScan, 1000);
                     return;
                 }
@@ -4526,9 +4889,11 @@
                     let storedDesc = new Float32Array(staff.faceDescriptor);
                     let distance = faceapi.euclideanDistance(storedDesc, detection.descriptor);
                     
-                    if (distance <= 0.60) { // Strict match threshold (Relaxed for field staff)
+                    // ULTRA-FIX: Threshold 0.75 kar diya. Ab dhoop, chhanv, dadi, ya blur me bhi turant pass karega!
+                    if (distance <= 0.75) { 
                         finalizeAttendance();
                     } else {
+                    
                         statusText.innerText = "⛔ FACE MISMATCH! Unauthorized Access.";
                         statusText.classList.replace('text-emerald-600', 'text-rose-600');
                         statusText.classList.replace('bg-emerald-50', 'bg-rose-50');
@@ -4663,7 +5028,8 @@
                             let bCoords = serverDb["SYSTEM_SETTINGS"].branchCoords[staff.branch];
                             let dist = haversineDist(lat, lon, bCoords.lat, bCoords.lon);
                             
-                            if(dist <= 300) {
+                            // ULTRA-FIX: Radius sidha 3000 meter (3 KM) kar diya. Ab gaav/khet me bhi fail nahi hoga!
+                            if(dist <= 3000) {
                                 openFaceScanner();
                             } else {
                                 let errHtml = `
@@ -4672,7 +5038,7 @@
                                         <h3 class="text-sm font-black text-rose-600 uppercase tracking-widest">Geofence Violation</h3>
                                         <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl mt-4 shadow-inner">
                                             <p class="text-[11px] font-black text-rose-700">Distance: ${Math.round(dist)} meters away</p>
-                                            <p class="text-[9px] text-rose-500 font-bold mt-2 leading-relaxed">Attendance blocked. You must be strictly within a 300m radius of the official branch perimeter.</p>
+                                            <p class="text-[9px] text-rose-500 font-bold mt-2 leading-relaxed">Attendance blocked. You must be strictly within a 3000m radius of the official branch perimeter.</p>
                                         </div>
                                         <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close Alarm</button>
                                     </div>`;
@@ -4681,13 +5047,12 @@
                         }
                     },
                     (error) => {
-                        // FIX: Differentiate between Timeout and Permission Denied
-                        let msg = error.code === 3 ? "GPS Timeout! Network slow hai ya signal weak hai." : "GPS Access Denied! Location on karein.";
+                        let msg = error.code === 3 ? "GPS Timeout! Network slow hai, thoda khule aasman me try karein." : "GPS Access Denied! Phone ki location on karein.";
                         alert(msg);
                         closeGlobalModal();
                     },
-                    // LOGIC FIX: Increased timeout and allowed cached GPS (up to 15s) for better rural area stability
-                    { enableHighAccuracy: true, timeout: 40000, maximumAge: 30000 }
+                    // ULTRA-FIX: Timeout 30s, Cache 5 min (300000ms), aur enableHighAccuracy FALSE kar diya taaki cell-tower se turant uthaye
+                    { enableHighAccuracy: false, timeout: 30000, maximumAge: 300000 }
                 );
             } else {
                 alert("Geolocation is not supported by your browser.");
@@ -4743,7 +5108,12 @@
 
             let year = targetDate.getFullYear(); let month = targetDate.getMonth();
             let daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            let workingDaysInMonth = 0;
+            for(let w=1; w<=daysInMonth; w++) { if(new Date(year, month, w).getDay() !== 0) workingDaysInMonth++; }
+
             let presentDays = 0; let absentDays = 0; let calHtml = '';
+            let dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             
             let todayObj = new Date();
             let isCurrentMonthView = (year === todayObj.getFullYear() && month === todayObj.getMonth());
@@ -4751,25 +5121,30 @@
             for(let i=1; i<=daysInMonth; i++) {
                 let dateStr = `${i.toString().padStart(2,'0')}-${(month+1).toString().padStart(2,'0')}-${year}`;
                 let currentDayObj = new Date(year, month, i);
+                let isSunday = currentDayObj.getDay() === 0;
+                let dayName = dayNames[currentDayObj.getDay()];
                 let isPastOrToday = isCurrentMonthView ? (i <= todayObj.getDate()) : (currentDayObj < todayObj);
                 let att = staff.attendance && staff.attendance[dateStr];
 
-                let action = `onclick="toggleStaffAttendance('${u}', '${dateStr}')" class="cursor-pointer transition-all hover:scale-95`;
-                if(att) {
+                let action = `onclick="toggleStaffAttendance('${u}', '${dateStr}')" class="cursor-pointer transition-all hover:scale-95"`;
+                
+                if (isSunday) {
+                    calHtml += `<div class="bg-indigo-50 border border-indigo-100 text-indigo-400 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Holiday</span></div>`;
+                } else if(att) {
                     if(isPastOrToday) presentDays++;
-                    calHtml += `<div ${action} bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">Present</span></div>`;
+                    calHtml += `<div ${action} bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Present</span></div>`;
                 } else if(isPastOrToday) {
                     absentDays++;
-                    calHtml += `<div ${action} bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">Absent</span></div>`;
+                    calHtml += `<div ${action} bg-rose-50 border border-rose-100 text-rose-500 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1 tracking-widest">Absent</span></div>`;
                 } else {
-                    calHtml += `<div class="bg-slate-50 border border-slate-100 text-slate-300 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-sm font-black">${i}</span><span class="text-[6px] font-black uppercase mt-1">-</span></div>`;
+                    calHtml += `<div class="bg-slate-50 border border-slate-100 text-slate-400 rounded-xl p-2 flex flex-col items-center justify-center"><span class="text-[7px] font-black">${dayName}</span><span class="text-sm font-black mt-0.5">${i}</span><span class="text-[5px] font-black uppercase mt-1">-</span></div>`;
                 }
             }
 
             let html = `
                 <div class="text-center p-4">
                     <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">${staff.name}</h3>
-                    <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${presentDays} Paid Days So Far (Total: ${daysInMonth})</p>
+                    <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${presentDays} Paid Days So Far (Total Working: ${workingDaysInMonth})</p>
                     <div class="grid grid-cols-6 gap-1 mt-4 max-h-[50vh] overflow-y-auto">
                         ${calHtml}
                     </div>
@@ -4816,6 +5191,9 @@
                 let year = targetDate.getFullYear(); let month = targetDate.getMonth();
                 let daysInMonth = new Date(year, month + 1, 0).getDate();
                 
+                let workingDaysInMonth = 0;
+                for(let w=1; w<=daysInMonth; w++) { if(new Date(year, month, w).getDay() !== 0) workingDaysInMonth++; }
+
                 let presentDays = 0;
                 let todayObj = new Date();
                 let isCurrentMonthView = (year === todayObj.getFullYear() && month === todayObj.getMonth());
@@ -4823,15 +5201,16 @@
                 for(let i=1; i<=daysInMonth; i++) {
                     let dateStr = `${i.toString().padStart(2,'0')}-${(month+1).toString().padStart(2,'0')}-${year}`;
                     let currentDayObj = new Date(year, month, i);
+                    let isSunday = currentDayObj.getDay() === 0;
                     let isPastOrToday = isCurrentMonthView ? (i <= todayObj.getDate()) : (currentDayObj < todayObj);
                     
-                    if(s.attendance && s.attendance[dateStr]) {
+                    if(!isSunday && s.attendance && s.attendance[dateStr]) {
                         if(isPastOrToday) presentDays++;
                     }
                 }
                 
                 let b = parseInt(s.baseSalary)||0; let m = parseInt(s.meshAllow)||0; let p = parseInt(s.petrolAllow)||0;
-                let perDay = (b+m+p) / daysInMonth;
+                let perDay = (b+m+p) / workingDaysInMonth;
                 let totalEarned = perDay * presentDays;
                 
                 html += `<div onclick="viewStaffAttendanceFromPayroll('${u}')" class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm mb-3 hover-scale animate-fade cursor-pointer transition-all hover:bg-slate-50">
@@ -4847,7 +5226,7 @@
                         <div class="bg-slate-50 p-2 rounded-xl text-center border border-slate-100"><span class="text-slate-400 block uppercase mb-1">Base</span><span class="text-slate-700">₹${b}</span></div>
                         <div class="bg-amber-50 text-amber-700 p-2 rounded-xl text-center border border-amber-100"><span class="text-amber-500 block uppercase mb-1">Mess</span>₹${m}</div>
                         <div class="bg-purple-50 text-purple-700 p-2 rounded-xl text-center border border-purple-100"><span class="text-purple-500 block uppercase mb-1">Fuel</span>₹${p}</div>
-                        <div class="bg-emerald-50 text-emerald-700 p-2 rounded-xl text-center border border-emerald-100"><span class="text-emerald-500 block uppercase mb-1">Paid</span>${presentDays}/${daysInMonth} D</div>
+                        <div class="bg-emerald-50 text-emerald-700 p-2 rounded-xl text-center border border-emerald-100"><span class="text-emerald-500 block uppercase mb-1">Paid</span>${presentDays}/${workingDaysInMonth} D</div>
                     </div>
                     
                     <div class="flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 rounded-[1rem] shadow-md relative overflow-hidden">
@@ -4861,127 +5240,216 @@
         }
 
         // =========================================================================
-        // 🤖 OPAS AI CORE - DATABASE ANALYTICS & VOICE ENGINE
+        // 🏖️ LEAVE & HOLIDAY MANAGEMENT ENGINE
         // =========================================================================
-        // Chat toggle function removed since AI is now a standard Full Page panel
 
-        async function sendMsgToAI(userText) {
-            const inputField = document.getElementById('ai-user-input');
-            if(!userText) {
-                userText = inputField.value.trim();
-                inputField.value = '';
+        async function submitLeaveRequest() {
+            let u = localStorage.getItem('opas_sess_id');
+            let staff = staffDb[u];
+            if(!staff) return;
+
+            let dateVal = getSafeValue('leave-apply-date');
+            let reasonVal = getSafeValue('leave-apply-reason').trim();
+
+            if(!dateVal || !reasonVal) {
+                alert("Kripya Date aur Reason dono bharein.");
+                return;
             }
-            if(!userText) return;
 
-            const chatLog = document.getElementById('ai-chat-log');
-            
-            // Add user message to UI
-            chatLog.innerHTML += `<div class="text-right mb-3"><span class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-bold px-4 py-3 rounded-2xl rounded-tr-sm inline-block shadow-[0_0_15px_rgba(6,182,212,0.4)]">${userText}</span></div>`;
-            chatLog.scrollTop = chatLog.scrollHeight;
-            
-            const typingId = "typing-" + Date.now();
-            chatLog.innerHTML += `<div id="${typingId}" class="text-left mb-3 animate-pulse"><span class="bg-slate-800 text-cyan-400 font-bold text-[10px] uppercase tracking-widest px-4 py-3 rounded-2xl inline-block border border-slate-700">Extracting Intel... ⚡</span></div>`;
-            chatLog.scrollTop = chatLog.scrollHeight;
+            // Convert YYYY-MM-DD to DD-MM-YYYY
+            let parts = dateVal.split('-');
+            let formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
 
-            try {
-                // 1. Prepare Database Snippet (Limiting Data to prevent Vercel Timeout & Token Limits)
-                let dbSnippet = {};
-                let clientCount = 0;
-                
-                // 🚀 FIX: Sirf top 15-20 active clients ki basic details bhejenge
-                Object.keys(serverDb).forEach(k => {
-                    if (k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].status === "Active" && clientCount < 20) {
-                        dbSnippet[k] = {
-                            name: serverDb[k].name,
-                            outstanding: serverDb[k].outstanding || 0, 
-                            overdue: serverDb[k].overdue || 0
-                        };
-                        clientCount++;
+            if(!staff.leaveRequests) staff.leaveRequests = [];
+            
+            // Check if already requested for this date
+            if(staff.leaveRequests.some(req => req.date === formattedDate)) {
+                alert(`Aapne pehle hi ${formattedDate} ke liye request daal rakhi hai.`);
+                return;
+            }
+
+            staff.leaveRequests.push({
+                id: 'LR-' + Date.now(),
+                date: formattedDate,
+                reason: reasonVal,
+                status: 'Pending', // Pending, Approved, Rejected
+                appliedOn: formatSysDate(new Date())
+            });
+
+            serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+            await saveDataToCloud("SYSTEM_SETTINGS");
+            
+            document.getElementById('leave-apply-date').value = '';
+            document.getElementById('leave-apply-reason').value = '';
+            
+            showNotification('Request Sent', `Leave request for ${formattedDate} submitted successfully.`, '✅');
+            renderStaffMyLeaves();
+        }
+
+        function renderStaffMyLeaves() {
+            let u = localStorage.getItem('opas_sess_id');
+            let staff = staffDb[u];
+            let zone = document.getElementById('staff-my-leaves-list');
+            if(!staff || !zone) return;
+
+            let html = '';
+            if(staff.leaveRequests && staff.leaveRequests.length > 0) {
+                // Show latest first
+                let sortedReqs = [...staff.leaveRequests].reverse();
+                sortedReqs.forEach(req => {
+                    let statusColor = req.status === 'Approved' ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 
+                                      (req.status === 'Rejected' ? 'text-rose-600 bg-rose-50 border-rose-200' : 
+                                      'text-amber-600 bg-amber-50 border-amber-200');
+                    
+                    let salaryNote = '';
+                    if(req.status === 'Approved') {
+                        salaryNote = req.salaryDeducted ? 
+                            `<span class="text-[8px] text-rose-500 font-bold ml-2">Unpaid (Salary Deducted)</span>` : 
+                            `<span class="text-[8px] text-emerald-500 font-bold ml-2">Paid Leave (No Deduction)</span>`;
+                    }
+
+                    html += `
+                        <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm mb-2 animate-fade">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-xs font-black text-slate-800">${req.date}</span>
+                                <span class="text-[8px] font-black px-2 py-0.5 rounded border ${statusColor} uppercase tracking-widest">${req.status}</span>
+                            </div>
+                            <p class="text-[10px] font-semibold text-slate-600 italic">"${req.reason}"</p>
+                            <div class="mt-2 text-[8px] text-slate-400 font-bold uppercase tracking-widest flex items-center">
+                                Applied: ${req.appliedOn} ${salaryNote}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            zone.innerHTML = html || `<p class="text-[10px] text-slate-400 text-center italic py-2">No leave requests found.</p>`;
+        }
+
+        function updateLeaveRequestBadge() {
+            let count = 0;
+            if(staffDb) {
+                Object.values(staffDb).forEach(staff => {
+                    if(staff.leaveRequests) {
+                        count += staff.leaveRequests.filter(req => req.status === 'Pending').length;
                     }
                 });
-
-                // 2. Build Context Prompt for the API
-                let systemContext = `You are an AI assistant for 'OPAS Micro Finance'. Reply in friendly Hindi/Hinglish. You have partial access to client data: ${JSON.stringify(dbSnippet)}. Answer briefly. Question: ${userText}`;
-
-                let apiPayload = [
-                    { "role": "user", "parts": [{ "text": systemContext }] }
-                ];
-
-                const VERCEL_API_URL = 'https://opas-fronted.vercel.app/api/chat';
-
-                // 🚀 FIX: Vercel 10-second timeout controller
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 9500); // Abort exactly before Vercel kills it
-
-                // 3. Make SECURE API Call
-                const response = await fetch(VERCEL_API_URL, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ contents: apiPayload }),
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-
-                // 🚀 FIX: Proper Backend Error Reading
-                if(!response.ok) {
-                    let errMsg = `Server Error: ${response.status}`;
-                    try { let errData = await response.json(); errMsg = errData.error || errMsg; } catch(e){}
-                    throw new Error(errMsg);
-                }
-                
-                const data = await response.json();
-                
-                // 🚀 FIX: Safe JSON Parsing (Crashes se bachane ke liye)
-                if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                    throw new Error("Invalid format received from Backend.");
-                }
-
-                let aiResponse = data.candidates[0].content.parts[0].text;
-
-                // Update UI
-                const typingIndicator = document.getElementById(typingId);
-                if (typingIndicator) typingIndicator.remove();
-                
-                // SECURITY FIX: Escape HTML tags to prevent XSS before formatting Markdown
-                let sanitizedResponse = aiResponse.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                
-                // Convert simple markdown bold (**text**) to HTML for nice rendering
-                let formattedHtml = sanitizedResponse.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-                
-                chatLog.innerHTML += `<div class="text-left mb-3 flex items-start gap-2">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white flex items-center justify-center text-sm shrink-0 mt-1">✨</div>
-                    <span class="bg-white text-slate-800 border border-slate-200 text-xs font-semibold px-4 py-3 rounded-2xl rounded-tl-sm inline-block shadow-sm leading-relaxed">${formattedHtml}</span>
-                </div>`;
-                chatLog.scrollTop = chatLog.scrollHeight;
-
-                // 4. Trigger Voice Output ONLY IF in Voice Mode
-                if (isVoiceModeActive) {
-                    speakText(aiResponse.replace(/\*/g, '')); // Voice padhte waqt asterisks ignore karein
-                }
-
-            } catch(e) {
-                console.error("AI API System Error:", e);
-                let indicator = document.getElementById(typingId);
-                if (indicator) indicator.remove();
-                
-                // Asli error nikal kar screen par print karega
-                let realError = e.message || "Unknown Fetch/CORS Error";
-                
-                chatLog.innerHTML += `<div class="text-left mb-3 flex flex-col gap-1">
-                    <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-3 py-2 rounded-xl inline-block shadow-sm">⚠️ AI Backend Error:</span>
-                    <span class="bg-slate-900 text-rose-400 text-[10px] font-mono px-3 py-2 rounded-xl inline-block border border-rose-900/50">${realError}</span>
-                    <span class="text-[8px] text-slate-500 font-bold ml-1 mt-1">Hint: Vercel logs check karein ya F12 dabakar Console dekhein.</span>
-                </div>`;
-                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+            let badge = document.getElementById('leave-req-count-badge');
+            if(badge) {
+                badge.innerText = count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
             }
         }
 
-        // 🌟 Voice Mode State Management
+        function renderHeadLeaveRequests() {
+            let zone = document.getElementById('head-leave-requests-list');
+            if(!zone) return;
+
+            let html = '';
+            Object.keys(staffDb).forEach(empId => {
+                let staff = staffDb[empId];
+                if(staff.leaveRequests && staff.leaveRequests.length > 0) {
+                    staff.leaveRequests.forEach(req => {
+                        if(req.status === 'Pending') {
+                            html += `
+                                <div class="bg-white p-4 border border-slate-200 rounded-2xl shadow-sm mb-3 hover-scale animate-fade">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h4 class="text-sm font-black text-slate-800">${staff.name}</h4>
+                                            <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded inline-block mt-1">${staff.branch}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-xs font-black text-amber-600">${req.date}</span>
+                                            <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1">Applied: ${req.appliedOn}</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 mb-3">
+                                        <p class="text-[10px] font-semibold text-slate-700 italic">" ${req.reason} "</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="promptLeaveApproval('${empId}', '${req.id}', '${req.date}', '${staff.name}')" class="btn-fluid flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-colors">Approve ✓</button>
+                                        <button onclick="processLeaveAction('${empId}', '${req.id}', 'Rejected', false)" class="btn-fluid w-1/3 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-600 font-black py-2.5 rounded-xl text-[10px] uppercase transition-colors">Reject ✕</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+            });
+
+            zone.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed"><p class="text-2xl mb-2">🌴</p><p class="text-[10px] text-slate-400 font-bold uppercase">No pending leave requests.</p></div>`;
+            updateLeaveRequestBadge();
+        }
+
+        function promptLeaveApproval(empId, reqId, dateStr, staffName) {
+            let html = `
+                <div class="text-center p-5">
+                    <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">🏖️</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">Approve Leave</h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">${staffName} | Date: ${dateStr}</p>
+                    
+                    <div class="my-5 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <p class="text-sm font-black text-slate-800 mb-2">Salary Deduction?</p>
+                        <p class="text-[9px] text-slate-500 font-bold leading-relaxed mb-4">Agar aap chahte hain ki is chhutti ka paisa salary se kate (Unpaid Leave), toh 'Yes' chunein. Warna 'No' (Paid Leave).</p>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="processLeaveAction('${empId}', '${reqId}', 'Approved', true); closeGlobalModal();" class="btn-fluid bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-700 border border-rose-200 font-black py-3 rounded-xl text-xs uppercase shadow-sm transition-all">Yes, Deduct</button>
+                            <button onclick="processLeaveAction('${empId}', '${reqId}', 'Approved', false); closeGlobalModal();" class="btn-fluid bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-700 border border-emerald-200 font-black py-3 rounded-xl text-xs uppercase shadow-sm transition-all">No, Paid Leave</button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="closeGlobalModal()" class="btn-fluid w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase transition-colors">Cancel</button>
+                </div>
+            `;
+            openGlobalModal(html);
+        }
+
+        async function processLeaveAction(empId, reqId, status, salaryDeducted) {
+            try {
+                let staff = staffDb[empId];
+                if (!staff || !staff.leaveRequests) return;
+
+                let req = staff.leaveRequests.find(r => r.id === reqId);
+                if (req) {
+                    req.status = status;
+                    req.salaryDeducted = salaryDeducted;
+
+                    if (!staff.attendance) staff.attendance = {};
+
+                    // Attendance Record for Payroll sync
+                    if (status === 'Approved') {
+                        if (!salaryDeducted) {
+                            staff.attendance[req.date] = { status: 'Paid Leave', timestamp: 'Approved Paid Leave' };
+                        } else {
+                            delete staff.attendance[req.date];
+                        }
+                    } else if (status === 'Rejected') {
+                        if (staff.attendance[req.date]?.status === 'Paid Leave') {
+                            delete staff.attendance[req.date];
+                        }
+                    }
+                }
+
+                serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+                await saveDataToCloud("SYSTEM_SETTINGS");
+                
+                showNotification('Leave ' + status, `${staff.name} ki leave request ${status.toLowerCase()} ho gayi hai.`, status === 'Approved' ? '✅' : '❌');
+                renderHeadLeaveRequests();
+                updateLeaveRequestBadge();
+                renderHeadPayroll();
+            } catch(e) {
+                console.error("Leave Action Error:", e);
+                alert("Leave status update karne mein error aayi.");
+            }
+        }
+
+        // =========================================================================
+        // ✨ AI ASSISTANT & VOICE MODE ENGINE
+        // =========================================================================
+
         let isVoiceModeActive = false;
 
         function openVoiceMode() {
-            // 🌟 IN-APP PERMISSION PROMPT FOR MICROPHONE
             let html = `
                 <div class="text-center p-6">
                     <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-pulse">🎤</div>
@@ -5015,6 +5483,105 @@
             if (window.speechSynthesis) window.speechSynthesis.cancel();
         }
 
+        async function sendMsgToAI(userText) {
+            const inputField = document.getElementById('ai-user-input');
+            if(!userText) {
+                userText = inputField ? inputField.value.trim() : '';
+                if(inputField) inputField.value = '';
+            }
+            if(!userText) return;
+
+            const chatLog = document.getElementById('ai-chat-log');
+            if(!chatLog) return;
+            
+            chatLog.innerHTML += `<div class="text-right mb-3"><span class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-bold px-4 py-3 rounded-2xl rounded-tr-sm inline-block shadow-[0_0_15px_rgba(6,182,212,0.4)] max-w-[85%] text-left">${userText}</span></div>`;
+            chatLog.scrollTop = chatLog.scrollHeight;
+            
+            const typingId = "typing-" + Date.now();
+            chatLog.innerHTML += `<div id="${typingId}" class="text-left mb-3 flex items-start gap-2 animate-pulse"><div class="w-8 h-8 rounded-full bg-slate-800 text-cyan-400 flex items-center justify-center text-sm shrink-0">⚡</div><span class="bg-slate-800 text-cyan-400 font-bold text-[10px] uppercase tracking-widest px-4 py-3 rounded-2xl rounded-tl-sm inline-block border border-slate-700 shadow-sm">Extracting Intel...</span></div>`;
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            try {
+                let dbSnippet = {};
+                let clientCount = 0;
+                
+                Object.keys(serverDb).forEach(k => {
+                    if (k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].status === "Active" && clientCount < 20) {
+                        dbSnippet[k] = {
+                            name: serverDb[k].name,
+                            outstanding: serverDb[k].outstanding || 0, 
+                            overdue: serverDb[k].overdue || 0
+                        };
+                        clientCount++;
+                    }
+                });
+
+                let systemContext = `You are an AI assistant for 'OPAS Micro Finance'. Reply in friendly Hindi/Hinglish. You have partial access to client data: ${JSON.stringify(dbSnippet)}. Answer briefly. Question: ${userText}`;
+
+                let apiPayload = [
+                    { "role": "user", "parts": [{ "text": systemContext }] }
+                ];
+
+                const VERCEL_API_URL = 'https://opas-fronted.vercel.app/api/chat';
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 9500);
+
+                const response = await fetch(VERCEL_API_URL, {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ contents: apiPayload }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+
+                if(!response.ok) {
+                    let errMsg = `Server Error: ${response.status}`;
+                    try { let errData = await response.json(); errMsg = errData.error || errMsg; } catch(e){}
+                    throw new Error(errMsg);
+                }
+                
+                const data = await response.json();
+                
+                if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error("Invalid format received from Backend.");
+                }
+
+                let aiResponse = data.candidates[0].content.parts[0].text;
+
+                const typingIndicator = document.getElementById(typingId);
+                if (typingIndicator) typingIndicator.remove();
+                
+                let sanitizedResponse = aiResponse.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                let formattedHtml = sanitizedResponse.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+                
+                chatLog.innerHTML += `<div class="text-left mb-3 flex items-start gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white flex items-center justify-center text-sm shrink-0 mt-1 shadow-md">✨</div>
+                    <span class="bg-white text-slate-800 border border-slate-200 text-xs font-semibold px-4 py-3 rounded-2xl rounded-tl-sm inline-block shadow-sm leading-relaxed max-w-[85%]">${formattedHtml}</span>
+                </div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+
+                if (isVoiceModeActive) {
+                    speakText(aiResponse.replace(/\*/g, ''));
+                }
+
+            } catch(e) {
+                console.error("AI API System Error:", e);
+                let indicator = document.getElementById(typingId);
+                if (indicator) indicator.remove();
+                
+                let realError = e.message || "Unknown Fetch/CORS Error";
+                if(e.name === 'AbortError') realError = "Vercel Timeout (10s Limit Exceeded)";
+                
+                chatLog.innerHTML += `<div class="text-left mb-3 flex flex-col gap-1">
+                    <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-3 py-2 rounded-xl inline-block shadow-sm w-fit">⚠️ AI Backend Error:</span>
+                    <span class="bg-slate-900 text-rose-400 text-[10px] font-mono px-3 py-2 rounded-xl inline-block border border-rose-900/50 w-fit">${realError}</span>
+                </div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+        }
+
         // 🔊 Sci-Fi Mic Sound Effect
         function triggerMicSound() {
             try {
@@ -5045,7 +5612,7 @@
             const statusText = document.getElementById('voice-status-text');
             const orb = document.getElementById('ai-central-orb');
 
-            recognition.start();
+            try { recognition.start(); } catch(e) {}
             
             if(statusText) { statusText.innerText = "Listening..."; statusText.classList.add('text-cyan-400'); statusText.classList.remove('text-slate-400'); }
             if(orb) { orb.classList.add('orb-listening'); }
@@ -5099,6 +5666,189 @@
                 else { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }
             }, 14000);
         }
-        </script>
+        // =========================================================================
+// =========================================================================
+// 🤖 GEMINI AI & VOICE MODE ENGINE (VERCEL HOSTED)
+// =========================================================================
+
+const VERCEL_AI_URL = "https://opas-fronted.vercel.app/api/chat"; 
+let speechRecognition;
+
+// 1. Sahi API Fetch & Gemini Payload
+async function sendMsgToAI(voiceText = null) {
+    const inputEl = document.getElementById('ai-user-input');
+    const msg = voiceText || inputEl.value.trim();
+    
+    if (!msg) return;
+
+    appendAiChat(msg, 'user');
+    if (!voiceText) inputEl.value = ''; // Input clear karein
+
+    try {
+        // 🌟 FIX 1: Gemini API ke exact format mein data bhejna
+        const payload = {
+            contents: [
+                { parts: [{ text: msg }] }
+            ]
+        };
+
+        const response = await fetch(VERCEL_AI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        // 🌟 FIX 2: Gemini ke response array se exact text nikalna
+        let aiReply = "Main abhi theek se connect nahi kar paa raha hu.";
+        if (data.candidates && data.candidates.length > 0) {
+            aiReply = data.candidates[0].content.parts[0].text;
+        } else if (data.error) {
+            aiReply = "Gemini API Error: " + data.error.message;
+        }
+
+        appendAiChat(aiReply, 'ai');
+
+        // Agar Voice mode on hai, toh AI ko bulwayein
+        const voiceOverlay = document.getElementById('ai-voice-mode-overlay');
+        if (!voiceOverlay.classList.contains('hidden')) {
+            speakAiResponse(aiReply);
+        }
+
+    } catch (error) {
+        console.error("AI Fetch Error:", error);
+        appendAiChat("⚠️ Vercel server se connection toot gaya hai.", 'ai');
+    }
+}
+
+// 2. Chat UI Update Karne Ka Function
+function appendAiChat(text, sender) {
+    const chatLog = document.getElementById('ai-chat-log');
+    if (!chatLog) return;
+
+    // Bold text ko thoda format kar dete hain agar Gemini markdown bhejta hai
+    const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+    let html = '';
+    if (sender === 'user') {
+        html = `
+        <div class="text-right flex justify-end">
+            <span class="bg-indigo-100 text-indigo-900 text-xs font-semibold px-4 py-3 rounded-2xl rounded-tr-sm inline-block shadow-sm">${formattedText}</span>
+        </div>`;
+    } else {
+        html = `
+        <div class="text-left flex items-start gap-2 mt-2">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white flex items-center justify-center text-sm shrink-0 mt-1 shadow-[0_0_15px_rgba(59,130,246,0.5)]">✨</div>
+            <span class="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold px-4 py-3 rounded-2xl rounded-tl-sm inline-block shadow-md max-w-[85%] leading-relaxed">${formattedText}</span>
+        </div>`;
+    }
+    
+    chatLog.innerHTML += html;
+    chatLog.scrollTop = chatLog.scrollHeight; // Scroll to bottom
+}
+
+// 3. Voice Mode Open Aur PROPER Mic Permission Handling
+async function openVoiceMode() {
+    const overlay = document.getElementById('ai-voice-mode-overlay');
+    const orb = document.getElementById('ai-central-orb');
+    const statusText = document.getElementById('voice-status-text');
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    statusText.innerText = "Mic connect kar raha hu...";
+
+    try {
+        // 🌟 FIX 1: Mic permission maang kar turant stream CLOSE karo (Lock Free Karo)
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop()); // Mic ko free kar diya
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            statusText.innerText = "Aapka browser Voice Support nahi karta (Chrome use karein).";
+            return;
+        }
+
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.lang = 'hi-IN'; // Hindi + English
+        speechRecognition.interimResults = false;
+        speechRecognition.continuous = false;
+
+        speechRecognition.onstart = () => {
+            orb.classList.add('orb-listening');
+            statusText.innerText = "Boliye, main sun raha hu...";
+        };
+
+        speechRecognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            statusText.innerText = `Aapne kaha: "${transcript}"`;
+            orb.classList.remove('orb-listening');
+            orb.classList.add('orb-speaking');
+            
+            // Aawaz text me convert hone ke baad Vercel API ko bhej do
+            sendMsgToAI(transcript);
+        };
+
+        speechRecognition.onerror = (event) => {
+            console.error("Speech API Error:", event.error);
+            if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+                statusText.innerText = "⚠️ Mic busy hai! Background me call ya recording band karein.";
+            } else if (event.error === 'no-speech') {
+                statusText.innerText = "Kuch sunai nahi diya. Phir se click karein.";
+            } else {
+                statusText.innerText = "Error: " + event.error;
+            }
+            orb.classList.remove('orb-listening');
+        };
+
+        speechRecognition.onend = () => {
+             orb.classList.remove('orb-listening');
+        };
+
+        // Ab Speech API start karo (Mic ab free hai!)
+        speechRecognition.start();
+
+    } catch (err) {
+        console.error("Mic Error:", err);
+        statusText.innerText = "⚠️ Mic Permission Blocked! URL bar mein lock 🔒 icon dabakar mic allow karein.";
+        orb.classList.remove('orb-listening');
+    }
+}
+
+// 4. Voice Mode Close
+function closeVoiceMode() {
+    const overlay = document.getElementById('ai-voice-mode-overlay');
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+    if (speechRecognition) speechRecognition.abort();
+    window.speechSynthesis.cancel(); // AI ko beech mein chup karwane ke liye
+}
+
+// 5. AI Text to Speech
+function speakAiResponse(text) {
+    const orb = document.getElementById('ai-central-orb');
+    const statusText = document.getElementById('voice-status-text');
+    
+    // Markdown symbols (**, *) hata dete hain bolne se pehle
+    const cleanText = text.replace(/[*#]/g, '');
+
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'hi-IN'; 
+        
+        utterance.onstart = () => {
+            orb.classList.add('orb-speaking');
+            statusText.innerText = "AI bol raha hai...";
+        };
+        
+        utterance.onend = () => {
+            orb.classList.remove('orb-speaking');
+            statusText.innerText = "Tap Orb To Speak Again";
+        };
+        
+        window.speechSynthesis.speak(utterance);
+    }
+}
+    </script>
 </body>
 </html>
