@@ -2402,14 +2402,25 @@
                 serverDb[m].nextEmiDate = "Completed";
                 serverDb[m].lastPaymentDate = formatSysDate(new Date());
                 serverDb[m].emiSettled = null; 
-                serverDb[m].advancePaid = 0;
-                
                 if(!serverDb[m].transactions) serverDb[m].transactions = [];
-                serverDb[m].transactions.push({
-                    date: formatSysDate(new Date()),
-                    amount: settlementAmount,
-                    type: 'Direct Settle'
-                });
+
+// 🛡️ NAYA ATOM-LEVEL FIX: Subah liye gaye Advance ko hawa me gayab hone se bachane ke liye pehle uska hisaab likhein
+if (safeAdvance > 0) {
+    serverDb[m].transactions.push({
+        date: formatSysDate(new Date()),
+        amount: safeAdvance,
+        type: 'Advance (Pre-Settle)'
+    });
+}
+
+// Fir Final Settlement ka hisaab likhein
+serverDb[m].transactions.push({
+    date: formatSysDate(new Date()),
+    amount: settlementAmount,
+    type: 'Direct Settle'
+});
+
+serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
                 await saveDataToCloud(m);
                 showNotification('Loan Settled 💰', `${serverDb[m].name} ka loan poori tarah close ho gaya hai.`, '🎉');
@@ -2744,16 +2755,22 @@
                     }
                 });
 
-                setHtmlSafe('queue-count-badge', `${pendingCount} Pending`);
-                const qZone = document.getElementById('global-approval-zone');
-                const qBlock = document.getElementById('shared-approval-queue-block');
-                if (pendingApprovalHtml === '') { 
-                    if(qZone) qZone.innerHTML = ``; 
-                    if(qBlock) qBlock.classList.add('hidden');
-                } else { 
-                    if(qZone) qZone.innerHTML = pendingApprovalHtml; 
-                    if(qBlock) qBlock.classList.remove('hidden');
-                }
+                // NAYA CODE: Menu Badges ko update karne ke liye
+setHtmlSafe('menu-app-badge', pendingCount);
+setHtmlSafe('menu-neft-badge', neftCount);
+
+// NAYA CODE: Dashboard ke top alert box (Action Required) ko update aur show/hide karne ke liye
+setHtmlSafe('head-top-pending-count', pendingCount);
+const pendingAlertBox = document.getElementById('head-pending-alert-box');
+if (pendingAlertBox) {
+    if (pendingCount > 0) {
+        pendingAlertBox.classList.remove('hidden');
+        pendingAlertBox.classList.add('flex'); // hidden hata kar flex lagana zaroori hai
+    } else {
+        pendingAlertBox.classList.add('hidden');
+        pendingAlertBox.classList.remove('flex');
+    }
+}
 
                 // 🌟 NAYA: Rendering NEFT Queue to Dashboard
                 setHtmlSafe('neft-count-badge', `${neftCount} Waiting`);
