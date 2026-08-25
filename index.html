@@ -462,6 +462,9 @@
                     <!-- Naya Unmarked Actions Block -->
                     <div onclick="showDashboardList('unmarked')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Pending Actions (Unmarked)</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-unmarked-today">₹0</div></div>
 
+                    <!-- Staff Pending Approvals Block -->
+                    <div onclick="showDashboardList('pending-approval')" class="bg-purple-50 border border-purple-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-purple-600 uppercase ml-1">Awaiting Head Approval</p><div class="bg-white text-purple-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-pending-approval">0</div></div>
+
                     <div onclick="showDashboardList('active')" id="dash-active-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale cursor-pointer"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Active Accounts</p><div class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg font-black text-lg" id="m-active-count">0</div></div>
                     <div onclick="showDashboardList('deactive')" id="dash-closed-acc-block" class="glass-card p-4 rounded-xl flex justify-between items-center col-span-2 hidden hover-scale cursor-pointer"><p class="text-[10px] font-black text-slate-500 uppercase ml-1">Closed/Deactive Accounts</p><div class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg font-black text-lg" id="m-deactive-count">0</div></div>
                     
@@ -635,8 +638,22 @@
                             <div id="renew-search-results" class="max-h-[35vh] overflow-y-auto space-y-2 pr-1"></div>
                             <input type="hidden" id="renew-client-mobile-select" value="">
                         </div>
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Master Plan</label><select id="renew-loan-plan-select" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-blue-700"><option value="">-- Choose Master Plan --</option></select></div>
+                            <div>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1.5 ml-1">New Master Plan</label>
+                            <select id="renew-loan-plan-select" onchange="runLiveLoanMathRenew()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-black focus:outline-none text-blue-700">
+                                <option value="">-- Choose Master Plan --</option>
+                            </select>
+                        </div>
                         
+                        <div class="bg-slate-900 text-slate-300 p-5 rounded-2xl text-xs space-y-3 font-mono relative overflow-hidden mt-3">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl"></div>
+                            <div class="flex justify-between relative z-10"><span>Base Principal:</span><span class="text-white font-bold" id="renew-math-principal">₹0</span></div>
+                            <div class="flex justify-between relative z-10"><span>Generated Interest:</span><span class="text-blue-400 font-bold" id="renew-math-interest">₹0</span></div>
+                            <div class="flex justify-between relative z-10"><span>Insurance Premium:</span><span class="text-amber-400 font-bold" id="renew-math-insurance">₹0</span></div>
+                            <div class="flex justify-between border-t border-slate-700/50 pt-3 mt-2 relative z-10"><span class="text-slate-400 font-black uppercase text-[9px]">Final Payable</span><span class="text-emerald-400 text-xl font-black" id="renew-math-total-payable">₹0</span></div>
+                            <div id="renew-math-emi-breakdown" class="text-[9px] text-amber-300 font-bold mt-2 pt-2 border-t border-slate-700/50 relative z-10 hidden"></div>
+                        </div>
+
                         <button onclick="executeLoanRenewalSubmission()" class="btn-fluid w-full bg-slate-900 text-white font-black py-4.5 rounded-xl text-xs uppercase shadow-lg shadow-slate-900/20 mt-4">Inject Renewal Profile</button>
                     </div>
                 </div>
@@ -1864,7 +1881,11 @@
 
                 if(panelId === 'ledger') renderStaffLedgerSheets();
                 if(panelId === 'clients') { syncReportDropdowns(); renderClientDirectory(); }
-                if(panelId === 'renew') { syncRenewalClientsDropdown(); syncKycPlanDropdown(); }
+                if(panelId === 'renew') { 
+                    try { syncKycPlanDropdown(); } catch(e) { console.error(e); }
+                    try { syncRenewalClientsDropdown(); } catch(e) { console.error(e); } 
+                    runLiveLoanMathRenew();
+                }
                 if(panelId === 'settlement') syncSettleCentreFilter();
                 if(panelId === 'requests') renderPendingRequestsBox();
                 if(panelId === 'approvals' || panelId === 'neft') refreshHeadDashboardStats(); // 🌟 NAYA: Auto fetch
@@ -2755,24 +2776,35 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     }
                 });
 
-                // NAYA CODE: Menu Badges ko update karne ke liye
-setHtmlSafe('menu-app-badge', pendingCount);
-setHtmlSafe('menu-neft-badge', neftCount);
+                // 1. Sidebar Menu Badges ko update karne ke liye
+                setHtmlSafe('menu-app-badge', pendingCount);
+                setHtmlSafe('menu-neft-badge', neftCount);
 
-// NAYA CODE: Dashboard ke top alert box (Action Required) ko update aur show/hide karne ke liye
-setHtmlSafe('head-top-pending-count', pendingCount);
-const pendingAlertBox = document.getElementById('head-pending-alert-box');
-if (pendingAlertBox) {
-    if (pendingCount > 0) {
-        pendingAlertBox.classList.remove('hidden');
-        pendingAlertBox.classList.add('flex'); // hidden hata kar flex lagana zaroori hai
-    } else {
-        pendingAlertBox.classList.add('hidden');
-        pendingAlertBox.classList.remove('flex');
-    }
-}
+                // 2. Dashboard ke top alert box ko update karne ke liye
+                setHtmlSafe('head-top-pending-count', pendingCount);
+                const pendingAlertBox = document.getElementById('head-pending-alert-box');
+                if (pendingAlertBox) {
+                    if (pendingCount > 0) {
+                        pendingAlertBox.classList.remove('hidden');
+                        pendingAlertBox.classList.add('flex'); 
+                    } else {
+                        pendingAlertBox.classList.add('hidden');
+                        pendingAlertBox.classList.remove('flex');
+                    }
+                }
 
-                // 🌟 NAYA: Rendering NEFT Queue to Dashboard
+                // 3. APPROVAL WALE SECTION MEIN FILES SHOW KARNE KE LIYE
+                setHtmlSafe('queue-count-badge', `${pendingCount} Pending`); 
+                const aZone = document.getElementById('global-approval-zone');
+                if (aZone) {
+                    if (pendingApprovalHtml === '') {
+                        aZone.innerHTML = `<p class="text-[10px] text-center text-slate-400 p-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed uppercase font-bold tracking-widest">No files pending for approval.</p>`;
+                    } else {
+                        aZone.innerHTML = pendingApprovalHtml;
+                    }
+                }
+
+                // 4. NEFT Queue ko Dashboard par render karne ke liye
                 setHtmlSafe('neft-count-badge', `${neftCount} Waiting`);
                 const nZone = document.getElementById('global-neft-zone');
                 const nBlock = document.getElementById('shared-neft-queue-block');
@@ -2885,6 +2917,7 @@ if (pendingAlertBox) {
                 setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-bounce-today', `₹${todayBounceAmt.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-unmarked-today', `₹${(localUnmarkedAmt || 0).toLocaleString('en-IN')}`); 
+                setHtmlSafe('m-pending-approval', pendingCount);
                 setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
@@ -3237,10 +3270,9 @@ if (pendingAlertBox) {
         // =========================================================================
         // 🧮 HYBRID MATH ENGINE (Dynamic rendering)
         // =========================================================================
-        function calculateLoanMetrics() { 
+        function calculateLoanMetrics(isRenew = false) { 
             try {
-                let planId = getSafeValue('new-loan-plan-select');
-                if (!planId) planId = getSafeValue('renew-loan-plan-select');
+                let planId = isRenew ? getSafeValue('renew-loan-plan-select') : getSafeValue('new-loan-plan-select');
                 if (!planId) throw new Error("No Plan");
                 const plan = loanPlans.find(p => p.id === planId);
                 if(!plan) throw new Error("Plan not found");
@@ -3269,7 +3301,7 @@ if (pendingAlertBox) {
 
         function runLiveLoanMath() { 
             try {
-                const m = calculateLoanMetrics(); 
+                const m = calculateLoanMetrics(false); 
                 setHtmlSafe('math-principal', `₹${m.principal.toLocaleString('en-IN')}`); 
                 setHtmlSafe('math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); 
                 setHtmlSafe('math-insurance', `₹${(m.insuranceAmt || 0).toLocaleString('en-IN')}`); 
@@ -3300,6 +3332,29 @@ if (pendingAlertBox) {
                     if (m.isHybrid) {
                         let phaseInfo = (typedPaidEmis >= m.phase1Days) ? `<span class="text-emerald-400">Currently in Phase 2</span>` : `<span class="text-blue-400">Currently in Phase 1</span>`;
                         bBox.innerHTML = `🔥 HYBRID PLAN SETUP<br>Phase 1: ${m.phase1Days} Days @ ₹${m.phase1Emi} EMI<br>Phase 2: ${m.phase2Days} Days @ ₹${m.phase2Emi} EMI<br>${typedPaidEmis > 0 ? phaseInfo : ''}`;
+                        bBox.classList.remove('hidden');
+                    } else if (m.principal > 0) {
+                        bBox.innerHTML = `✅ STANDARD PLAN<br>EMI: ₹${m.cycleEmi} per ${m.cycleType}`;
+                        bBox.classList.remove('hidden');
+                    } else {
+                        bBox.classList.add('hidden');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function runLiveLoanMathRenew() { 
+            try {
+                const m = calculateLoanMetrics(true); 
+                setHtmlSafe('renew-math-principal', `₹${m.principal.toLocaleString('en-IN')}`); 
+                setHtmlSafe('renew-math-interest', `₹${m.interestAmt.toLocaleString('en-IN')}`); 
+                setHtmlSafe('renew-math-insurance', `₹${(m.insuranceAmt || 0).toLocaleString('en-IN')}`); 
+                setHtmlSafe('renew-math-total-payable', `₹${m.totalPayable.toLocaleString('en-IN')}`);
+
+                const bBox = document.getElementById('renew-math-emi-breakdown');
+                if(bBox) {
+                    if (m.isHybrid) {
+                        bBox.innerHTML = `🔥 HYBRID PLAN SETUP<br>Phase 1: ${m.phase1Days} Days @ ₹${m.phase1Emi} EMI<br>Phase 2: ${m.phase2Days} Days @ ₹${m.phase2Emi} EMI`;
                         bBox.classList.remove('hidden');
                     } else if (m.principal > 0) {
                         bBox.innerHTML = `✅ STANDARD PLAN<br>EMI: ₹${m.cycleEmi} per ${m.cycleType}`;
@@ -4071,6 +4126,8 @@ if (pendingAlertBox) {
                 a.cycleEmi = plan.isHybrid ? plan.phase1Emi : plan.baseEmi;
                 
                 await saveDataToCloud(m); 
+                document.getElementById('renew-loan-plan-select').value = '';
+                runLiveLoanMathRenew();
                 showNotification('Loan Renewed 🔄', `Client renewed with Plan: ${plan.name} & Synced!`, '✅');
                 routePanelSection('dashboard');
             } catch(e) {}
@@ -4454,6 +4511,12 @@ if (pendingAlertBox) {
                             amount = Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
                         }
                     }
+                } else if (type === 'pending-approval') {
+                    title = "Awaiting Head Approval";
+                    if (c.status === "Pending Approval") { 
+                        match = true; 
+                        amount = c.principal; 
+                    }
                 }
 
                 if(match) {
@@ -4466,6 +4529,8 @@ if (pendingAlertBox) {
                         amtLabel = `<span class="text-sm font-black text-blue-600 bg-white border border-blue-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     } else if (type === 'unmarked') {
                         amtLabel = `<span class="text-sm font-black text-amber-600 bg-white border border-amber-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                    } else if (type === 'pending-approval') {
+                        amtLabel = `<span class="text-sm font-black text-purple-600 bg-white border border-purple-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     } else if (type.includes('ins')) {
                         amtLabel = `<span class="text-sm font-black text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     }
