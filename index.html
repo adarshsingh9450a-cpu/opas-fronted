@@ -1243,21 +1243,38 @@
                             branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
                             centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
                             staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
-                            loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans; // Load Plans
+                            loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans; 
                         }
                     } catch(e) {}
                 }
 
-                const response = await fetch(API_URL);
-                if (response.ok) {
-                    let cloudData = await response.json();
+                // 🌟 FIX 1: ACTUAL PAGINATION LOOP YAHAN HONA CHAHIYE
+                let cloudData = {};
+                let lastMobile = ''; 
+                let limit = 500; 
+                let hasMore = true;
+
+                while (hasMore) {
+                    const response = await fetch(`${API_URL}?limit=${limit}&lastMobile=${lastMobile}`);
+                    if (!response.ok) throw new Error("Cloud Error");
                     
-                    // Fix: Smart Timestamp & Status Shield. Prevents offline staff from accidentally overwriting Head's approvals.
+                    let chunk = await response.json();
+                    let keys = Object.keys(chunk);
+                    
+                    if (keys.length === 0) {
+                        hasMore = false; 
+                    } else {
+                        Object.assign(cloudData, chunk); 
+                        lastMobile = keys[keys.length - 1]; 
+                        document.getElementById('cloud-status').innerText = `☁️ Syncing... (${Object.keys(cloudData).length})`;
+                    }
+                }
+
+                if (Object.keys(cloudData).length > 0) {
                     Object.keys(cloudData).forEach(k => {
                         if (cloudData[k] === null) {
                             delete serverDb[k]; 
                         } else if (cloudData[k]) {
-                            // If cloud has newer data, OR if cloud says 'Active' but local says 'Pending' (meaning Head approved while staff was offline)
                             let isCloudNewer = !serverDb[k] || !serverDb[k].lastUpdated || (cloudData[k].lastUpdated > serverDb[k].lastUpdated);
                             let isCloudApproved = (cloudData[k].status === "Active" && serverDb[k] && serverDb[k].status === "Pending Approval");
                             
@@ -1267,20 +1284,33 @@
                         }
                     });
                     
-                    // 🛡️ TITANIUM SHIELD 1
                     Object.keys(serverDb).forEach(k => {
                         if (!serverDb[k] || serverDb[k] === "null") {
                             delete serverDb[k];
                         }
                     });
                     
+                    // 🌟 FIX 2: PREVENT DDoS (API FLOODING) - Bulk sync offline records
+                    let pendingSyncPayload = [];
                     for (const k of Object.keys(localData)) {
                         if(k !== "SYSTEM_SETTINGS") {
-                            // Fix: Awaiting each sync to prevent Render/Neon DB API flooding limits
                             if(cloudData[k] === undefined || (cloudData[k] !== null && localData[k] && localData[k].lastUpdated && (!cloudData[k].lastUpdated || localData[k].lastUpdated > cloudData[k].lastUpdated))) {
-                                await saveDataToCloud(k); 
+                                pendingSyncPayload.push({ mobile: k, data: serverDb[k] });
                             }
                         }
+                    }
+
+                    // Agar offline data hai, toh 600 requests ki jagah 1 hi bulk request bhejo
+                    if (pendingSyncPayload.length > 0) {
+                        const token = localStorage.getItem('opas_jwt_token');
+                        await fetch(API_URL + '/bulk', {
+                            method: 'POST', 
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ clients: pendingSyncPayload })
+                        }).catch(e => console.log("Offline bulk sync delayed."));
                     }
 
                     await localforage.setItem('opas_local_db', serverDb);
@@ -1289,11 +1319,9 @@
                         branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
                         centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
                         staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
-                        loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans; // Sync Plans
+                        loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans;
                     }
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
-                } else { 
-                    document.getElementById('cloud-status').innerText = "⚠️ Cloud Error (Using Local DB)"; 
                 }
             } catch (error) { 
                 document.getElementById('cloud-status').innerText = "⚠️ Offline (Using Local DB)"; 
@@ -1437,7 +1465,7 @@
                     try {
                         const token = localStorage.getItem('opas_jwt_token');
                         // 🚀 FIX: Correctly routing to /api/bulk
-                    let wipeRes = await fetch(API_URL.replace('/clients', '/bulk'), {
+                    let wipeRes = await fetch(API_URL + '/bulk', {
                             method: 'POST', 
                             headers: { 
                                 'Content-Type': 'application/json',
@@ -2299,12 +2327,12 @@
                     let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
                     html += `
                     <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover-scale transition-colors">
-                        <div>
-                            <p class="text-xs font-black text-slate-900">${c.name}</p>
+                        <div onclick="showClientFullInfo('${m}')" class="cursor-pointer flex-1">
+                            <p class="text-xs font-black text-slate-900 flex items-center gap-1">${c.name} <span class="text-blue-500 text-[10px] bg-blue-50 px-1 rounded-full" title="View Profile">ℹ️</span></p>
                             <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
                             <p class="text-[9px] font-black text-rose-500 mt-1 uppercase tracking-widest bg-rose-50 inline-block px-1.5 py-0.5 rounded">Due: ₹${totalDebt}</p>
                         </div>
-                        <button onclick="selectSettlementClient('${m}')" class="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all">Select</button>
+                        <button onclick="selectSettlementClient('${m}')" class="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all ml-2">Select</button>
                     </div>`;
                 }
             });
@@ -2323,8 +2351,8 @@
                 <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex justify-between items-center shadow-sm">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-black">✓</div>
-                        <div>
-                            <p class="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Target Locked</p>
+                        <div onclick="showClientFullInfo('${mobile}')" class="cursor-pointer group">
+                            <p class="text-[9px] font-black text-emerald-700 uppercase tracking-widest group-hover:text-emerald-900">Target Locked ℹ️</p>
                             <p class="text-xs font-black text-slate-900">${c.name} <span class="text-slate-500">(${mobile})</span></p>
                         </div>
                     </div>
@@ -2355,12 +2383,12 @@
                     
                     html += `
                     <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover-scale transition-colors">
-                        <div>
-                            <p class="text-xs font-black text-slate-900">${c.name}</p>
+                        <div onclick="showClientFullInfo('${m}')" class="cursor-pointer flex-1">
+                            <p class="text-xs font-black text-slate-900 flex items-center gap-1">${c.name} <span class="text-blue-500 text-[10px] bg-blue-50 px-1 rounded-full" title="View Profile">ℹ️</span></p>
                             <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
                             <p class="text-[9px] font-black text-indigo-600 mt-1 uppercase tracking-widest bg-indigo-50 inline-block px-1.5 py-0.5 rounded border border-indigo-100 shadow-sm">Prev: ${c.planName || 'N/A'} | ${c.branch || 'NA'}</p>
                         </div>
-                        <button onclick="selectRenewClient('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all">Select</button>
+                        <button onclick="selectRenewClient('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all ml-2">Select</button>
                     </div>`;
                 }
             });
@@ -2378,8 +2406,8 @@
                 <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl flex justify-between items-center shadow-sm">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-black">✓</div>
-                        <div>
-                            <p class="text-[9px] font-black text-blue-800 uppercase tracking-widest">Client Ready</p>
+                        <div onclick="showClientFullInfo('${mobile}')" class="cursor-pointer group">
+                            <p class="text-[9px] font-black text-blue-800 uppercase tracking-widest group-hover:text-blue-900">Client Ready ℹ️</p>
                             <p class="text-xs font-black text-slate-900">${c.name} <span class="text-slate-500">(${mobile})</span></p>
                         </div>
                     </div>
@@ -4043,7 +4071,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     // Backend par ek single request bhejenge (Apne API URL mein zarurat anusar '/bulk' add karein)
                     const token = localStorage.getItem('opas_jwt_token');
                     // 🚀 FIX: Correctly routing to /api/bulk for day-end
-                    let res = await fetch(API_URL.replace('/clients', '/bulk'), {
+                    let res = await fetch(API_URL + '/bulk', {
                         method: 'POST', 
                         headers: { 
                             'Content-Type': 'application/json',
@@ -4771,8 +4799,18 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             
             await localforage.setItem('opas_local_db', serverDb);
             
-            let syncPromises = selectedClients.map(m => saveDataToCloud(m));
-            await Promise.allSettled(syncPromises);
+            // 🚀 FIX: Prevent API Flooding and Browser Crash by using Bulk Sync
+            let bulkPayload = selectedClients.map(m => ({ mobile: m, data: serverDb[m] }));
+            const token = localStorage.getItem('opas_jwt_token');
+            
+            await fetch(API_URL + '/bulk', {
+                method: 'POST', 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ clients: bulkPayload })
+            });
 
             alert(`✅ Successfully aligned ${selectedClients.length} clients to ${dayNames[targetDay]}!`);
             
@@ -6459,189 +6497,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 else { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }
             }, 14000);
         }
-        // =========================================================================
-// =========================================================================
-// 🤖 GEMINI AI & VOICE MODE ENGINE (VERCEL HOSTED)
-// =========================================================================
-
-const VERCEL_AI_URL = "https://opas-fronted.vercel.app/api/chat"; 
-let speechRecognition;
-
-// 1. Sahi API Fetch & Gemini Payload
-async function sendMsgToAI(voiceText = null) {
-    const inputEl = document.getElementById('ai-user-input');
-    const msg = voiceText || inputEl.value.trim();
-    
-    if (!msg) return;
-
-    appendAiChat(msg, 'user');
-    if (!voiceText) inputEl.value = ''; // Input clear karein
-
-    try {
-        // 🌟 FIX 1: Gemini API ke exact format mein data bhejna
-        const payload = {
-            contents: [
-                { parts: [{ text: msg }] }
-            ]
-        };
-
-        const response = await fetch(VERCEL_AI_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
         
-        const data = await response.json();
-        
-        // 🌟 FIX 2: Gemini ke response array se exact text nikalna
-        let aiReply = "Main abhi theek se connect nahi kar paa raha hu.";
-        if (data.candidates && data.candidates.length > 0) {
-            aiReply = data.candidates[0].content.parts[0].text;
-        } else if (data.error) {
-            aiReply = "Gemini API Error: " + data.error.message;
-        }
 
-        appendAiChat(aiReply, 'ai');
-
-        // Agar Voice mode on hai, toh AI ko bulwayein
-        const voiceOverlay = document.getElementById('ai-voice-mode-overlay');
-        if (!voiceOverlay.classList.contains('hidden')) {
-            speakAiResponse(aiReply);
-        }
-
-    } catch (error) {
-        console.error("AI Fetch Error:", error);
-        appendAiChat("⚠️ Vercel server se connection toot gaya hai.", 'ai');
-    }
-}
-
-// 2. Chat UI Update Karne Ka Function
-function appendAiChat(text, sender) {
-    const chatLog = document.getElementById('ai-chat-log');
-    if (!chatLog) return;
-
-    // Bold text ko thoda format kar dete hain agar Gemini markdown bhejta hai
-    const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-
-    let html = '';
-    if (sender === 'user') {
-        html = `
-        <div class="text-right flex justify-end">
-            <span class="bg-indigo-100 text-indigo-900 text-xs font-semibold px-4 py-3 rounded-2xl rounded-tr-sm inline-block shadow-sm">${formattedText}</span>
-        </div>`;
-    } else {
-        html = `
-        <div class="text-left flex items-start gap-2 mt-2">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white flex items-center justify-center text-sm shrink-0 mt-1 shadow-[0_0_15px_rgba(59,130,246,0.5)]">✨</div>
-            <span class="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold px-4 py-3 rounded-2xl rounded-tl-sm inline-block shadow-md max-w-[85%] leading-relaxed">${formattedText}</span>
-        </div>`;
-    }
-    
-    chatLog.innerHTML += html;
-    chatLog.scrollTop = chatLog.scrollHeight; // Scroll to bottom
-}
-
-// 3. Voice Mode Open Aur PROPER Mic Permission Handling
-async function openVoiceMode() {
-    const overlay = document.getElementById('ai-voice-mode-overlay');
-    const orb = document.getElementById('ai-central-orb');
-    const statusText = document.getElementById('voice-status-text');
-
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
-    statusText.innerText = "Mic connect kar raha hu...";
-
-    try {
-        // 🌟 FIX 1: Mic permission maang kar turant stream CLOSE karo (Lock Free Karo)
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop()); // Mic ko free kar diya
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            statusText.innerText = "Aapka browser Voice Support nahi karta (Chrome use karein).";
-            return;
-        }
-
-        speechRecognition = new SpeechRecognition();
-        speechRecognition.lang = 'hi-IN'; // Hindi + English
-        speechRecognition.interimResults = false;
-        speechRecognition.continuous = false;
-
-        speechRecognition.onstart = () => {
-            orb.classList.add('orb-listening');
-            statusText.innerText = "Boliye, main sun raha hu...";
-        };
-
-        speechRecognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            statusText.innerText = `Aapne kaha: "${transcript}"`;
-            orb.classList.remove('orb-listening');
-            orb.classList.add('orb-speaking');
-            
-            // Aawaz text me convert hone ke baad Vercel API ko bhej do
-            sendMsgToAI(transcript);
-        };
-
-        speechRecognition.onerror = (event) => {
-            console.error("Speech API Error:", event.error);
-            if (event.error === 'not-allowed' || event.error === 'audio-capture') {
-                statusText.innerText = "⚠️ Mic busy hai! Background me call ya recording band karein.";
-            } else if (event.error === 'no-speech') {
-                statusText.innerText = "Kuch sunai nahi diya. Phir se click karein.";
-            } else {
-                statusText.innerText = "Error: " + event.error;
-            }
-            orb.classList.remove('orb-listening');
-        };
-
-        speechRecognition.onend = () => {
-             orb.classList.remove('orb-listening');
-        };
-
-        // Ab Speech API start karo (Mic ab free hai!)
-        speechRecognition.start();
-
-    } catch (err) {
-        console.error("Mic Error:", err);
-        statusText.innerText = "⚠️ Mic Permission Blocked! URL bar mein lock 🔒 icon dabakar mic allow karein.";
-        orb.classList.remove('orb-listening');
-    }
-}
-
-// 4. Voice Mode Close
-function closeVoiceMode() {
-    const overlay = document.getElementById('ai-voice-mode-overlay');
-    overlay.classList.add('hidden');
-    overlay.classList.remove('flex');
-    if (speechRecognition) speechRecognition.abort();
-    window.speechSynthesis.cancel(); // AI ko beech mein chup karwane ke liye
-}
-
-// 5. AI Text to Speech
-function speakAiResponse(text) {
-    const orb = document.getElementById('ai-central-orb');
-    const statusText = document.getElementById('voice-status-text');
-    
-    // Markdown symbols (**, *) hata dete hain bolne se pehle
-    const cleanText = text.replace(/[*#]/g, '');
-
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'hi-IN'; 
-        
-        utterance.onstart = () => {
-            orb.classList.add('orb-speaking');
-            statusText.innerText = "AI bol raha hai...";
-        };
-        
-        utterance.onend = () => {
-            orb.classList.remove('orb-speaking');
-            statusText.innerText = "Tap Orb To Speak Again";
-        };
-        
-        window.speechSynthesis.speak(utterance);
-    }
-}
     </script>
 </body>
 </html>
