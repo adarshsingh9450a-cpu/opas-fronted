@@ -1259,6 +1259,13 @@
 
                 while (hasMore) {
                     const token = localStorage.getItem('opas_jwt_token');
+                    
+                    // 🚀 CRITICAL FIX: Agar token nahi hai (naya user ya logged out), toh cloud fetch skip karo. (Prevents Infinite Reload Loop)
+                    if (!token) {
+                        hasMore = false;
+                        break;
+                    }
+
                     const response = await fetch(`${API_URL}?limit=${limit}&lastMobile=${lastMobile}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
