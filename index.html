@@ -437,6 +437,17 @@
                     </div>
                 </div>
 
+                <!-- 🌟 NAYA: Staff Dashboard Live Pending Queue -->
+                <div id="staff-live-pending-queue" class="role-staff hidden mb-4 animate-slide-up">
+                    <div class="glass-card p-4 rounded-3xl border-purple-200 bg-purple-50/30 shadow-sm">
+                        <h3 class="text-[10px] font-black text-purple-800 uppercase flex items-center justify-between border-b border-purple-200/50 pb-2 mb-3 px-1">
+                            Live Approval Queue 
+                            <span class="bg-purple-600 text-white px-2 py-0.5 rounded-lg text-[9px] font-black shadow-sm" id="staff-dash-queue-badge">0</span>
+                        </h3>
+                        <div id="staff-dash-queue-zone" class="space-y-3 max-h-[35vh] overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 animate-slide-up" style="animation-delay: 0.1s;">
                     <div onclick="showDashboardList('disburse-today')" class="glass-card p-5 rounded-[1.5rem] hover-scale cursor-pointer"><p class="text-[9px] font-black text-slate-400 uppercase" id="lbl-disburse-today">Today's Disbursal</p><p class="text-xl font-black text-slate-800 mt-2" id="m-disburse-today">₹0</p></div>
                     <div onclick="showDashboardList('disburse-month')" class="glass-card p-5 rounded-[1.5rem] border-blue-200 hover-scale cursor-pointer"><p class="text-[9px] font-black text-blue-500 uppercase" id="lbl-disburse-month">Month's Disbursal</p><p class="text-xl font-black text-blue-600 mt-2" id="m-disburse-month">₹0</p></div>
@@ -499,7 +510,7 @@
                 <div class="glass-card rounded-[2rem] p-5 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">👥</div><h3 class="text-xs font-black text-blue-600 uppercase">Client Directory</h3></div>
                     <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                        <input type="text" id="report-name-search" oninput="renderClientDirectory()" placeholder="🔍 Live Search Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
+                        <input type="text" id="report-name-search" oninput="debounceSearch(renderClientDirectory)" placeholder="🔍 Live Search Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
                         <select id="report-type-filter" onchange="renderClientDirectory()" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none transition-all focus:border-blue-300"><option value="total">Total Active</option><option value="pending">Pending (Approve / NEFT) ⏳</option><option value="new">Newly Added (1st Loan)</option><option value="renewed">Renewed</option><option value="centre">Centre-wise</option><option value="closed">Closed/Deactive</option></select>
                         <div class="grid grid-cols-2 gap-2">
                             <select id="report-branch-filter" onchange="syncReportDropdowns(); renderClientDirectory()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
@@ -516,7 +527,7 @@
                     <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
                     <div class="flex justify-between items-center"><span class="text-xs font-black uppercase text-slate-800">Sheets</span><div class="flex gap-1 bg-slate-100 p-1.5 rounded-lg border border-slate-200"><button onclick="switchStaffTab('daily')" id="tab-daily" class="text-[10px] px-4 py-2 rounded-md font-black bg-white text-blue-600 shadow-sm transition-all">DAILY</button><button onclick="switchStaffTab('weekly')" id="tab-weekly" class="text-[10px] px-4 py-2 rounded-md font-bold text-slate-400 transition-all">WEEKLY</button></div></div>
                     
-                    <input type="text" id="ledger-search" oninput="renderStaffLedgerSheets()" placeholder="🔍 Search in Ledger..." class="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
+                    <input type="text" id="ledger-search" oninput="debounceSearch(renderStaffLedgerSheets)" placeholder="🔍 Search in Ledger..." class="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
                     
                     <div class="space-y-4 max-h-[55vh] overflow-y-auto pr-1" id="staff-cycle-list-zone"></div>
                     <button onclick="uploadDayEndReport()" id="upload-day-btn" class="btn-fluid w-full bg-slate-200 text-slate-400 font-black py-4 rounded-xl text-[11px] uppercase tracking-widest cursor-not-allowed mt-2 border border-slate-300 transition-all" disabled>Upload Day-End 📤</button>
@@ -613,7 +624,7 @@
                         </div>
                         <!-- Custom Search Panel for Settlement -->
                         <div class="space-y-2">
-                            <input type="text" id="settle-search-input" onkeyup="syncSettlementClientsDropdown()" placeholder="🔍 Search Client Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
+                            <input type="text" id="settle-search-input" oninput="debounceSearch(syncSettlementClientsDropdown)" placeholder="🔍 Search Client Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
                             <div id="settle-search-results" class="max-h-[35vh] overflow-y-auto space-y-2 pr-1"></div>
                             <input type="hidden" id="settle-client-mobile-select" value="">
                         </div>
@@ -634,7 +645,7 @@
                     <div class="space-y-4">
                         <!-- Custom Search Panel for Renew -->
                         <div class="space-y-2">
-                            <input type="text" id="renew-search-input" onkeyup="syncRenewalClientsDropdown()" placeholder="🔍 Search Closed Client Name, ID..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
+                            <input type="text" id="renew-search-input" oninput="debounceSearch(syncRenewalClientsDropdown)" placeholder="🔍 Search Closed Client Name, ID..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
                             <div id="renew-search-results" class="max-h-[35vh] overflow-y-auto space-y-2 pr-1"></div>
                             <input type="hidden" id="renew-client-mobile-select" value="">
                         </div>
@@ -706,7 +717,7 @@
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
                     <div class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
-                        <input type="text" id="admin-edit-search" onkeyup="syncAdminEditDropdown()" placeholder="🔍 Search Client Name..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none">
+                        <input type="text" id="admin-edit-search" oninput="debounceSearch(syncAdminEditDropdown)" placeholder="🔍 Search Client Name..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none">
                         <div class="grid grid-cols-2 gap-2">
                             <select id="admin-edit-branch" onchange="syncAdminEditCentre(); syncAdminEditDropdown()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                             <select id="admin-edit-centre" onchange="syncAdminEditDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="ALL">-- All Centres --</option></select>
@@ -1170,9 +1181,18 @@
         let loanPlans = []; // 🌟 HYBRID UPGRADE: Store Master Plans
         let serverDb = {}; 
 
+        // 🚀 FIX: Performance Debouncer (Prevents UI lag during fast typing)
+        let searchTimeout = null;
+        function debounceSearch(func, delay = 300) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(func, delay);
+        }
+
         // 🌟 NAYA: Head Background Notification Radar
         let headPendingRadar = null;
         let previousPendingCount = -1;
+        let autoSyncRadar = null; // 🌟 NAYA: Background Universal Auto-Sync Engine
+        let isSystemBusy = false; // 🚀 FIX: Prevent auto-sync and manual-sync collisions
 
         async function silentHeadRadar() {
             if (currentLoggedInRole !== 'head') return;
@@ -1260,8 +1280,8 @@
                 while (hasMore) {
                     const token = localStorage.getItem('opas_jwt_token');
                     
-                    // 🚀 CRITICAL FIX: Agar token nahi hai (naya user ya logged out), toh cloud fetch skip karo. (Prevents Infinite Reload Loop)
-                    if (!token) {
+                    // 🚀 CRITICAL FIX: Token undefined ya null string ho, toh bhi loop tod do taaki 401 error na aaye!
+                    if (!token || token === 'undefined' || token === 'null') {
                         hasMore = false;
                         break;
                     }
@@ -1310,9 +1330,9 @@
                                         cloudData[k].advancePaid = serverDb[k].advancePaid;
                                         cloudData[k].tempAdv = serverDb[k].tempAdv;
                                     }
-                                    if (serverDb[k]._pendingEmiClear) {
-                                        cloudData[k]._pendingEmiClear = serverDb[k]._pendingEmiClear;
-                                        cloudData[k]._pendingAdvanceClear = serverDb[k]._pendingAdvanceClear;
+                                    // 🛡️ CRITICAL FIX: Protect offline day-end locks from being wiped
+                                    if (serverDb[k].lastDayEndProcessed) {
+                                        cloudData[k].lastDayEndProcessed = serverDb[k].lastDayEndProcessed;
                                     }
                                     
                                     // 🛡️ CRITICAL FIX 1: Protect offline Renewals & Direct Settlements from being wiped out by old cloud states
@@ -1684,8 +1704,15 @@
                         headPendingRadar = setInterval(silentHeadRadar, 60000);
                         silentHeadRadar(); // Pehli baar turant check kare
                     } else if (role === 'staff') {
-                        if(staffDb[id]) {
-                            currentLoggedInRole = 'staff'; let staff = staffDb[id];
+                        let staff = staffDb[id];
+                        // 🛡️ CRITICAL FIX: Case-Insensitive check to prevent fake deletions
+                        if (!staff) {
+                            let realKey = Object.keys(staffDb).find(k => k.toLowerCase() === id.toLowerCase());
+                            if (realKey) staff = staffDb[realKey];
+                        }
+                        
+                        if(staff) {
+                            currentLoggedInRole = 'staff'; 
                             const df = document.getElementById('dashboard-active-branch-select'); 
                             const lf = document.getElementById('ledger-active-branch-select');
                             const sf = document.getElementById('settle-branch-filter'); 
@@ -1767,26 +1794,35 @@
                 
                 let isPresentToday = s.attendance && s.attendance[dayStr];
                 
+                // 🚀 FIX: Must explicitly match "Present" string or truthy boolean to avoid counting undefined join dates
+                let isActuallyPresent = (isPresentToday === "Present" || isPresentToday === true);
+
                 // Count Attendance
-                if(isPresentToday) presentCount++;
+                if(isActuallyPresent) presentCount++;
                 
                 // Check if branch hit bonus AND staff was present that day
-                if(bStats[dayStr] && bStats[dayStr].bonusAchieved && isPresentToday) {
+                if(bStats[dayStr] && bStats[dayStr].bonusAchieved && isActuallyPresent) {
                     bonusHitCount++;
                     bonusDates.push(i); // Save the date (e.g., 12, 15, 22)
                 }
             }
             
             // Salary Math
-            let base = s.baseSalary || 0;
-            let mess = s.meshAllow || 0;
-            let petrol = s.petrolAllow || 0;
+            let base = parseInt(s.baseSalary) || 0;
+            let mess = parseInt(s.meshAllow) || 0;
+            let petrol = parseInt(s.petrolAllow) || 0;
             let totalFixed = base + mess + petrol;
             
-            let perDaySalary = totalFixed / daysInMonth;
+            // 🚀 FIX: Prevent division by zero and handle exact per-day rounding precisely
+            let perDaySalary = daysInMonth > 0 ? (totalFixed / daysInMonth) : 0;
             let earnedSalary = Math.round(perDaySalary * presentCount);
             let earnedBonus = bonusHitCount * bonusAmount;
             let netPayable = earnedSalary + earnedBonus;
+            
+            // 🚀 FIX: Failsafe to prevent negative payments
+            if (netPayable < 0 || isNaN(netPayable)) netPayable = 0;
+            if (isNaN(earnedSalary)) earnedSalary = 0;
+            if (isNaN(earnedBonus)) earnedBonus = 0;
             
             let bonusDaysText = bonusDates.length > 0 ? bonusDates.join(', ') : 'No bonus hit this month';
             
@@ -2673,13 +2709,49 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
         async function saveClientEdits() {
              const m = getSafeValue('admin-edit-client-select'); if(!m) return;
              try {
-                 let oldOut = serverDb[m].outstanding;
-                 // FIX 2B: Prevent Admin from saving corrupted negative debt amounts
+                 // 1. Gather Details First
                  let newOut = Math.max(0, parseInt(getSafeValue('edit-cust-outstanding')) || 0);
-                 let oldOd = serverDb[m].overdue || 0;
                  let newOd = Math.max(0, parseInt(getSafeValue('edit-cust-od')) || 0);
+                 let newStatus = getSafeValue('edit-cust-status') || serverDb[m].status;
                  
-                 // Fix: Log a transaction if Admin modifies Outstanding OR Overdue manually
+                 let rawDate = getSafeValue('edit-cust-due-date');
+                 if (rawDate === "") rawDate = "N/A";
+                 let safeDate = rawDate.replace(/\//g, '-').replace(/\./g, '-');
+                 
+                 // Force EMI Date to Completed if closed
+                 if (newStatus === 'Deactive' || newStatus === 'Deleted') { safeDate = "Completed"; }
+
+                 let rawDisbDate = getSafeValue('edit-cust-disbursal-date');
+                 if (rawDisbDate === "") rawDisbDate = "N/A";
+                 let safeDisbDate = rawDisbDate.replace(/\//g, '-').replace(/\./g, '-');
+
+                 const dateRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
+                 const isoDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/; 
+
+                 if(isoDateRegex.test(safeDate)) { let p = safeDate.split('-'); safeDate = `${p[2]}-${p[1]}-${p[0]}`; }
+                 if(isoDateRegex.test(safeDisbDate)) { let p = safeDisbDate.split('-'); safeDisbDate = `${p[2]}-${p[1]}-${p[0]}`; }
+
+                 // 2. 🛡️ STRICT VALIDATIONS (Return BEFORE modifying Database memory)
+                 if(safeDate !== "N/A" && safeDate !== "Completed" && !dateRegex.test(safeDate)) { alert("❌ Error: Next Due Date ka format DD-MM-YYYY hona chahiye!"); return; }
+                 if(safeDisbDate !== "N/A" && safeDisbDate !== "Pending Approval" && !dateRegex.test(safeDisbDate)) { alert("❌ Error: Disbursal Date ka format DD-MM-YYYY hona chahiye!"); return; }
+
+                 if ((serverDb[m].status === 'Pending Approval' || serverDb[m].status === 'Pending NEFT') && newStatus === 'Active') {
+                     alert("⚠️ Dhyan Dein: Kisi bhi 'Pending' file ko yahan se direct 'Active' mat karein! Dashboard par jaakar 'Approve' ya 'NEFT Mark' button ka use karein, taaki EMI calendar aur Dates sahi se generate ho sakein.");
+                     return;
+                 }
+
+                 // 3. ✅ SAFE TO MUTATE DATABASE MEMORY
+                 let oldOut = parseInt(serverDb[m].outstanding) || 0; 
+                 let oldOd = parseInt(serverDb[m].overdue) || 0;
+                 
+                 if (newStatus === 'Deactive' || newStatus === 'Deleted') { 
+                     newOut = 0; 
+                     newOd = 0; 
+                     serverDb[m].advancePaid = 0; 
+                     serverDb[m].emiSettled = null; 
+                 } 
+
+                 // Log transaction ONLY when all errors are cleared
                  if (oldOut !== newOut || oldOd !== newOd) {
                      if (!serverDb[m].transactions) serverDb[m].transactions = [];
                      
@@ -2695,40 +2767,23 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                      }
                  }
 
-                 // FIX 2: Date clearing & dual format (DD-MM-YYYY & YYYY-MM-DD) support
-                 let rawDate = getSafeValue('edit-cust-due-date');
-                 if (rawDate === "") rawDate = "N/A";
-                 let safeDate = rawDate.replace(/\//g, '-').replace(/\./g, '-');
-
-                 let rawDisbDate = getSafeValue('edit-cust-disbursal-date');
-                 if (rawDisbDate === "") rawDisbDate = "N/A";
-                 let safeDisbDate = rawDisbDate.replace(/\//g, '-').replace(/\./g, '-');
-
-                 const dateRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
-                 const isoDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/; 
-
-                 if(isoDateRegex.test(safeDate)) { let p = safeDate.split('-'); safeDate = `${p[2]}-${p[1]}-${p[0]}`; }
-                 if(isoDateRegex.test(safeDisbDate)) { let p = safeDisbDate.split('-'); safeDisbDate = `${p[2]}-${p[1]}-${p[0]}`; }
-
-                 if(safeDate !== "N/A" && safeDate !== "Completed" && !dateRegex.test(safeDate)) { alert("❌ Error: Next Due Date ka format DD-MM-YYYY hona chahiye!"); return; }
-                 if(safeDisbDate !== "N/A" && safeDisbDate !== "Pending Approval" && !dateRegex.test(safeDisbDate)) { alert("❌ Error: Disbursal Date ka format DD-MM-YYYY hona chahiye!"); return; }
-                 
-                 let newStatus = getSafeValue('edit-cust-status') || serverDb[m].status;
-                 if (newStatus === 'Deactive' || newStatus === 'Deleted') { newOut = 0; newOd = 0; } // Force ZERO debt on closure
-
-                 // 🚨 FIX: Prevent Admin from bypassing NEFT workflow via Edit Data Panel
-                 if ((serverDb[m].status === 'Pending Approval' || serverDb[m].status === 'Pending NEFT') && newStatus === 'Active') {
-                     alert("⚠️ Dhyan Dein: Kisi bhi 'Pending' file ko yahan se direct 'Active' mat karein! Dashboard par jaakar 'Approve' ya 'NEFT Mark' button ka use karein, taaki EMI calendar aur Dates sahi se generate ho sakein.");
-                     return;
-                 }
-
                  let parsedEmisPaid = parseInt(getSafeValue('edit-cust-emis-paid'));
                  if(!isNaN(parsedEmisPaid)) { serverDb[m].emisPaidCount = parsedEmisPaid; }
                  
-                 serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; serverDb[m].outstanding = newOut; 
-                 // FIX 3: Protected the remaining fields from negative input crashes
+                 serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; 
+                 
+                 // 🚀 FIX: Smart Name Restoration logic
+                 if (newStatus === 'Deleted' && !serverDb[m].name.includes('(Deleted)')) {
+                     serverDb[m].name += " (Deleted)";
+                 } else if (newStatus !== 'Deleted' && serverDb[m].name.includes(' (Deleted)')) {
+                     serverDb[m].name = serverDb[m].name.replace(' (Deleted)', ''); // Status wapas Active hone par tag hata dega
+                 }
+                 
+                 serverDb[m].outstanding = newOut; 
                  serverDb[m].cycleEmi = Math.max(0, parseInt(getSafeValue('edit-cust-emi'))||0);
-                 serverDb[m].overdue = newOd; serverDb[m].status = newStatus; serverDb[m].nextEmiDate = safeDate;
+                 serverDb[m].overdue = newOd; 
+                 serverDb[m].status = newStatus; 
+                 serverDb[m].nextEmiDate = safeDate;
                  
                  // Updating Disbursal Math
                  if (safeDisbDate !== "N/A") {
@@ -2757,8 +2812,18 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 try { 
                     // FIX: Hard Delete causes ghost data sync bugs from offline staff devices. Using Soft-Delete Override instead.
                     serverDb[m].status = "Deleted";
+                    serverDb[m].outstanding = 0; // 🚀 FIX: Wipe debt memory
+                    serverDb[m].overdue = 0; // 🚀 FIX: Wipe penalty memory
+                    serverDb[m].nextEmiDate = "Completed"; // 🚀 FIX: Kill calendar schedule
+                    serverDb[m].advancePaid = 0;
+                    serverDb[m].emiSettled = null; // 🚀 FIX: Clear running EMI flags
                     serverDb[m].lastUpdated = Date.now();
-                    serverDb[m].name = serverDb[m].name + " (Deleted)";
+                    
+                    // 🚀 FIX: Prevent double "(Deleted) (Deleted)" tags
+                    if (!serverDb[m].name.includes('(Deleted)')) {
+                        serverDb[m].name = serverDb[m].name + " (Deleted)";
+                    }
+                    
                     await localforage.setItem('opas_local_db', serverDb); 
                     await saveDataToCloud(m);
                     
@@ -2932,6 +2997,19 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         aZone.innerHTML = `<p class="text-[10px] text-center text-slate-400 p-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed uppercase font-bold tracking-widest">No files pending for approval.</p>`;
                     } else {
                         aZone.innerHTML = pendingApprovalHtml;
+                    }
+                }
+
+                // 🌟 NAYA: STAFF DASHBOARD LIVE APPROVAL QUEUE INJECTION
+                const sqZone = document.getElementById('staff-dash-queue-zone');
+                const sqContainer = document.getElementById('staff-live-pending-queue');
+                if (sqZone && sqContainer) {
+                    if (pendingCount > 0 && currentLoggedInRole === 'staff') {
+                        sqZone.innerHTML = pendingApprovalHtml;
+                        setHtmlSafe('staff-dash-queue-badge', `${pendingCount} Pending`);
+                        sqContainer.classList.remove('hidden');
+                    } else {
+                        sqContainer.classList.add('hidden');
                     }
                 }
 
@@ -3948,6 +4026,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
         }
 
         async function uploadDayEndReport() {
+            // 🚀 FIX: Prevent Day-End collision
+            if (isSystemBusy) { alert("Background sync chal raha hai, kripya 5 second rukiye..."); return; }
+            isSystemBusy = true; // System ko heavy task ke liye lock kar do
             try {
                 let btn = document.getElementById('upload-day-btn');
                 if(btn) { 
@@ -3996,8 +4077,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
                     if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
-                    // 🚀 FIX: Prevent Math Recalculation (Duplicate Entries) on Retry Upload
-                    if (!c._pendingEmiClear && !c._pendingAdvanceClear) {
+                    // 🚀 FIX: Date-based lock prevents duplicate math on retry AND auto-unlocks next day
+                    if (c.lastDayEndProcessed !== todayStr) {
 
                     if (isClientDue && c.status === "Active" && c.outstanding > 0) {
                         if (!c.emiSettled && !c.advancePaid) { c.emiSettled = 'bounce'; }
@@ -4111,9 +4192,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     }
                     } // 🚀 FIX: Closing bracket to lock the Math Calculation block
 
-                    // 🚀 FIX: Temporary properties hatane se pehle ensure karo ki cloud sync successful ho
-                    c._pendingAdvanceClear = true;
-                    c._pendingEmiClear = true;
+                    // 🚀 FIX: Update processing date lock
+                    c.lastDayEndProcessed = todayStr;
                     c.lastUpdated = Date.now(); 
                 });
 
@@ -4180,8 +4260,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         let cleanData = JSON.parse(JSON.stringify(serverDb[k]));
                         cleanData.advancePaid = 0;
                         cleanData.emiSettled = null;
-                        delete cleanData._pendingAdvanceClear;
-                        delete cleanData._pendingEmiClear;
+                        // Date-lock inherently protects state, no need to delete tricky boolean flags!
                         return { mobile: k, data: cleanData };
                     });
                     
@@ -4200,11 +4279,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     if(res.ok) {
                         // 🚀 FIX: Ab jab Cloud ne data accept kar liya hai, tab local memory clean karo
                         Object.keys(serverDb).forEach(m => {
-                            if (serverDb[m] && serverDb[m]._pendingAdvanceClear) {
+                            if (serverDb[m] && serverDb[m].lastDayEndProcessed === todayStr) {
                                 serverDb[m].advancePaid = 0; 
                                 serverDb[m].emiSettled = null;
-                                delete serverDb[m]._pendingAdvanceClear;
-                                delete serverDb[m]._pendingEmiClear;
                             }
                         });
                         await localforage.setItem('opas_local_db', serverDb);
@@ -4226,7 +4303,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 renderStaffLedgerSheets();
                 
                 if(btn) { btn.innerText = "Upload Day-End 📤"; btn.disabled = false; }
+                isSystemBusy = false; // 🚀 FIX: Unlock system jab day-end success ho jaye
             } catch(e) {
+                isSystemBusy = false; // 🚀 FIX: Unlock system agar error aaye
                 console.error(e);
                 let btn = document.getElementById('upload-day-btn');
                 if(btn) { 
@@ -4420,6 +4499,16 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         silentHeadRadar();
                     } else if (data.role === 'staff') { 
                         let staff = staffDb[u];
+                        // 🛡️ CRITICAL FIX: Agar Staff account abhi sync nahi hua hai, toh crash hone se bachao aur case-insensitive dhundho
+                        if (!staff) {
+                            let realKey = Object.keys(staffDb).find(k => k.toLowerCase() === u.toLowerCase());
+                            if (realKey) staff = staffDb[realKey];
+                        }
+                        if (!staff) {
+                            alert("Account Syncing... Thodi der me dobara try karein. (Agar lagatar aaye toh Head se apni branch config karwayein)");
+                            return; // Yahan se script wapas bhej do, aage UI crash na ho!
+                        }
+
                         const df = document.getElementById('dashboard-active-branch-select'); 
                         const lf = document.getElementById('ledger-active-branch-select');
                         const sf = document.getElementById('settle-branch-filter'); 
@@ -4514,7 +4603,51 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
                 document.querySelectorAll('.role-cust, .role-staff, .role-head, #dash-active-acc-block, #dash-closed-acc-block, #dash-branch-filter-zone').forEach(el => el.classList.add('hidden'));
                 
-                if(role === 'customer') { 
+                // 🌟 NAYA: Background Auto-Sync Engine (Har 45 seconds me automatically naya data layega bina click kiye)
+                if (autoSyncRadar) clearInterval(autoSyncRadar);
+                if (role === 'head' || role === 'staff') {
+                    autoSyncRadar = setInterval(async () => {
+                        // 🚀 FIX: Day-End upload ya manual heavy sync ke dauran background sync skip karo
+                        if (isSystemBusy) return;
+
+                        try {
+                            isSystemBusy = true; // Lock laga do
+                            const cloudStatusText = document.getElementById('cloud-status');
+                            if(cloudStatusText) cloudStatusText.innerText = "☁️ Auto-Syncing...";
+                            
+                            await loadDataFromCloud();
+                            refreshHeadDashboardStats();
+                            isSystemBusy = false; // Lock khol do
+                            
+                            // 🛡️ SMART TYPING, SCROLL & MODAL PROTECTION
+                            let isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+                            let isModalOpen = !document.getElementById('global-modal-overlay').classList.contains('hidden');
+                            
+                            if(!isTyping && !isModalOpen) {
+                                // 🚀 FIX: Scroll position save karo taaki list refresh hone par wapas upar jump na mare
+                                let ledgerZone = document.getElementById('staff-cycle-list-zone');
+                                let clientZone = document.getElementById('client-directory-list-zone');
+                                let ledgerScroll = ledgerZone ? ledgerZone.scrollTop : 0;
+                                let clientScroll = clientZone ? clientZone.scrollTop : 0;
+
+                                if(!document.getElementById('view-node-ledger').classList.contains('hidden')) {
+                                    renderStaffLedgerSheets();
+                                    if(document.getElementById('staff-cycle-list-zone')) document.getElementById('staff-cycle-list-zone').scrollTop = ledgerScroll;
+                                }
+                                if(!document.getElementById('view-node-clients').classList.contains('hidden')) {
+                                    renderClientDirectory();
+                                    if(document.getElementById('client-directory-list-zone')) document.getElementById('client-directory-list-zone').scrollTop = clientScroll;
+                                }
+                            }
+                            
+                            setTimeout(() => { if(cloudStatusText) cloudStatusText.innerText = "☁️ Data Synced!"; }, 2000);
+                        } catch(e){
+                            isSystemBusy = false; // Error aaye tab bhi lock khol do
+                        }
+                    }, 45000); // 45 seconds ki cycle
+                }
+
+                if(role === 'customer') {
                     document.querySelectorAll('.role-cust').forEach(el => el.classList.remove('hidden'));
                     let u = serverDb[currentlyLoggedInMobile]; if(u) { setHtmlSafe('sidebar-name', u.name); setHtmlSafe('sidebar-role', "Client Account"); setHtmlSafe('sidebar-avatar', u.name ? u.name.substring(0,2).toUpperCase() : "NA"); }
                     routePanelSection('cust-portal'); 
@@ -4535,6 +4668,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
         function logout() { 
             try {
                 if(headPendingRadar) clearInterval(headPendingRadar); // Radar Off
+                if(autoSyncRadar) clearInterval(autoSyncRadar); // Auto-Sync Off
                 previousPendingCount = -1;
                 
                 // Clear state variables
