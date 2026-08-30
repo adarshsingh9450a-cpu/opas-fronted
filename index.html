@@ -1177,7 +1177,10 @@
         async function silentHeadRadar() {
             if (currentLoggedInRole !== 'head') return;
             try {
-                const response = await fetch(API_URL);
+                const token = localStorage.getItem('opas_jwt_token');
+                const response = await fetch(API_URL, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 if (response.ok) {
                     let cloudData = await response.json();
                     let currentPending = 0;
@@ -1255,7 +1258,20 @@
                 let hasMore = true;
 
                 while (hasMore) {
-                    const response = await fetch(`${API_URL}?limit=${limit}&lastMobile=${lastMobile}`);
+                    const token = localStorage.getItem('opas_jwt_token');
+                    const response = await fetch(`${API_URL}?limit=${limit}&lastMobile=${lastMobile}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    // 🚀 FIX: Force logout if token expires to prevent fake offline data entry
+                    if (response.status === 401 || response.status === 403) {
+                        alert("Session Expired! Please login again to sync data. Your offline data is SAFE.");
+                        // DO NOT call full logout() as it wipes local DB. Just clear tokens and reload.
+                        localStorage.removeItem('opas_jwt_token');
+                        localStorage.removeItem('opas_sess_role');
+                        window.location.reload();
+                        throw new Error("Session Expired, halting execution."); // 🚀 FIX: Isko dalna zaroori hai warna day-end math chalta rahega
+                    }
                     if (!response.ok) throw new Error("Cloud Error");
                     
                     let chunk = await response.json();
@@ -1265,7 +1281,8 @@
                         hasMore = false; 
                     } else {
                         Object.assign(cloudData, chunk); 
-                        lastMobile = keys[keys.length - 1]; 
+                        // 🌟 NAYA FIX: Keys ko strictly sort karna padega warna JS unhe jumble kar dega
+                        lastMobile = keys.sort()[keys.length - 1]; 
                         document.getElementById('cloud-status').innerText = `☁️ Syncing... (${Object.keys(cloudData).length})`;
                     }
                 }
@@ -1279,6 +1296,37 @@
                             let isCloudApproved = (cloudData[k].status === "Active" && serverDb[k] && serverDb[k].status === "Pending Approval");
                             
                             if (isCloudNewer || isCloudApproved) {
+                                // 🚀 FIX: Prevent Cloud from wiping out unsynced offline collections & Retry State
+                                if (serverDb[k]) {
+                                    if (serverDb[k].emiSettled || serverDb[k].advancePaid > 0) {
+                                        cloudData[k].emiSettled = serverDb[k].emiSettled;
+                                        cloudData[k].advancePaid = serverDb[k].advancePaid;
+                                        cloudData[k].tempAdv = serverDb[k].tempAdv;
+                                    }
+                                    if (serverDb[k]._pendingEmiClear) {
+                                        cloudData[k]._pendingEmiClear = serverDb[k]._pendingEmiClear;
+                                        cloudData[k]._pendingAdvanceClear = serverDb[k]._pendingAdvanceClear;
+                                    }
+                                    
+                                    // 🛡️ CRITICAL FIX 1: Protect offline Renewals & Direct Settlements from being wiped out by old cloud states
+                                    if ((serverDb[k].status === "Pending Approval" && cloudData[k].status === "Deactive") || 
+                                        (serverDb[k].status === "Deactive" && cloudData[k].status === "Active") || 
+                                        (serverDb[k].status === "Deleted" && cloudData[k].status !== "Deleted")) {
+                                        cloudData[k] = serverDb[k]; 
+                                    } 
+                                    // 🛡️ CRITICAL FIX 2: Protect unsynced transactions and shifted EMI dates from getting rolled back
+                                    else if (serverDb[k].transactions && cloudData[k].transactions) {
+                                        if (serverDb[k].transactions.length > cloudData[k].transactions.length) {
+                                            cloudData[k].transactions = serverDb[k].transactions;
+                                            cloudData[k].outstanding = serverDb[k].outstanding;
+                                            cloudData[k].overdue = serverDb[k].overdue;
+                                            cloudData[k].emisPaidCount = serverDb[k].emisPaidCount;
+                                            cloudData[k].nextEmiDate = serverDb[k].nextEmiDate;
+                                            cloudData[k].lastPaymentDate = serverDb[k].lastPaymentDate;
+                                            cloudData[k].status = serverDb[k].status;
+                                        }
+                                    }
+                                }
                                 serverDb[k] = cloudData[k]; 
                             }
                         }
@@ -1336,7 +1384,7 @@
                 await localforage.setItem('opas_local_db', serverDb);
                 document.getElementById('cloud-status').innerText = "☁️ Syncing...";
                 const token = localStorage.getItem('opas_jwt_token');
-                await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST', 
                     headers: { 
                         'Content-Type': 'application/json',
@@ -1344,6 +1392,16 @@
                     },
                     body: JSON.stringify({ mobile: mobileNumber, data: serverDb[mobileNumber] })
                 });
+                
+                // 🚀 FIX: Catch silent fetch errors (Token Expiry or Server Crash)
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('opas_jwt_token');
+                    localStorage.removeItem('opas_sess_role');
+                    window.location.reload();
+                    throw new Error("Token Expired");
+                }
+                if (!response.ok) throw new Error("Server Reject");
+
                 document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
             } catch (error) { 
                 document.getElementById('cloud-status').innerText = "⚠️ Saved Locally (Pending Cloud)"; 
@@ -1352,7 +1410,11 @@
 
         async function saveSystemSettings() {
             try {
-                const response = await fetch(API_URL);
+                const token = localStorage.getItem('opas_jwt_token');
+                // 🚀 FIX: Backend uses "WHERE mobile > lastMobile". To fetch "SYSTEM_SETTINGS", we must pass "SYSTEM_SETTINGR" (R comes before S)
+                const response = await fetch(`${API_URL}?limit=2&lastMobile=SYSTEM_SETTINGR`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 if (response.ok) {
                     const contentType = response.headers.get("content-type");
                     if (!contentType || !contentType.includes("application/json")) {
@@ -1396,6 +1458,13 @@
                         let cloudCoords = cloudData["SYSTEM_SETTINGS"].branchCoords || {};
                         Object.keys(cloudCoords).forEach(b => {
                             serverDb["SYSTEM_SETTINGS"].branchCoords[b] = { ...(cloudCoords[b] || {}), ...(serverDb["SYSTEM_SETTINGS"].branchCoords[b] || {}) };
+                        });
+
+                        // 🌟 NAYA FIX 5: Deep Merge Branch Stats taaki ek branch dusri ka data na udaye
+                        if(!serverDb["SYSTEM_SETTINGS"].branchStats) serverDb["SYSTEM_SETTINGS"].branchStats = {};
+                        let cloudStats = cloudData["SYSTEM_SETTINGS"].branchStats || {};
+                        Object.keys(cloudStats).forEach(b => {
+                            serverDb["SYSTEM_SETTINGS"].branchStats[b] = { ...(cloudStats[b] || {}), ...(serverDb["SYSTEM_SETTINGS"].branchStats[b] || {}) };
                         });
                     }
                 }
@@ -1619,6 +1688,7 @@
                             setHtmlSafe('sidebar-name', staff.name||'Unk'); setHtmlSafe('sidebar-role', `Staff (${staff.empId||''})`);
                             let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); setHtmlSafe('sidebar-avatar', ini);
                             showDashboard('staff'); updatePendingRequestsBadge();
+                            syncSetupDropdowns(); // 🌟 FIX: Force lock all dropdowns (KYC, Settle) for Auto-Logged in Staff
                         } else { logout(); } // Auto-logout if admin deleted this staff account
                     }
                 } else { logout(); } // Time Expired
@@ -2025,18 +2095,44 @@
 
         function syncSetupDropdowns() {
             try {
-                let bOpt = `<option value="">-- Select Branch --</option>`; branchList.forEach(b => { bOpt += `<option value="${b}">${b}</option>`; });
+                let isStaff = (currentLoggedInRole === 'staff');
+                let staffBranch = "";
+                if (isStaff && currentlyLoggedInMobile && staffDb[currentlyLoggedInMobile]) {
+                    staffBranch = staffDb[currentlyLoggedInMobile].branch; // Fetch locked branch from profile
+                } else if (isStaff) {
+                    staffBranch = getSafeValue('dashboard-active-branch-select');
+                }
+
+                // 🚀 FIX: Lock Staff to their own branch only, Head sees all
+                let bOpt = `<option value="">-- Select Branch --</option>`; 
+                if (isStaff && staffBranch) {
+                    bOpt = `<option value="${staffBranch}">${staffBranch}</option>`;
+                } else {
+                    branchList.forEach(b => { bOpt += `<option value="${b}">${b}</option>`; });
+                }
+
                 let ks = document.getElementById('new-cust-branch'); if(ks) ks.innerHTML = bOpt;
-                let ps = document.getElementById('setup-centre-parent'); if(ps) ps.innerHTML = bOpt;
-                let sb = document.getElementById('new-staff-branch'); if(sb) sb.innerHTML = bOpt;
+                let ps = document.getElementById('setup-centre-parent'); if(ps && !isStaff) ps.innerHTML = bOpt;
+                let sb = document.getElementById('new-staff-branch'); if(sb && !isStaff) sb.innerHTML = bOpt;
                 let stB = document.getElementById('settle-branch-filter'); if(stB) stB.innerHTML = bOpt;
 
-                let fOpt = ``; branchList.forEach((b, idx) => { fOpt += `<option value="${b}" ${idx===0?'selected':''}>${b}</option>`; });
-                let db = document.getElementById('dashboard-active-branch-select'); if(db) db.innerHTML = fOpt;
-                let lb = document.getElementById('ledger-active-branch-select'); if(lb) lb.innerHTML = fOpt;
+                let fOpt = ``; 
+                if (isStaff && staffBranch) {
+                    fOpt = `<option value="${staffBranch}">${staffBranch}</option>`;
+                } else {
+                    branchList.forEach((b, idx) => { fOpt += `<option value="${b}" ${idx===0?'selected':''}>${b}</option>`; });
+                }
+                
+                let db = document.getElementById('dashboard-active-branch-select'); 
+                if(db && (!isStaff || db.options.length === 0)) db.innerHTML = fOpt;
+                
+                let lb = document.getElementById('ledger-active-branch-select'); 
+                if(lb && (!isStaff || lb.options.length === 0)) lb.innerHTML = fOpt;
 
-                let hOpt = `<option value="ALL">Global View (All Branches)</option>`; branchList.forEach(b => { hOpt += `<option value="${b}">Branch: ${b}</option>`; });
-                let hb = document.getElementById('head-analytics-branch-selector'); if(hb) hb.innerHTML = hOpt;
+                if (!isStaff) {
+                    let hOpt = `<option value="ALL">Global View (All Branches)</option>`; branchList.forEach(b => { hOpt += `<option value="${b}">Branch: ${b}</option>`; });
+                    let hb = document.getElementById('head-analytics-branch-selector'); if(hb) hb.innerHTML = hOpt;
+                }
                 
                 syncReportDropdowns(); renderSetupLists();
             } catch(e) {}
@@ -3893,6 +3989,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
                     if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
+                    // 🚀 FIX: Prevent Math Recalculation (Duplicate Entries) on Retry Upload
+                    if (!c._pendingEmiClear && !c._pendingAdvanceClear) {
+
                     if (isClientDue && c.status === "Active" && c.outstanding > 0) {
                         if (!c.emiSettled && !c.advancePaid) { c.emiSettled = 'bounce'; }
                     }
@@ -4003,11 +4102,15 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; 
                         }
                     }
-                    
-                    c.advancePaid = 0; c.emiSettled = null;
-                    c.lastUpdated = Date.now(); // Fix: Force update timestamp so backend accepts the Day-End changes
+                    } // 🚀 FIX: Closing bracket to lock the Math Calculation block
+
+                    // 🚀 FIX: Temporary properties hatane se pehle ensure karo ki cloud sync successful ho
+                    c._pendingAdvanceClear = true;
+                    c._pendingEmiClear = true;
+                    c.lastUpdated = Date.now(); 
                 });
 
+                // 🛡️ CRITICAL FIX: Day-End ka math cloud par bhejne se pehle Local DB me save karna ZAROORI hai!
                 await localforage.setItem('opas_local_db', serverDb);
 
                 // 🌟 NAYA: DYNAMIC TARGET & BONUS LOCK IN SYSTEM
@@ -4065,8 +4168,15 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 // 🚀 FIX: Bulk API Request to prevent Rate Limiting and Backend Overload
                 if (btn) btn.innerText = `Syncing Bulk Data... ☁️`;
                 try {
-                    // Saare clients ka ek single array bana rahe hain
-                    let bulkPayload = keys.map(k => ({ mobile: k, data: serverDb[k] }));
+                    // 🚀 FIX: Cloud ko hamesha clean data bhejein taaki kal koi double-deduction (zombie flag) bug na aaye
+                    let bulkPayload = keys.map(k => {
+                        let cleanData = JSON.parse(JSON.stringify(serverDb[k]));
+                        cleanData.advancePaid = 0;
+                        cleanData.emiSettled = null;
+                        delete cleanData._pendingAdvanceClear;
+                        delete cleanData._pendingEmiClear;
+                        return { mobile: k, data: cleanData };
+                    });
                     
                     // Backend par ek single request bhejenge (Apne API URL mein zarurat anusar '/bulk' add karein)
                     const token = localStorage.getItem('opas_jwt_token');
@@ -4081,7 +4191,20 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     });
                     
                     if(res.ok) {
+                        // 🚀 FIX: Ab jab Cloud ne data accept kar liya hai, tab local memory clean karo
+                        Object.keys(serverDb).forEach(m => {
+                            if (serverDb[m] && serverDb[m]._pendingAdvanceClear) {
+                                serverDb[m].advancePaid = 0; 
+                                serverDb[m].emiSettled = null;
+                                delete serverDb[m]._pendingAdvanceClear;
+                                delete serverDb[m]._pendingEmiClear;
+                            }
+                        });
+                        await localforage.setItem('opas_local_db', serverDb);
+
                         if (btn) btn.innerText = `Synced ${keys.length}/${keys.length} ☁️`;
+                        // 🌟 NAYA FIX: Bulk sync ke baad System Settings (Bonus/Stats) ko bhi forcefully cloud par bhejo
+                        await saveSystemSettings();
                     } else {
                         throw new Error("Bulk sync failed due to server error");
                     }
@@ -4305,6 +4428,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         
                         showDashboard('staff'); 
                         updatePendingRequestsBadge();
+                        syncSetupDropdowns(); // 🌟 FIX: Lock cross-branch access for newly logged in Staff
                     }
                 } else {
                     alert(data.message || 'Galat Credentials!');
@@ -4803,7 +4927,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             let bulkPayload = selectedClients.map(m => ({ mobile: m, data: serverDb[m] }));
             const token = localStorage.getItem('opas_jwt_token');
             
-            await fetch(API_URL + '/bulk', {
+            let res = await fetch(API_URL + '/bulk', {
                 method: 'POST', 
                 headers: { 
                     'Content-Type': 'application/json',
@@ -4811,6 +4935,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 },
                 body: JSON.stringify({ clients: bulkPayload })
             });
+
+            // 🚀 FIX: Verify the server actually processed the data before alerting success
+            if (!res.ok) throw new Error("Bulk Binding Sync Failed");
 
             alert(`✅ Successfully aligned ${selectedClients.length} clients to ${dayNames[targetDay]}!`);
             
