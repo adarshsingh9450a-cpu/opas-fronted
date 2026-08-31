@@ -1097,7 +1097,7 @@
             <div id="view-node-cust-profile" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-5">
                     <div class="text-center border-b border-slate-100 pb-4"><div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl">⚙️</div><h3 class="text-xs font-black text-slate-900 uppercase">Profile Settings</h3></div>
-                    <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200"><p class="text-[10px] font-bold text-slate-500 text-center">Note: Address updates require branch approval.</p><textarea id="cust-edit-address" rows="3" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-semibold resize-none focus:outline-none"></textarea><button onclick="alert('Update request sent.')" class="btn-fluid w-full py-4 bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl mt-2">Request Update</button></div>
+                    <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200"><p class="text-[10px] font-bold text-slate-500 text-center">Note: Address updates require branch approval.</p><textarea id="cust-edit-address" rows="3" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-semibold resize-none focus:outline-none"></textarea><button onclick="if(serverDb[currentlyLoggedInMobile]){ serverDb[currentlyLoggedInMobile].address = document.getElementById('cust-edit-address').value; saveDataToCloud(currentlyLoggedInMobile); alert('Address Updated Successfully!'); }" class="btn-fluid w-full py-4 bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl mt-2">Update Address</button>
                 </div>
             </div>
 
@@ -1296,8 +1296,8 @@
                         // DO NOT call full logout() as it wipes local DB. Just clear tokens and reload.
                         localStorage.removeItem('opas_jwt_token');
                         localStorage.removeItem('opas_sess_role');
-                        window.location.reload();
-                        throw new Error("Session Expired, halting execution."); // 🚀 FIX: Isko dalna zaroori hai warna day-end math chalta rahega
+                        setTimeout(() => { window.location.reload(); }, 1500); // 🚀 FIX: Added delay to halt completely before reload
+                        throw new Error("Session Expired, halting execution."); 
                     }
                     if (!response.ok) throw new Error("Cloud Error");
                     
@@ -1323,6 +1323,17 @@
                             let isCloudApproved = (cloudData[k].status === "Active" && serverDb[k] && serverDb[k].status === "Pending Approval");
                             
                             if (isCloudNewer || isCloudApproved) {
+                                // 🛡️ CRITICAL FIX: Protect offline Staff Attendance from being wiped by Admin Updates
+                                if (k === "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].staff) {
+                                    let cStaff = cloudData[k].staff || {};
+                                    let lStaff = serverDb[k].staff || {};
+                                    Object.keys(lStaff).forEach(emp => {
+                                        if(cStaff[emp]) {
+                                            cStaff[emp].attendance = { ...(cStaff[emp].attendance || {}), ...(lStaff[emp].attendance || {}) };
+                                        }
+                                    });
+                                }
+
                                 // 🚀 FIX: Prevent Cloud from wiping out unsynced offline collections & Retry State
                                 if (serverDb[k]) {
                                     if (serverDb[k].emiSettled || serverDb[k].advancePaid > 0) {
@@ -1343,7 +1354,11 @@
                                     } 
                                     // 🛡️ CRITICAL FIX 2: Protect unsynced transactions and shifted EMI dates from getting rolled back
                                     else if (serverDb[k].transactions && cloudData[k].transactions) {
-                                        if (serverDb[k].transactions.length > cloudData[k].transactions.length) {
+                                        let localPast = serverDb[k].pastLoans ? serverDb[k].pastLoans.length : 0;
+                                        let cloudPast = cloudData[k].pastLoans ? cloudData[k].pastLoans.length : 0;
+
+                                        // 🚀 FIX: Agar cloud par "pastLoans" badh gaye hain matlab client Renew hua hai. Tab transaction array reset hona normal hai, usko rollback mat karo!
+                                        if (serverDb[k].transactions.length > cloudData[k].transactions.length && cloudPast <= localPast) {
                                             cloudData[k].transactions = serverDb[k].transactions;
                                             cloudData[k].outstanding = serverDb[k].outstanding;
                                             cloudData[k].overdue = serverDb[k].overdue;
@@ -1424,7 +1439,7 @@
                 if (response.status === 401 || response.status === 403) {
                     localStorage.removeItem('opas_jwt_token');
                     localStorage.removeItem('opas_sess_role');
-                    window.location.reload();
+                    setTimeout(() => { window.location.reload(); }, 1500); // 🚀 FIX: Halt to prevent rapid reload crashes
                     throw new Error("Token Expired");
                 }
                 if (!response.ok) throw new Error("Server Reject");
@@ -1448,7 +1463,9 @@
                         throw new Error("Render Gateway Error or Cold Start HTML received.");
                     }
                     let cloudData = await response.json();
-                    if (cloudData["SYSTEM_SETTINGS"]) {
+                    
+                    // 🛡️ FIX: Safe check - ensure data exists before wiping local config
+                    if (cloudData && typeof cloudData === 'object' && cloudData["SYSTEM_SETTINGS"] && Object.keys(cloudData["SYSTEM_SETTINGS"]).length > 0) {
                         // 🛠️ FIX: Deep Merging for Offline/Online Data Synchronization
                         branchList = [...new Set([...(cloudData["SYSTEM_SETTINGS"].branches || []), ...branchList])];
                         
@@ -1493,9 +1510,17 @@
                         Object.keys(cloudStats).forEach(b => {
                             serverDb["SYSTEM_SETTINGS"].branchStats[b] = { ...(cloudStats[b] || {}), ...(serverDb["SYSTEM_SETTINGS"].branchStats[b] || {}) };
                         });
+
+                        // 🛡️ CRITICAL FIX 6: Merge Global Configs (UPI, Bonus & Leaves) to prevent cross-device overwrite
+                        if (cloudData["SYSTEM_SETTINGS"].companyUpi) serverDb["SYSTEM_SETTINGS"].companyUpi = cloudData["SYSTEM_SETTINGS"].companyUpi;
+                        if (cloudData["SYSTEM_SETTINGS"].bonusConfig) serverDb["SYSTEM_SETTINGS"].bonusConfig = cloudData["SYSTEM_SETTINGS"].bonusConfig;
+                        if (cloudData["SYSTEM_SETTINGS"].leaves) serverDb["SYSTEM_SETTINGS"].leaves = cloudData["SYSTEM_SETTINGS"].leaves;
                     }
                 }
-            } catch(e) { console.error("Sync merge error"); }
+            } catch(e) { 
+                console.error("Sync merge error", e); 
+                return; // 🚀 FIX: Cloud error aane par local incomplete data upload hone se roko
+            }
             
             if(!serverDb["SYSTEM_SETTINGS"].branchCoords) serverDb["SYSTEM_SETTINGS"].branchCoords = {};
             // 🚀 FIX: Preserve Custom Fields during updates
@@ -1713,7 +1738,8 @@
                         
                         if(staff) {
                             currentLoggedInRole = 'staff'; 
-                            const df = document.getElementById('dashboard-active-branch-select'); 
+                            currentlyLoggedInMobile = id; // 🚀 FIX: Store Staff ID in global session state
+                            const df = document.getElementById('dashboard-active-branch-select');
                             const lf = document.getElementById('ledger-active-branch-select');
                             const sf = document.getElementById('settle-branch-filter'); 
                             if(df) df.innerHTML = `<option value="${staff.branch}">${staff.branch}</option>`; 
@@ -1730,15 +1756,23 @@
         }
 
         async function forceCloudSync(event) {
+            if (isSystemBusy) { alert("Background sync chal raha hai, kripya thodi der rukein."); return; } 
+            isSystemBusy = true; // 🚀 FIX: Actually set the lock so background auto-sync doesn't clash
             let btn = event.currentTarget.querySelector('span');
             btn.classList.add('spin-fast');
-            await loadDataFromCloud();
-            if(currentLoggedInRole !== 'customer') { 
-                refreshHeadDashboardStats(); 
-                syncSetupDropdowns();
-                syncKycPlanDropdown();
+            try {
+                await loadDataFromCloud();
+                if(currentLoggedInRole !== 'customer') { 
+                    refreshHeadDashboardStats(); 
+                    syncSetupDropdowns();
+                    syncKycPlanDropdown();
+                }
+            } catch (e) {
+                console.error("Sync failed:", e);
+                alert("Sync failed! Please check your internet connection.");
+            } finally {
+                setTimeout(() => { btn.classList.remove('spin-fast'); isSystemBusy = false; }, 500); // 🚀 FIX: ALWAYS release the lock safely, even on error
             }
-            setTimeout(() => { btn.classList.remove('spin-fast'); }, 500);
         }
 
         function setHtmlSafe(id, val) { try { const el = document.getElementById(id); if(el) el.innerText = (val !== undefined && val !== null && val !== "") ? val : "-"; } catch (e) {} }
@@ -1940,8 +1974,10 @@
             setHtmlSafe('lbl-p-spouse-1', c.spouse);
             setHtmlSafe('lbl-p-sys-id-1', c.id);
             setHtmlSafe('lbl-p-voter-1', c.voterRef);
-            // FIX: Print actual imported date instead of "Pending" for legally backdated loans
-            let displayDate = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate + " (Imported)" : "Pending Approval";
+            // 🖨️ FIX: Show correct approval date for active loans, not just backdated ones
+            let displayDate = "Pending Approval";
+            if (c.customAppDate && c.customAppDate !== "N/A") displayDate = c.customAppDate + " (Imported)";
+            else if (c.approvalDate && c.approvalDate !== "N/A") displayDate = c.approvalDate;
             setHtmlSafe('lbl-p-approval-date-1', displayDate);
             setHtmlSafe('lbl-p-nominee-1', c.nominee);
             setHtmlSafe('lbl-p-relation-1', c.nomineeRelation);
@@ -1999,6 +2035,71 @@
             setHtmlSafe('lbl-r-date', receiptDate);
             setHtmlSafe('lbl-r-amt', `₹${paidAmt}`);
             window.print();
+        }
+
+        // 🚀 FIX: Added Missing Staff UI Functions (Prevents ReferenceError Crash)
+        function renderStaffProfile() {
+            try {
+                let s = staffDb[currentlyLoggedInMobile];
+                if (!s) return;
+                setHtmlSafe('sp-name', s.name || 'Unknown');
+                setHtmlSafe('sp-role', `${s.role || 'Staff'} | ${s.branch || 'N/A'}`);
+                setHtmlSafe('sp-avatar', s.name ? s.name.substring(0,2).toUpperCase() : "ST");
+                setHtmlSafe('sp-base', `₹${s.baseSalary || 0}`);
+                setHtmlSafe('sp-mess', `₹${s.meshAllow || 0}`);
+                setHtmlSafe('sp-petrol', `₹${s.petrolAllow || 0}`);
+                
+                let present = 0, absent = 0;
+                let d = new Date(); 
+                let cy = d.getFullYear(); 
+                let cm = (d.getMonth() + 1).toString().padStart(2, '0');
+                
+                if(s.attendance) {
+                    // 🛡️ FIX: Count attendance for the CURRENT month only, not lifetime
+                    Object.keys(s.attendance).forEach(dateStr => {
+                        if (dateStr.substring(3, 10) === `${cm}-${cy}`) {
+                            let v = s.attendance[dateStr];
+                            if(v === 'Present' || v === true) present++; else absent++;
+                        }
+                    });
+                }
+                setHtmlSafe('sp-present', present);
+                setHtmlSafe('sp-leaves', absent);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderStaffAttendanceCalendar() {
+            try {
+                let s = staffDb[currentlyLoggedInMobile];
+                if (!s) return;
+                
+                let present = 0, absent = 0;
+                let d = new Date(); let cy = d.getFullYear(); let cm = d.getMonth() + 1;
+                let daysInMonth = new Date(cy, cm, 0).getDate();
+
+                let gridHtml = '';
+                for (let i = 1; i <= daysInMonth; i++) {
+                    let dateStr = `${i.toString().padStart(2, '0')}-${cm.toString().padStart(2, '0')}-${cy}`;
+                    let status = s.attendance ? s.attendance[dateStr] : null;
+                    let bg = 'bg-slate-50 border-slate-200 text-slate-400';
+                    
+                    if (status === 'Present' || status === true) { bg = 'bg-emerald-100 border-emerald-300 text-emerald-700 font-black'; present++; }
+                    if (status === 'Absent' || status === false) { bg = 'bg-rose-100 border-rose-300 text-rose-700 font-black'; absent++; }
+                    
+                    gridHtml += `<div class="p-2 border rounded-lg text-center ${bg} text-[10px]">${i}</div>`;
+                }
+
+                setHtmlSafe('att-present-count', present);
+                setHtmlSafe('att-absent-count', absent);
+                
+                let totalFixed = (s.baseSalary || 0) + (s.meshAllow || 0) + (s.petrolAllow || 0);
+                let earned = daysInMonth > 0 ? Math.round((totalFixed / daysInMonth) * present) : 0;
+                setHtmlSafe('att-total-salary', `₹${totalFixed}`);
+                setHtmlSafe('att-earned-salary', `₹${earned}`);
+                
+                let gridEl = document.getElementById('attendance-calendar-grid');
+                if (gridEl) gridEl.innerHTML = gridHtml;
+            } catch(e) { console.error(e); }
         }
 
         function routePanelSection(panelId) {
@@ -2130,6 +2231,7 @@
                     opt += `<option value="${p.id}">${p.name} - ₹${p.principal} [${tag}]</option>`;
                 });
                 let ps = document.getElementById('new-loan-plan-select'); if(ps) ps.innerHTML = opt;
+                // 🚀 FIX: Ensure Renew Dropdown successfully populates Hybrid Plans every time
                 let rps = document.getElementById('renew-loan-plan-select'); if(rps) rps.innerHTML = opt;
                 let aps = document.getElementById('apply-cust-plan-select'); if(aps) aps.innerHTML = opt;
             } catch(e) {}
@@ -2360,6 +2462,40 @@
             alert("✅ Staff Salary Updated!");
         }
 
+        // 🚀 FIX: Missing Transfer Staff Logic Added
+        function openTransferStaffModal(u) {
+            let s = staffDb[u];
+            if (!s) return;
+            let opts = '';
+            branchList.forEach(b => {
+                let sel = (b === s.branch) ? 'selected' : '';
+                opts += `<option value="${b}" ${sel}>${b}</option>`;
+            });
+            let html = `
+                <div class="text-center p-5">
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl">🔄</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase">Transfer Staff</h3>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-4">${s.name} | Current: ${s.branch}</p>
+                    <select id="transfer-staff-branch" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none mb-4">
+                        ${opts}
+                    </select>
+                    <button onclick="executeStaffTransfer('${u}')" class="btn-fluid w-full bg-indigo-600 text-white font-black py-4 rounded-xl text-xs uppercase shadow-md transition-colors">Confirm Transfer</button>
+                </div>
+            `;
+            openGlobalModal(html);
+        }
+
+        async function executeStaffTransfer(u) {
+            let newBranch = document.getElementById('transfer-staff-branch').value;
+            if(staffDb[u].branch === newBranch) { alert("Pehle se is branch me hai."); return; }
+            staffDb[u].branch = newBranch;
+            serverDb["SYSTEM_SETTINGS"].staff = staffDb;
+            await saveDataToCloud("SYSTEM_SETTINGS");
+            closeGlobalModal();
+            renderStaffList();
+            showNotification("Transfer Complete", "Staff ko nayi branch me bhej diya gaya hai.", "✅");
+        }
+
         async function deleteStaff(u) { 
             if(confirm(`Are you sure you want to delete staff account: ${u}?`)) { 
                 try {
@@ -2422,8 +2558,10 @@
                     
                     if (activeBranch !== "ALL" && c.branch !== activeBranch) return;
                     if (activeCentre !== "ALL" && c.center !== activeCentre) return;
-                    // BUG FIX: Mobile Number 'm' ko bhi search criteria mein add kiya hai
-                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !String(m).includes(searchQ)) return;
+                    // BUG FIX: Safer Mobile Number 'm' ko bhi search criteria mein add kiya hai
+                    let safeName = (c.name || "").toString().toLowerCase();
+                    let safeId = (c.id || "").toString().toLowerCase();
+                    if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !String(m).includes(searchQ)) return;
 
                     opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
                 });
@@ -2461,7 +2599,10 @@
                 if (m === "SYSTEM_SETTINGS") return;
                 let c = serverDb[m];
                 if (c && c.center === center && c.status === "Active") {
-                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !m.includes(searchQ)) return;
+                    // 🚀 FIX: Safer Search Logic (Prevents Null/Blank matching)
+                    let safeName = (c.name || "").toString().toLowerCase();
+                    let safeId = (c.id || "").toString().toLowerCase();
+                    if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !m.includes(searchQ)) return;
                     
                     let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
                     html += `
@@ -2518,7 +2659,10 @@
                     // 🛡️ SECURITY Check: Agar Head nahi hai, to sirf apni branch dekhe
                     if (activeBranch !== "ALL" && c.branch !== activeBranch) return;
 
-                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !m.includes(searchQ)) return;
+                    // 🚀 FIX: Safer Search Logic (Prevents Null/Blank matching)
+                    let safeName = (c.name || "").toString().toLowerCase();
+                    let safeId = (c.id || "").toString().toLowerCase();
+                    if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !m.includes(searchQ)) return;
                     
                     html += `
                     <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover-scale transition-colors">
@@ -2602,11 +2746,13 @@ if (safeAdvance > 0) {
 }
 
 // Fir Final Settlement ka hisaab likhein
-serverDb[m].transactions.push({
-    date: formatSysDate(new Date()),
-    amount: settlementAmount,
-    type: 'Direct Settle'
-});
+if (settlementAmount > 0) { // 🚀 FIX: Zero amount ki fake entry ko rokein
+    serverDb[m].transactions.push({
+        date: formatSysDate(new Date()),
+        amount: settlementAmount,
+        type: 'Direct Settle'
+    });
+}
 
 serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
@@ -2676,8 +2822,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             
             let activeOutstanding = c.totalPayable;
             // FIX: Prevent Infinity crash if old data has 0 duration
-            let activeCycleEmi = c.isHybrid ? c.phase1Emi : (c.totalPayable / (c.duration || 1));
-            if (!activeCycleEmi || activeCycleEmi <= 0 || !isFinite(activeCycleEmi)) activeCycleEmi = c.cycleEmi; 
+            let safeDuration = parseInt(c.duration) || 1; // 🚀 FIX: Properly parse duration to prevent string/0 division
+            let activeCycleEmi = c.isHybrid ? c.phase1Emi : (c.totalPayable / safeDuration);
+            if (!activeCycleEmi || activeCycleEmi <= 0 || !isFinite(activeCycleEmi)) activeCycleEmi = c.cycleEmi;
 
             if (typedPaidEmis > 0) {
                 for(let i = 0; i < typedPaidEmis; i++) {
@@ -2794,8 +2941,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                      // Auto-shift End Date
                      let newAppObj = parseSysDate(safeDisbDate);
                      if (newAppObj.getFullYear() !== 9999) {
-                         let durDays = serverDb[m].planType === 'weekly' ? serverDb[m].duration * 7 : serverDb[m].duration;
-                         newAppObj.setDate(newAppObj.getDate() + parseInt(durDays));
+                         // 🧮 FIX: Strictly parse duration to integer
+                         let safeDur = parseInt(serverDb[m].duration, 10) || 1;
+                         let durDays = serverDb[m].planType === 'weekly' ? safeDur * 7 : safeDur;
+                         newAppObj.setDate(newAppObj.getDate() + durDays);
                          serverDb[m].endDate = formatSysDate(newAppObj);
                      }
                  }
@@ -2876,8 +3025,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             let viewDetailsBtn = `<button onclick="showClientFullInfo('${k}')" class="w-full mt-3 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-black py-2 rounded-xl text-[10px] uppercase transition-all shadow-sm">📋 Check KYC Details</button>`;
 
                             let backdateBadge = (f.customAppDate && f.customAppDate !== "N/A") ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase shadow-sm ml-2 border border-amber-200">Imported</span>` : '';
+                            // 🚀 FIX: Distinctive Green Badge for Renewed Clients in Approval Queue
+                            let renewedQueueTag = f.isRenewed ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase shadow-sm ml-2 border border-emerald-200">Renewed</span>` : '';
                             
-                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm flex items-center">${f.name||'Unk'}${backdateBadge}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${viewDetailsBtn}${actionBtn}</div>`;
+                            pendingApprovalHtml += `<div class="p-5 bg-white border border-purple-200 rounded-3xl mb-3 hover-scale shadow-sm animate-fade"><div class="flex justify-between items-start"><div><h4 class="font-black text-slate-900 text-sm flex items-center">${f.name||'Unk'}${backdateBadge}${renewedQueueTag}</h4><p class="text-[9px] text-slate-500 font-bold uppercase mt-1">${f.branch||'NA'} / ${f.center||'NA'}</p></div><span class="text-[9px] bg-purple-200 text-purple-800 px-3 py-1.5 rounded-xl font-black uppercase shadow-sm pulse-glow">Pending</span></div><p class="text-[10px] text-purple-700 font-black mt-3 uppercase bg-purple-50 p-2.5 rounded-lg inline-block shadow-sm">₹${(f.principal||0).toLocaleString()} | ROI: ${f.roi||0}%</p>${viewDetailsBtn}${actionBtn}</div>`;
                         }
                         
                         // 🌟 NAYA: NEFT Dashboard List Rendering
@@ -2923,7 +3074,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                     let matchMY = (txMY === selectedMonthVal);
                                     let matchToday = (tx.date === todayStr);
 
-                                    if(tx.type === 'Received' || tx.type === 'Online App') {
+                                    // 💰 FIX: Include Advance and Direct Settle in total collections to balance cash in hand
+                                    if(tx.type === 'Received' || tx.type === 'Online App' || tx.type === 'Advance' || tx.type === 'Direct Settle') {
                                         if (isCurrentMonth && matchToday) cT += tx.amount;
                                         if (matchMY) cM += tx.amount;
                                     }
@@ -3163,8 +3315,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     c.approvalDate = c.customAppDate; 
                     
                     let appDateObj = parseSysDate(c.customAppDate);
-                    let durDays = c.planType === 'weekly' ? c.duration * 7 : c.duration;
-                    appDateObj.setDate(appDateObj.getDate() + parseInt(durDays));
+                    // 🧮 FIX: Strictly parse duration to integer to prevent string concatenation bugs
+                    let safeDur = parseInt(c.duration, 10) || 1;
+                    let durDays = c.planType === 'weekly' ? safeDur * 7 : safeDur;
+                    appDateObj.setDate(appDateObj.getDate() + durDays);
                     c.endDate = formatSysDate(appDateObj);
                     
                     c.lastPaymentDate = "N/A"; 
@@ -3210,8 +3364,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 c.approvalDate = finalAppDate; 
                 
                 let appDateObj = isBackdated ? parseSysDate(finalAppDate) : new Date();
-                let durDays = c.planType === 'weekly' ? c.duration * 7 : c.duration;
-                appDateObj.setDate(appDateObj.getDate() + parseInt(durDays));
+                // 🧮 FIX: Strictly parse duration to integer to prevent string concatenation bugs
+                let safeDur = parseInt(c.duration, 10) || 1;
+                let durDays = c.planType === 'weekly' ? safeDur * 7 : safeDur;
+                appDateObj.setDate(appDateObj.getDate() + durDays);
                 c.endDate = formatSysDate(appDateObj);
                 
                 c.lastPaymentDate = "N/A"; 
@@ -3287,8 +3443,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     if (currentLoggedInRole === 'head' && rt === 'centre' && sb !== "ALL" && c.branch !== sb) return;
                     if (rt === 'centre' && sc !== "ALL" && c.center !== sc) return;
 
-                    // BUG FIX: Name / ID / Mobile Search Logic
-                    if (searchQ && !(c.name && String(c.name).toLowerCase().includes(searchQ)) && !(c.id && String(c.id).toLowerCase().includes(searchQ)) && !mobile.includes(searchQ)) return;
+                    // BUG FIX: Safer Name / ID / Mobile Search Logic
+                    let safeName = (c.name || "").toString().toLowerCase();
+                    let safeId = (c.id || "").toString().toLowerCase();
+                    if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !mobile.includes(searchQ)) return;
 
                     let match = false;
                     if (rt === 'total' && c.status === "Active") match = true; 
@@ -3302,11 +3460,13 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         count++;
                         let statusColor = c.status === 'Active' ? 'text-emerald-500' : (c.status === 'Pending Approval' ? 'text-amber-500' : 'text-rose-500');
                         let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mr-1">Hybrid</span>` : '';
-                        let importedTag = (c.customAppDate && c.customAppDate !== "N/A") ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Imported</span>` : '';
+                        let importedTag = (c.customAppDate && c.customAppDate !== "N/A") ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-sm mr-1">Imported</span>` : '';
+                        // 🚀 FIX: Distinctive Green Badge for Renewed Clients
+                        let renewedTag = c.isRenewed ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-sm border border-emerald-200">Renewed</span>` : '';
                         
                         html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
-                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold flex items-center">${c.id||'NA'} <span class="ml-2">${tag}${importedTag}</span></p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
+                                <div><p class="text-[9px] font-mono text-indigo-500 font-bold flex items-center">${c.id||'NA'} <span class="ml-2">${tag}${importedTag}${renewedTag}</span></p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
                                 <span class="text-[9px] font-black px-3 py-1.5 rounded-xl uppercase bg-blue-50 text-blue-600 shadow-inner">${c.planName||'Plan'}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-4 mt-1 pt-3 border-t border-slate-50 text-[10px]">
@@ -3525,6 +3685,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 if (typedPaidEmis > 0) {
                     for(let i=0; i<typedPaidEmis; i++) {
                         let currentPhaseEmi = m.isHybrid ? ((i < m.phase1Days) ? m.phase1Emi : m.phase2Emi) : m.cycleEmi;
+                        if (!currentPhaseEmi || currentPhaseEmi <= 0) break; // 🚀 FIX: Prevent infinite loop if EMI is 0 or NaN
                         // FIX 3A: Added explicitly break safeguard to prevent infinite loop RAM crashes if staff types 99999 EMIs
                         if (activeOutstanding >= currentPhaseEmi) {
                             activeOutstanding -= currentPhaseEmi;
@@ -3683,6 +3844,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 if (paidEmisVal > 0) {
                     for(let i=0; i<paidEmisVal; i++) {
                         let currentPhaseEmi = metrics.isHybrid ? ((actualEmisPaid < metrics.phase1Days) ? metrics.phase1Emi : metrics.phase2Emi) : metrics.cycleEmi;
+                        if (!currentPhaseEmi || currentPhaseEmi <= 0) break; // 🚀 FIX: Prevent infinite loop on submit
                         // FIX 3B: Exact same protection for the actual submit sequence
                         if (actualOutstanding >= currentPhaseEmi) {
                             actualOutstanding -= currentPhaseEmi;
@@ -3951,9 +4113,11 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     // Fix: Clients with overdue must appear on ledger even if not their exact EMI day
                     if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0)) {
                         
-                        // Live Ledger Search Logic Filter
-                        if (searchQ && !(a.name && String(a.name).toLowerCase().includes(searchQ)) && !(a.id && String(a.id).toLowerCase().includes(searchQ)) && !m.includes(searchQ)) {
-                            return; // Search match na hone par skip kar dega
+                        // 🚀 FIX: Safer Ledger Search Logic (Prevents Null Matching Bug)
+                        let safeName = (a.name || "").toString().toLowerCase();
+                        let safeId = (a.id || "").toString().toLowerCase();
+                        if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !m.includes(searchQ)) {
+                            return; 
                         }
 
                         let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
@@ -3969,8 +4133,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         let activeOverdueAmount = a.overdue || 0;
                         
                         // Naya Smart QR Button
-                        let safeName = (a.name || 'Unknown Client').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${safeName}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
+                        let qrSafeName = (a.name || 'Unknown Client').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${qrSafeName}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
 
                         if(a.emiSettled === 'online_paid') { 
                             aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online App Paid</div>`; 
@@ -3978,7 +4142,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         else { 
                             // 🌟 NAYA: Clean UI with 1 Single Receive Popup Button
                             aB = `${qrBtn}
-                            <button onclick="openPaymentModeModal('${m}', ${activeEmiAmount}, '${safeName}')" class="btn-fluid flex-[1.5] py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">📥 Receive</button>
+                            <button onclick="openPaymentModeModal('${m}', ${activeEmiAmount}, '${qrSafeName}')" class="btn-fluid flex-[1.5] py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">📥 Receive</button>
                             <button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">❌ BNC</button>`; 
                         }
 
@@ -4485,12 +4649,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 btn.innerText = oldText;
 
                 if (data.success) {
-                    // 🌟 NAYA: JWT Token save karein
-                    localStorage.setItem('opas_jwt_token', data.token);
+                    
+                    // 🔐 FIX: Save session to prevent auto-logout on page refresh
                     setAuthSession(data.role, u);
-                    currentLoggedInRole = data.role;
-
-                    await loadDataFromCloud(); 
 
                     if (data.role === 'head') { 
                         showDashboard('head'); 
@@ -4759,14 +4920,14 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     title = "Today's Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if((t.type === 'Received' || t.type === 'Online App') && t.date === todayStr) { match = true; amount += t.amount; }
+                            if(['Received', 'Online App', 'Advance', 'Direct Settle'].includes(t.type) && t.date === todayStr) { match = true; amount += t.amount; }
                         });
                     }
                 } else if (type === 'collect-month') {
                     title = "Month's Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if((t.type === 'Received' || t.type === 'Online App') && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; }
+                            if(['Received', 'Online App', 'Advance', 'Direct Settle'].includes(t.type) && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; }
                         });
                     }
                 } else if (type === 'ins-today') {
@@ -5563,8 +5724,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">Capture KYC Photo</h3>
                     <p class="text-[9px] font-bold text-slate-500 uppercase mb-4" id="kyc-gps-status">📍 Fetching GPS Location...</p>
                     
-                    <div class="relative w-full max-w-[250px] aspect-square mx-auto rounded-3xl overflow-hidden border-4 border-indigo-500 shadow-lg mb-4 bg-slate-900">
-                        <video id="kyc-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    <div class="relative w-full max-w-[250px] aspect-square mx-auto rounded-3xl overflow-hidden border-4 border-indigo-500 shadow-lg mb-4 bg-slate-900 flex items-center justify-center">
+                        <p id="kyc-loading-text" class="absolute text-white text-xs font-bold animate-pulse">Starting Camera...</p>
+                        <video id="kyc-video" autoplay playsinline muted class="w-full h-full object-cover z-10"></video>
                         <canvas id="kyc-canvas" class="hidden"></canvas>
                     </div>
                     
@@ -5574,39 +5736,57 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             `;
             openGlobalModal(html);
 
-            // Start Camera
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 640 } } })
+            let constraints = { video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 640 } }, audio: false };
+            
+            navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
                 kycVideoStream = stream;
                 let video = document.getElementById('kyc-video');
-                video.srcObject = stream;
+                let loadText = document.getElementById('kyc-loading-text');
                 
-                // 🛠️ BUG FIX: Force video play to prevent Black Screen / Freeze on iOS Safari & Android Chrome
-                video.onloadedmetadata = () => { video.play().catch(e => console.error("Video Play Error:", e)); };
+                if(video) {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => { 
+                        video.play().then(() => {
+                            if(loadText) loadText.style.display = "none";
+                        }).catch(e => console.error("Video Play Error:", e)); 
+                    };
+                }
                 
-                // Fetch GPS
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition((pos) => {
                         window.kycCurrentGps = `Lat: ${pos.coords.latitude.toFixed(4)}, Lon: ${pos.coords.longitude.toFixed(4)}`;
-                        document.getElementById('kyc-gps-status').innerText = `📍 ${window.kycCurrentGps}`;
-                        document.getElementById('kyc-gps-status').classList.replace('text-slate-500', 'text-emerald-600');
+                        let statusEl = document.getElementById('kyc-gps-status');
+                        if(statusEl) {
+                            statusEl.innerText = `📍 ${window.kycCurrentGps}`;
+                            statusEl.classList.replace('text-slate-500', 'text-emerald-600');
+                        }
                         let btn = document.getElementById('kyc-capture-btn');
-                        btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        btn.innerText = "📸 Click Photo";
+                        if(btn) {
+                            btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            btn.innerText = "📸 Click Photo";
+                        }
                     }, () => {
                         window.kycCurrentGps = "GPS Not Available";
-                        document.getElementById('kyc-gps-status').innerText = `⚠️ GPS Failed. Proceeding without GPS.`;
+                        let statusEl = document.getElementById('kyc-gps-status');
+                        if(statusEl) statusEl.innerText = `⚠️ GPS Failed. Proceeding without GPS.`;
                         let btn = document.getElementById('kyc-capture-btn');
-                        btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        btn.innerText = "📸 Click Photo";
-                    }, { timeout: 10000 });
+                        if(btn) {
+                            btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            btn.innerText = "📸 Click Photo";
+                        }
+                    }, { timeout: 10000, enableHighAccuracy: true });
                 }
             })
-            .catch(err => { alert("Camera Error!"); closeKycCamera(); });
+            .catch(err => { alert("⚠️ Camera Error! Browser permissions check karein."); closeKycCamera(); });
         }
 
+        // 🚀 FIX: Missing Shutdown Logic! Stream stop karni padegi warna light jalti rahegi.
         function closeKycCamera() {
-            if(kycVideoStream) kycVideoStream.getTracks().forEach(t=>t.stop());
+            if (kycVideoStream) {
+                kycVideoStream.getTracks().forEach(track => track.stop());
+                kycVideoStream = null;
+            }
             closeGlobalModal();
         }
 
@@ -5651,13 +5831,19 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     document.getElementById('new-cust-photo-url').value = finalUrl;
                     document.getElementById('kyc-photo-preview').src = finalUrl;
                     document.getElementById('kyc-photo-preview-box').classList.remove('hidden');
-                    document.getElementById('kyc-camera-btn').innerText = "✅ Photo Attached";
-                    document.getElementById('kyc-camera-btn').classList.replace('bg-indigo-600', 'bg-emerald-600');
-                    closeKycCamera();
+                    
+                    let camBtn = document.getElementById('kyc-camera-btn');
+                    if(camBtn) {
+                        camBtn.innerText = "✅ Photo Attached";
+                        camBtn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                    }
+                    
+                    saveKycDraft(); // 🚀 FIX: Update offline form draft so image isn't lost on refresh
+                    closeKycCamera(); // Properly stop camera and close modal
                     showNotification("Photo Uploaded", "KYC image saved to cloud successfully!", "☁️");
                 } else { throw new Error("Upload failed"); }
             } catch (err) {
-                alert("Cloud upload failed! Check internet.");
+                alert("Cloud upload failed! Check internet connection.");
                 btn.innerText = "Try Again";
                 btn.disabled = false; btn.classList.remove('opacity-50');
             }
