@@ -4758,6 +4758,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     setAuthSession(data.role, u);
 
                     if (data.role === 'head') {
+                        currentLoggedInRole = 'head'; // 🚀 BUG FIX: Head manual login ke time role set nahi tha!
                         showDashboard('head'); 
                         if(headPendingRadar) clearInterval(headPendingRadar);
                         headPendingRadar = setInterval(silentHeadRadar, 60000);
@@ -4948,6 +4949,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 localStorage.removeItem('opas_sess_role');
                 localStorage.removeItem('opas_sess_id');
                 localStorage.removeItem('opas_sess_time');
+                localStorage.removeItem('opas_jwt_token'); // 🚀 BUG FIX: Purane login ka token bhi mitana zaroori hai!
                 
                 // Wipe data from memory and local device to prevent cross-login data leaks
                 serverDb = {}; 
