@@ -1349,8 +1349,8 @@
                                         cloudData[k].lastDayEndProcessed = serverDb[k].lastDayEndProcessed;
                                     }
                                     
-                                    // 🛡️ CRITICAL FIX 1: Protect offline Renewals & Direct Settlements from being wiped out by old cloud states
-                                    if ((serverDb[k].status === "Pending Approval" && cloudData[k].status === "Deactive") || 
+                                    // 🛡️ CRITICAL FIX 1: Protect offline Renewals, Online Requests & Direct Settlements from being wiped out
+                                    if ((serverDb[k].status === "Pending Approval" && (cloudData[k].status === "Deactive" || cloudData[k].status === "Requested")) || 
                                         (serverDb[k].status === "Deactive" && cloudData[k].status === "Active") || 
                                         (serverDb[k].status === "Deleted" && cloudData[k].status !== "Deleted")) {
                                         cloudData[k] = serverDb[k]; 
@@ -1392,14 +1392,18 @@
                     for (const k of Object.keys(localData)) {
                         if(k !== "SYSTEM_SETTINGS") {
                             
-                            // NAYA FIX: Agar Local Deactive hai aur Cloud par naya Pending Approval aaya hai, toh time check bypass kar do
-                            let isForcedRenewal = (localData[k] && localData[k].status === "Deactive" && cloudData[k] && cloudData[k].status === "Pending Approval");
+                            let loc = localData[k];
+                            let srv = serverDb[k];
+                            
+                            // 🚀 GOD-MODE FIX: Agar staff ke phone mein koi form Pending/Requested hai, aur wo abhi tak Head ne approve nahi kiya hai, toh bina soche usko force push karo! Ye purane sabhi bugs bypass kar dega.
+                            let isStuckAction = loc && srv && 
+                                (loc.status === "Pending Approval" || loc.status === "Requested" || loc.status === "Pending NEFT") && 
+                                (srv.status === loc.status);
 
-                            if(cloudData[k] === undefined || (cloudData[k] !== null && localData[k] && localData[k].lastUpdated && (!cloudData[k].lastUpdated || localData[k].lastUpdated > cloudData[k].lastUpdated))) {
-                                // Bypass logic: Agar forced renewal chal raha hai toh purana Deactive data Cloud par waapas mat dhakelo
-                                if (!isForcedRenewal) {
-                                    pendingSyncPayload.push({ mobile: k, data: serverDb[k] });
-                                }
+                            let isTimeNewer = (cloudData[k] !== null && loc && loc.lastUpdated && (!cloudData[k].lastUpdated || loc.lastUpdated > cloudData[k].lastUpdated));
+
+                            if(cloudData[k] === undefined || isStuckAction || isTimeNewer) {
+                                pendingSyncPayload.push({ mobile: k, data: srv });
                             }
                         }
                     }
