@@ -1354,7 +1354,11 @@
                                         (serverDb[k].status === "Deactive" && cloudData[k].status === "Active") || 
                                         (serverDb[k].status === "Deleted" && cloudData[k].status !== "Deleted")) {
                                         cloudData[k] = serverDb[k]; 
-                                    } 
+                                    }
+                                    // ✅ NAYA BYPASS: Agar Cloud ne naya Renewal (Pending Approval) bheja hai aur Local pehle se Deactive tha, toh usko block mat hone do!
+                                    else if (serverDb[k].status === "Deactive" && (cloudData[k].status === "Pending Approval" || cloudData[k].status === "Requested")) {
+                                        serverDb[k] = cloudData[k]; // Force update local to Pending Approval
+                                    }
                                     // 🛡️ CRITICAL FIX 2: Protect unsynced transactions and shifted EMI dates from getting rolled back
                                     else if (serverDb[k].transactions && cloudData[k].transactions) {
                                         let localPast = serverDb[k].pastLoans ? serverDb[k].pastLoans.length : 0;
@@ -1387,8 +1391,15 @@
                     let pendingSyncPayload = [];
                     for (const k of Object.keys(localData)) {
                         if(k !== "SYSTEM_SETTINGS") {
+                            
+                            // NAYA FIX: Agar Local Deactive hai aur Cloud par naya Pending Approval aaya hai, toh time check bypass kar do
+                            let isForcedRenewal = (localData[k] && localData[k].status === "Deactive" && cloudData[k] && cloudData[k].status === "Pending Approval");
+
                             if(cloudData[k] === undefined || (cloudData[k] !== null && localData[k] && localData[k].lastUpdated && (!cloudData[k].lastUpdated || localData[k].lastUpdated > cloudData[k].lastUpdated))) {
-                                pendingSyncPayload.push({ mobile: k, data: serverDb[k] });
+                                // Bypass logic: Agar forced renewal chal raha hai toh purana Deactive data Cloud par waapas mat dhakelo
+                                if (!isForcedRenewal) {
+                                    pendingSyncPayload.push({ mobile: k, data: serverDb[k] });
+                                }
                             }
                         }
                     }
