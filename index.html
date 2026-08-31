@@ -1322,7 +1322,10 @@
                             let isCloudNewer = !serverDb[k] || !serverDb[k].lastUpdated || (cloudData[k].lastUpdated > serverDb[k].lastUpdated);
                             let isCloudApproved = (cloudData[k].status === "Active" && serverDb[k] && serverDb[k].status === "Pending Approval");
                             
-                            if (isCloudNewer || isCloudApproved) {
+                            // 🛡️ BUG FIX: Force sync pending files (Renewals/New/Requested) even if Staff's phone clock is behind Admin's phone clock
+                            let isCloudPending = ((cloudData[k].status === "Pending Approval" || cloudData[k].status === "Requested") && serverDb[k] && serverDb[k].status !== cloudData[k].status);
+                            
+                            if (isCloudNewer || isCloudApproved || isCloudPending) {
                                 // 🛡️ CRITICAL FIX: Protect offline Staff Attendance from being wiped by Admin Updates
                                 if (k === "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].staff) {
                                     let cStaff = cloudData[k].staff || {};
@@ -1547,6 +1550,9 @@
         }
 
         async function saveBonusConfig() {
+            // 🛡️ FIX: Pehle latest config cloud se pull kar lo
+            await saveSystemSettings();
+            
             if(!serverDb["SYSTEM_SETTINGS"]) serverDb["SYSTEM_SETTINGS"] = {};
             serverDb["SYSTEM_SETTINGS"].bonusConfig = {
                 enabled: document.getElementById('bonus-toggle-switch').checked,
@@ -1554,7 +1560,9 @@
                 bonusAmount: parseInt(getSafeValue('bonus-amt')) || 80,
                 targetMultiplier: parseFloat(getSafeValue('bonus-multiplier')) || 1.0
             };
-            await saveSystemSettings();
+            
+            // 🚀 FIX: Ab bina wapas fetch kiye sidha cloud par push maaro
+            await saveDataToCloud("SYSTEM_SETTINGS");
             showNotification("Bonus Settings Saved", "Rules successfully updated across all staff terminals.", "🎯");
         }
 
@@ -1562,9 +1570,16 @@
         async function updateCompanyUpi() {
             let newUpi = document.getElementById('setup-company-upi').value.trim();
             if(!newUpi || !newUpi.includes('@')) { alert("Please enter a valid UPI ID (e.g., name@bank)"); return; }
+            
+            // 🛡️ FIX: Pehle latest config cloud se pull kar lo
+            await saveSystemSettings(); 
+            
             if(!serverDb["SYSTEM_SETTINGS"]) serverDb["SYSTEM_SETTINGS"] = {};
             serverDb["SYSTEM_SETTINGS"].companyUpi = newUpi;
-            await saveSystemSettings();
+            
+            // 🚀 FIX: Ab bina wapas fetch kiye sidha cloud par push maaro
+            await saveDataToCloud("SYSTEM_SETTINGS");
+            
             alert("✅ Company UPI ID updated successfully! Naye QR codes ab is ID par banenge.");
             document.getElementById('setup-company-upi').value = '';
         }
@@ -1782,7 +1797,16 @@
         function submitLeaveRequest() { alert("Leave application logic will be implemented here."); }
         function renderStaffMyLeaves() { const z = document.getElementById('staff-my-leaves-list'); if(z) z.innerHTML = "<p class='text-[10px] text-slate-400'>No recent leaves.</p>"; }
         function renderHeadLeaveRequests() { const z = document.getElementById('head-leave-requests-list'); if(z) z.innerHTML = "<p class='text-[10px] text-slate-400'>No pending approvals.</p>"; }
-        function updateLeaveRequestBadge() { setHtmlSafe('leave-req-count-badge', '0'); }
+        function updateLeaveRequestBadge() { 
+            try { 
+                let c = 0; 
+                let leaves = (serverDb["SYSTEM_SETTINGS"] && serverDb["SYSTEM_SETTINGS"].leaves) ? serverDb["SYSTEM_SETTINGS"].leaves : [];
+                leaves.forEach(l => { if(l.status === 'Pending') c++; });
+                setHtmlSafe('leave-req-count-badge', c); 
+            } catch(e) { 
+                setHtmlSafe('leave-req-count-badge', '0'); 
+            } 
+        }
         function renderHeadPayroll() {
     try {
         const zone = document.getElementById('payroll-list-zone');
@@ -2728,6 +2752,16 @@
             if(confirm(`Kya aap sach mein ${serverDb[m].name} ka total bacha hua (Outstanding + Overdue) ₹${settlementAmount} lekar account close karna chahte hain?`)) {
                 if(event && event.currentTarget) { event.currentTarget.disabled = true; event.currentTarget.innerText = "Processing..."; }
                 
+                // FIX: Save to pastLoans before closing account to maintain history
+                if (!serverDb[m].pastLoans) serverDb[m].pastLoans = [];
+                serverDb[m].pastLoans.push({
+                    id: serverDb[m].id, 
+                    planName: serverDb[m].planName, 
+                    principal: serverDb[m].principal, 
+                    totalPayable: serverDb[m].totalPayable, 
+                    transactions: JSON.parse(JSON.stringify(serverDb[m].transactions || []))
+                });
+
                 serverDb[m].outstanding = 0;
                 serverDb[m].overdue = 0; 
                 serverDb[m].status = "Deactive";
@@ -3285,7 +3319,60 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 setHtmlSafe('m-deactive-count', deC); 
                 setHtmlSafe('m-new-clients', nC); 
                 setHtmlSafe('m-renew-clients', rC);
-            } catch(e) {}
+                
+                // 🎯 FIX: Populate the Dead UI for Staff Gamification/Bonus System
+                if (currentLoggedInRole === 'staff') {
+                    let bConfig = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
+                    
+                    let yDate = new Date(); yDate.setDate(yDate.getDate()-1);
+                    let yStr = formatSysDate(yDate);
+                    let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
+                    let yCollected = bStats[activeFilter]?.[yStr]?.collected || 0;
+                    
+                    let todayTarget = Math.round((yCollected * bConfig.targetMultiplier) / 500) * 500;
+                    if(todayTarget === 0 && bConfig.enabled) todayTarget = 10000; 
+
+                    let sExpected = 0;
+                    Object.keys(serverDb).forEach(m => {
+                        let c = serverDb[m];
+                        if (c && c.branch === activeFilter && c.status === "Active") {
+                            let isDue = false;
+                            if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                                if(todayCheck >= parseSysDate(c.nextEmiDate)) isDue = true;
+                            } else { isDue = true; }
+                            if (isDue || c.overdue > 0) sExpected += Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
+                        }
+                    });
+
+                    let colPct = sExpected > 0 ? (cT / sExpected) * 100 : (cT > 0 ? 100 : 0);
+                    if (colPct > 100) colPct = 100;
+                    let disPct = todayTarget > 0 ? (dT / todayTarget) * 100 : (dT > 0 ? 100 : 0);
+                    if (disPct > 100) disPct = 100;
+
+                    let bonusStatusText = (colPct >= bConfig.minCollectionPct && dT >= todayTarget) ? "🏆 Achieved" : "⏳ Pending";
+                    let bonusColor = (colPct >= bConfig.minCollectionPct && dT >= todayTarget) ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100";
+
+                    // Dash Updates
+                    setHtmlSafe('dash-sp-col-pct', `${colPct.toFixed(1)}%`);
+                    let colBar = document.getElementById('dash-sp-col-bar'); if(colBar) colBar.style.width = `${colPct}%`;
+                    setHtmlSafe('dash-sp-tar-text', `₹${dT.toLocaleString('en-IN')} / ₹${todayTarget.toLocaleString('en-IN')}`);
+                    let tarBar = document.getElementById('dash-sp-tar-bar'); if(tarBar) tarBar.style.width = `${disPct}%`;
+                    let dashBonus = document.getElementById('dash-sp-bonus'); 
+                    if(dashBonus) { dashBonus.innerText = bonusStatusText; dashBonus.className = `font-bold px-2 py-0.5 rounded shadow-sm border ${bonusColor}`; }
+
+                    // Profile Updates
+                    setHtmlSafe('sp-col-pct', `${colPct.toFixed(1)}%`);
+                    let spColBar = document.getElementById('sp-col-bar'); if(spColBar) spColBar.style.width = `${colPct}%`;
+                    setHtmlSafe('sp-tar-text', `₹${dT.toLocaleString('en-IN')} / ₹${todayTarget.toLocaleString('en-IN')}`);
+                    let spTarBar = document.getElementById('sp-tar-bar'); if(spTarBar) spTarBar.style.width = `${disPct}%`;
+                    setHtmlSafe('sp-bonus-amt', `₹${bConfig.bonusAmount}`);
+                    let spBonusStatus = document.getElementById('sp-bonus-status');
+                    if(spBonusStatus) { 
+                        spBonusStatus.innerText = bonusStatusText; 
+                        spBonusStatus.className = (colPct >= bConfig.minCollectionPct && dT >= todayTarget) ? "bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-inner" : "bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-inner";
+                    }
+                }
+            } catch(e) { console.error("Stats Error", e); }
         }
         
         async function rejectAndTrashApplication(mobile) {
@@ -4249,9 +4336,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     }
 
                     if (c.emiSettled === 'bounce') { 
-                        // Fix: Only penalize if they were actually due today. Don't add fake penalties on non-EMI follow-up days!
+                        // FIX: Ensure exact penalty is applied using Hybrid Phase logic
                         if (isClientDue) {
-                            c.overdue = (c.overdue || 0) + c.cycleEmi; 
+                            let penaltyEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                            c.overdue = (c.overdue || 0) + penaltyEmi;
                             c.transactions.push({ date: todayStr, amount: c.cycleEmi, type: 'Bounced' });
                             c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
                         } else {
@@ -4338,10 +4426,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
                         // 🛡️🔥 THE HYBRID EMI SWITCHER
                     if(c.isHybrid) {
-                        // Fix: Calculate hybrid phase based on actual billed cycles passed (Total Payable - Outstanding + Overdue), not just payments made, so bad payers don't stay in Phase 1 forever.
-                        let safePhase1Emi = (c.phase1Emi && c.phase1Emi > 0) ? c.phase1Emi : 1;
-                        let simulatedCycles = Math.floor(((c.totalPayable || 0) - (c.outstanding || 0) + (c.overdue || 0)) / safePhase1Emi);
-                        c.cycleEmi = (simulatedCycles < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
+                        // 🧮 FIX: Use the actual accurately tracked EMI count instead of a mathematically flawed division to determine Hybrid Phase
+                        c.cycleEmi = ((c.emisPaidCount || 0) < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
                     }
                     
                     if(c.outstanding <= 0 && c.status === "Active") { 
@@ -4650,10 +4736,13 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
                 if (data.success) {
                     
+                    // 🔑 FIX: Actually save the JWT token from the server response so API calls work
+                    if (data.token) localStorage.setItem('opas_jwt_token', data.token);
+
                     // 🔐 FIX: Save session to prevent auto-logout on page refresh
                     setAuthSession(data.role, u);
 
-                    if (data.role === 'head') { 
+                    if (data.role === 'head') {
                         showDashboard('head'); 
                         if(headPendingRadar) clearInterval(headPendingRadar);
                         headPendingRadar = setInterval(silentHeadRadar, 60000);
@@ -4770,6 +4859,11 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     autoSyncRadar = setInterval(async () => {
                         // 🚀 FIX: Day-End upload ya manual heavy sync ke dauran background sync skip karo
                         if (isSystemBusy) return;
+
+                        // FIX: Collision Prevention - Agar user form fill kar raha hai ya Modal khula hai to background sync rok do
+                        let isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+                        let isModalOpen = !document.getElementById('global-modal-overlay').classList.contains('hidden');
+                        if (isTyping || isModalOpen) return;
 
                         try {
                             isSystemBusy = true; // Lock laga do
