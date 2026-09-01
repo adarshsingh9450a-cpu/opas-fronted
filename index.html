@@ -413,6 +413,38 @@
                         <span class="text-slate-400 text-xl font-bold relative z-10 group-hover:translate-x-1 transition-transform">→</span>
                     </div>
 
+                    <!-- 🌟 SMART INTEGRATION: MIGRATION TRACKER & AUDIT HUB -->
+                    <div id="head-posting-tracker-box" class="glass-card p-5 rounded-3xl mt-4 shadow-sm relative overflow-hidden hidden">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
+                            <h4 class="text-[10px] font-black uppercase text-indigo-700 flex items-center gap-1">🗃️ Old Data Posting Tracker</h4>
+                            <button onclick="hidePostingTracker()" class="text-[8px] bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-2 py-1 rounded font-black uppercase transition-colors hover-scale" title="Hide this panel permanently">Hide Forever ✕</button>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[9px] font-bold text-slate-500 mb-1.5">
+                                <span>Verified Old Clients</span>
+                                <span id="posting-tracker-text" class="font-black text-indigo-600">0 / 0</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2 shadow-inner mb-4">
+                                <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 h-2 rounded-full transition-all duration-1000" id="posting-tracker-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showUnverifiedPostings()" class="btn-fluid w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-black py-2.5 rounded-xl text-[9px] uppercase transition-colors shadow-sm">View Pending Postings (Check Who Is Left)</button>
+                        </div>
+                    </div>
+
+                    <!-- SMART INTEGRATION: Audit Log Button -->
+                    <div onclick="showAuditLogs()" class="bg-slate-50 border border-slate-200 rounded-3xl p-4 mt-3 flex justify-between items-center shadow-sm hover-scale cursor-pointer group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl font-black group-hover:scale-110 transition-transform">📝</div>
+                            <div>
+                                <h4 class="text-slate-800 font-black text-xs uppercase tracking-wider">Master Edit Audit Logs</h4>
+                                <p class="text-slate-500 text-[8px] font-bold mt-0.5">Track exact details of what staff edited</p>
+                            </div>
+                        </div>
+                        <span class="text-slate-400 text-lg font-bold group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+
                     <!-- 🌟 NAYA: Minimal Branch Performance Grid -->
                     <div class="mt-4">
                         <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Live Branch Performance</p>
@@ -469,6 +501,10 @@
                     <!-- Bounced & Overdue -->
                     <div onclick="showDashboardList('today-bounce')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Today's Bounced EMI</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-bounce-today">₹0</div></div>
                     <div onclick="showDashboardList('total-risk')" class="bg-rose-50 border border-rose-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-rose-500 uppercase ml-1">Total Overdue (Risk)</p><div class="bg-white text-rose-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-od-today">₹0</div></div>
+
+                    <!-- 🌟 NAYA: Partial Payments Block -->
+                    <div onclick="openPartialPayList('today')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Today's Partial Payments</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-partial-today">0 Clients</div></div>
+                    <div onclick="openPartialPayList('month')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Month's Partial Payments</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-partial-month">0 Clients</div></div>
 
                     <!-- Naya Unmarked Actions Block -->
                     <div onclick="showDashboardList('unmarked')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Pending Actions (Unmarked)</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-unmarked-today">₹0</div></div>
@@ -726,14 +762,24 @@
                     <select id="admin-edit-client-select" onchange="loadClientForEdit()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                     
                     <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade mt-4">
-                        <input type="text" id="edit-cust-name" placeholder="Client Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold">
-                        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-2 animate-fade">
-                            <label class="block text-[10px] font-black text-amber-700 uppercase mb-2">Sync Old Passbook (Dropdown Mode)</label>
+                        <!-- 🌟 NAYA: QUICK MIGRATE EDITOR (For Fast Backdate Fixing) -->
+                        <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl mb-3 shadow-inner">
+                            <label class="block text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-3">⚡ Quick Migration Fixer</label>
                             <div class="grid grid-cols-2 gap-3">
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Total EMIs Paid</label><select id="edit-cust-emis-paid" onchange="autoCalcEditPassbook()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none"><option value="0">0 (No EMI)</option></select></div>
-                                <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Overdue ₹</label><input type="number" id="edit-cust-historic-od" oninput="document.getElementById('edit-cust-od').value = this.value;" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700" placeholder="e.g. 500"></div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Paid EMIs (Register se)</label>
+                                    <input type="number" id="quick-edit-paid-emis" oninput="document.getElementById('edit-cust-emis-paid').value=this.value; autoCalcEditPassbook();" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-sm" placeholder="Kitni aayi?">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Real Disbursal Date</label>
+                                    <input type="date" id="quick-edit-date" onchange="let dp=this.value.split('-'); document.getElementById('edit-cust-disbursal-date').value = dp[2]+'-'+dp[1]+'-'+dp[0]; autoCalcEditPassbook();" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-[10px] font-bold text-indigo-700 shadow-sm">
+                                </div>
                             </div>
+                            <p class="text-[8px] font-bold text-indigo-500 uppercase tracking-widest mt-2 bg-white/50 p-1.5 rounded">Note: Yahan type karte hi niche ka form apne aap set ho jayega!</p>
                         </div>
+                        
+                        <input type="text" id="edit-cust-name" placeholder="Client Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold">
+                        
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Outstanding (Auto/Manual)</label><input type="number" id="edit-cust-outstanding" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue (Auto/Manual)</label><input type="number" id="edit-cust-od" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
@@ -1246,6 +1292,8 @@
                         let sysNotif = new Notification(title, { body: message, icon: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png", vibrate: [200, 100, 200] });
                         sysNotif.onclick = function() { window.focus(); if(onClickFn) onClickFn(); };
                     } catch(e) {}
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission(); // 🌟 BUG FIX: System will now properly ask for permission
                 }
             }
         }  
@@ -1637,6 +1685,160 @@
                         document.getElementById('cloud-status').innerText = "⚠️ Wipe Failed";
                     }
                 } else { alert("Reset Cancelled."); }
+            }
+        }
+
+        // =========================================================================
+        // 🌟 NAYA: AUDIT LOGS & POSTING TRACKER (FOR HEAD)
+        // =========================================================================
+        function showAuditLogs() {
+            let html = `<div class="text-center p-2 mb-4 border-b border-slate-100 pb-4">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale">📝</div>
+                <h3 class="text-lg font-black text-slate-900 uppercase">Master Edit Logs</h3>
+                <p class="text-[9px] font-bold text-slate-500 uppercase mt-1 tracking-widest">History of Client Modifications</p>
+            </div>
+            <div class="max-h-[60vh] overflow-y-auto pr-2 space-y-3">`;
+            
+            let logsFound = false;
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (c && c.transactions) {
+                    let edits = c.transactions.filter(t => t.type.includes('(Edit)'));
+                    if (edits.length > 0) {
+                        logsFound = true;
+                        html += `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
+                                <div>
+                                    <p class="text-xs font-black text-slate-800">${c.name}</p>
+                                    <p class="text-[9px] font-bold text-slate-400">ID: ${m}</p>
+                                </div>
+                                <button onclick="showClientFullInfo('${m}')" class="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg shadow-sm border border-blue-100">Check Profile</button>
+                            </div>
+                            <div class="space-y-2">`;
+                        edits.forEach(edit => {
+                            let color = edit.type.includes('Waived') || edit.type.includes('Reduction') ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
+                            let sign = edit.type.includes('Waived') || edit.type.includes('Reduction') ? '-' : '+';
+                            html += `
+                                <div class="flex justify-between items-center py-2 px-3 rounded-lg ${color} border border-slate-100/50">
+                                    <span class="text-[9px] font-black uppercase">${edit.date}</span>
+                                    <span class="text-[9px] font-bold opacity-80">${edit.type}</span>
+                                    <span class="text-xs font-black">${sign}₹${edit.amount}</span>
+                                </div>`;
+                        });
+                        html += `</div></div>`;
+                    }
+                }
+            });
+
+            if (!logsFound) html += `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100 border-dashed"><p class="text-[10px] font-bold text-slate-400 uppercase">No manual edits found in the system.</p></div>`;
+            
+            html += `</div><button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase mt-4 shadow-md transition-colors">Close Logs</button>`;
+            openGlobalModal(html);
+        }
+
+        function showUnverifiedPostings() {
+            let html = `<div class="text-center p-2 mb-4 border-b border-slate-100 pb-4 relative">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale">🗃️</div>
+                <h3 class="text-lg font-black text-slate-900 uppercase">Pending Postings</h3>
+                <p class="text-[9px] font-bold text-slate-500 uppercase mt-1 tracking-widest mb-3">Verify imported data accuracy</p>
+                <button onclick="verifyAllPostings()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-black py-2 px-4 rounded-lg text-[9px] uppercase transition-colors shadow-sm pulse-glow w-fit mx-auto flex items-center gap-1">🚀 Mark ALL as Verified</button>
+            </div>
+            <div class="max-h-[55vh] overflow-y-auto pr-2 space-y-3">`;
+            
+            let found = false;
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (c && c.customAppDate && c.customAppDate !== "N/A" && c.status !== "Deleted" && c.status !== "Rejected" && !c.postingVerified) {
+                    found = true;
+                    html += `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-black text-slate-900">${c.name}</p>
+                                <p class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">${m} | ID: ${c.id}</p>
+                            </div>
+                            <span class="text-[8px] bg-indigo-50 text-indigo-600 font-black px-2 py-1 rounded uppercase border border-indigo-100">Imported</span>
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-xl grid grid-cols-3 text-center border border-slate-100 divide-x divide-slate-200 mt-1">
+                            <div><span class="block text-[8px] font-bold uppercase text-slate-400 mb-0.5">Bal</span><span class="text-emerald-600 font-black text-[11px]">₹${(c.outstanding||0).toLocaleString()}</span></div>
+                            <div><span class="block text-[8px] font-bold uppercase text-slate-400 mb-0.5">Overdue</span><span class="text-rose-500 font-black text-[11px]">₹${(c.overdue||0).toLocaleString()}</span></div>
+                            <div><span class="block text-[8px] font-bold uppercase text-slate-400 mb-0.5">Paid</span><span class="text-slate-800 font-black text-[11px]">${c.emisPaidCount||0}<span class="text-[9px] text-slate-500 font-bold">/${c.duration}</span></span></div>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="showClientFullInfo('${m}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-2.5 rounded-lg text-[9px] uppercase transition-colors">Check Details</button>
+                            <button onclick="verifyClientPosting('${m}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-lg text-[9px] uppercase shadow-sm transition-colors">Mark Verified ✓</button>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            if (!found) html += `<div class="text-center p-6 bg-emerald-50 rounded-2xl border border-emerald-100 border-dashed"><p class="text-[10px] font-bold text-emerald-600 uppercase">All old postings are verified! 🎉</p></div>`;
+            
+            html += `</div><button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase mt-4 shadow-md transition-colors">Close Window</button>`;
+            openGlobalModal(html);
+        }
+
+        // 🌟 SMART UPGRADE: Optimistic UI (Instant Feedback without UI freeze)
+        function verifyClientPosting(mobile) {
+            if (serverDb[mobile]) {
+                serverDb[mobile].postingVerified = true;
+                serverDb[mobile].lastUpdated = Date.now(); 
+                
+                // 1. Update UI Instantly (Zero delay)
+                showUnverifiedPostings(); 
+                refreshHeadDashboardStats(); 
+                showNotification("Posting Verified ✅", `${serverDb[mobile].name} ka data verify ho gaya hai.`, "🗃️");
+                
+                // 2. Sync to Cloud in Background
+                saveDataToCloud(mobile).catch(e => console.error("Background sync delayed", e));
+            }
+        }
+
+        // 🌟 SMART UPGRADE: Bulk Verify All
+        async function verifyAllPostings() {
+            if(!confirm("⚠️ Are you sure you want to mark ALL pending imported clients as verified?")) return;
+            
+            let toSync = [];
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (c && c.customAppDate && c.customAppDate !== "N/A" && c.status !== "Deleted" && c.status !== "Rejected" && !c.postingVerified) {
+                    c.postingVerified = true;
+                    c.lastUpdated = Date.now();
+                    toSync.push({ mobile: m, data: c });
+                }
+            });
+
+            if (toSync.length === 0) {
+                alert("Koi naya imported client bacha hi nahi hai!");
+                return;
+            }
+            
+            // 1. Instant UI Update
+            showUnverifiedPostings();
+            refreshHeadDashboardStats();
+            showNotification("Bulk Verified 🚀", `Sabhi ${toSync.length} clients verify ho gaye hain!`, "✅");
+
+            // 2. Background Bulk Cloud Sync
+            await localforage.setItem('opas_local_db', serverDb);
+            const token = localStorage.getItem('opas_jwt_token');
+            if(token) {
+                fetch(API_URL + '/bulk', {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ clients: toSync })
+                }).catch(e => console.log("Bulk sync background error", e));
+            }
+        }
+
+        async function hidePostingTracker() {
+            if(confirm("✅ Kya posting ka kaam 100% complete ho gaya hai?\n\nIse 'OK' karne par yeh Tracker Dashboard se hamesha ke liye gayab ho jayega. (Wapas lane ke liye database reset karna padega)")) {
+                if(!serverDb["SYSTEM_SETTINGS"]) serverDb["SYSTEM_SETTINGS"] = {};
+                serverDb["SYSTEM_SETTINGS"].hidePostingTracker = true;
+                await saveDataToCloud("SYSTEM_SETTINGS");
+                refreshHeadDashboardStats();
+                showNotification('Tracker Hidden', 'Posting tracker ko dashboard se remove kar diya gaya hai.', '👁️‍🗨️');
             }
         }
 
@@ -2059,12 +2261,13 @@
 
             // BUG FIX: Agar Day-End run nahi hua hai, to active pending amount ka fresh receipt dikhayein
             if (u.emiSettled === 'online_paid' || u.emiSettled === 'received_cash' || u.emiSettled === 'received_upi' || u.emiSettled === 'received') {
-                paidAmt = Math.min((u.outstanding || 0) + (u.overdue || 0), (u.cycleEmi || 0) + (u.overdue || 0));
+                // ✅ OPTION 2 FIX: Receipt par bhi sirf 1 EMI dikhegi, double amount nahi.
+                paidAmt = Math.min(u.outstanding || 0, u.cycleEmi || 0);
             } else if (u.advancePaid > 0) {
                 paidAmt = u.advancePaid;
             } else if (u.transactions && u.transactions.length > 0) {
                 // Agar pending kuch nahi hai, to sabse aakhri valid transaction uthayein
-                let lastValidTx = u.transactions.slice().reverse().find(t => ['Received', 'Online App', 'Advance', 'Direct Settle', 'Old System Import (Paid)'].includes(t.type));
+                let lastValidTx = u.transactions.slice().reverse().find(t => ['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle', 'Old System Import (Paid)'].includes(t.type));
                 if (lastValidTx) {
                     paidAmt = lastValidTx.amount;
                     receiptDate = lastValidTx.date;
@@ -2758,6 +2961,13 @@
             const m = document.getElementById('settle-client-mobile-select').value;
             if(!m || !serverDb[m]) return;
             
+            // 🔒 STRICT SAFETY LOCK: Subah ki Kist aur Shaam ka Settlement takraane se rokna
+            let currentStatus = serverDb[m].emiSettled;
+            if (currentStatus === 'received' || currentStatus === 'received_cash' || currentStatus === 'received_upi' || currentStatus === 'online_paid') {
+                alert("⛔ SETTLEMENT BLOCKED!\n\nIs client ki aaj ki Kist (EMI) pehle se Ledger me mark ki hui hai.\n\nAgar aapko pura loan close karna hai, toh pehle Ledger me jayein aur '❌ BNC' daba kar aaj ki kist ka lock hatayein. Uske baad yahan aakar poora Final amount ek sath Settle karein!");
+                return;
+            }
+
             // BUG FIX: Secure execution calculation (Includes Advance)
             let safeOutstanding = Math.max(0, parseInt(serverDb[m].outstanding) || 0);
             let safeOverdue = Math.max(0, parseInt(serverDb[m].overdue) || 0);
@@ -2846,7 +3056,16 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 document.getElementById('edit-cust-od').value = c.overdue||0; 
                 document.getElementById('edit-cust-status').value = c.status||"Active"; 
                 document.getElementById('edit-cust-due-date').value = c.nextEmiDate||"N/A";
-                document.getElementById('edit-cust-disbursal-date').value = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : (c.approvalDate || "N/A");
+                let disbDate = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : (c.approvalDate || "N/A");
+                document.getElementById('edit-cust-disbursal-date').value = disbDate;
+                
+                // 🌟 NAYA: Populate Quick Editor
+                if (disbDate !== "N/A") {
+                    let dp = disbDate.split('-');
+                    if(dp.length === 3) document.getElementById('quick-edit-date').value = `${dp[2]}-${dp[1]}-${dp[0]}`;
+                }
+                document.getElementById('quick-edit-paid-emis').value = c.emisPaidCount || 0;
+                
                 document.getElementById('edit-cust-insurance').value = c.insuranceAmt || 0;
                 
                 if (currentLoggedInRole === 'staff') {
@@ -2866,8 +3085,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             const m = getSafeValue('admin-edit-client-select'); if(!m) return;
             let c = serverDb[m]; if(!c) return;
 
-            let typedPaidEmis = parseInt(getSafeValue('edit-cust-emis-paid')) || 0;
-            let typedOverdue = parseInt(getSafeValue('edit-cust-historic-od')) || 0;
+            // 🌟 NAYA: Purane dropdown ki jagah naye Quick Fixer box se value uthayega
+            let typedPaidEmis = parseInt(getSafeValue('quick-edit-paid-emis')) || 0;
+            // Overdue directly ab manual wale form box se liya jayega (jisse conflict nahi hoga)
+            let typedOverdue = parseInt(getSafeValue('edit-cust-od')) || 0;
             
             let activeOutstanding = c.totalPayable;
             // FIX: Prevent Infinity crash if old data has 0 duration
@@ -2947,8 +3168,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                      serverDb[m].emiSettled = null; 
                  } 
 
-                 // Log transaction ONLY when all errors are cleared
-                 if (oldOut !== newOut || oldOd !== newOd) {
+                 // 🌟 NAYA FIX 1: Sirf Active/Deactive clients me hi Edit ki transaction log karo.
+                 // Pending files me log mat karo, warna Passbook me double entry (Edit + Import) ho jayegi!
+                 if ((currentStatus === 'Active' || currentStatus === 'Deactive') && (oldOut !== newOut || oldOd !== newOd)) {
                      if (!serverDb[m].transactions) serverDb[m].transactions = [];
                      
                      if (oldOut !== newOut) {
@@ -2964,7 +3186,13 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                  }
 
                  let parsedEmisPaid = parseInt(getSafeValue('edit-cust-emis-paid'));
-                 if(!isNaN(parsedEmisPaid)) { serverDb[m].emisPaidCount = parsedEmisPaid; }
+                 if(!isNaN(parsedEmisPaid)) { 
+                     serverDb[m].emisPaidCount = parsedEmisPaid; 
+                     // 🌟 NAYA FIX 2: Pending Imported files ke liye paid amount update karein (Taaki Approval receipt sahi kate)
+                     if (currentStatus === 'Pending Approval' || currentStatus === 'Requested') {
+                         serverDb[m].backdatePaidAmount = Math.max(0, (serverDb[m].totalPayable || 0) - newOut);
+                     }
+                 }
                  
                  serverDb[m].name = getSafeValue('edit-cust-name') || serverDb[m].name; 
                  
@@ -2980,6 +3208,11 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                  serverDb[m].overdue = newOd; 
                  serverDb[m].status = newStatus; 
                  serverDb[m].nextEmiDate = safeDate;
+                 
+                 // 🌟 NAYA FIX 3: Agar Date Edit ki hai, toh Pending files ka hidden CustomNextEmi bhi theek karo!
+                 if (serverDb[m].customNextEmi && serverDb[m].customNextEmi !== "N/A") {
+                     serverDb[m].customNextEmi = safeDate;
+                 }
                  
                  // Updating Disbursal Math
                  if (safeDisbDate !== "N/A") {
@@ -2999,9 +3232,19 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                  }
                  
                  serverDb[m].insuranceAmt = Math.max(0, parseInt(getSafeValue('edit-cust-insurance')) || 0);
+                 
+                 serverDb[m].postingVerified = true; // 🌟 BUG FIX: Variable name corrected so it properly updates Tracker
+                 
                  await saveDataToCloud(m); 
                  showNotification('Profile Edited ✏️', "Client records have been successfully updated.", '✅');
-                 document.getElementById('admin-edit-form-block')?.classList.add('hidden'); refreshHeadDashboardStats();
+                 document.getElementById('admin-edit-form-block')?.classList.add('hidden'); 
+                 refreshHeadDashboardStats();
+                 
+                 // Agar Modal khula hai toh usko bhi refresh karo taaki wahan se bhi hat jaye
+                 if (!document.getElementById('global-modal-overlay').classList.contains('hidden')) {
+                     let titleCheck = document.getElementById('modal-injection-zone').innerHTML;
+                     if(titleCheck.includes('Pending Postings')) showUnverifiedPostings();
+                 }
              } catch(e) { alert("Error saving data."); }
         }
         async function deleteClientRecord() {
@@ -3033,6 +3276,89 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             }
         }
 
+        // 🌟 NAYA: Smart Partial Payments Directory Modal
+        function openPartialPayList(timeframe) {
+            let selectedMonthVal = getSafeValue('dashboard-month-filter');
+            let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
+            if(!selectedMonthVal) selectedMonthVal = currentYYYYMM;
+            let todayStr = formatSysDate(new Date());
+            
+            const activeFilter = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (getSafeValue('dashboard-active-branch-select') || "ALL");
+
+            let html = `<div class="text-center p-4 border-b border-slate-100 mb-4">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale">🌗</div>
+                <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest">${timeframe === 'today' ? "Today's" : "Month's"} Partial Paid</h3>
+            </div><div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">`;
+            
+            let count = 0; let totalShortfall = 0; let totalCollected = 0;
+
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (!c || c.status !== 'Active') return;
+                if (activeFilter !== "ALL" && c.branch !== activeFilter) return;
+
+                // Agar partialOverdue laga hua hai toh check karenge
+                if (c.partialOverdue && c.overdue > 0) {
+                    let match = false; let paidAmount = 0;
+
+                    if (c.transactions) {
+                        // Pichli transaction history se Shortfall aur Advance dhundhenge
+                        for (let i = c.transactions.length - 1; i >= 0; i--) {
+                            let tx = c.transactions[i];
+                            if (tx.type === 'Shortfall Penalty') {
+                                let txMY = tx.date.substring(6,10) + "-" + tx.date.substring(3,5);
+                                if (timeframe === 'today' && tx.date === todayStr) { match = true; } 
+                                else if (timeframe === 'month' && txMY === selectedMonthVal) { match = true; }
+                                
+                                if (match) {
+                                    // 🌟 FIX: Custom Pay ko bhi array me add karo warna list me amount ₹0 dikhega!
+                                    let payTx = c.transactions.find(ptx => ptx.date === tx.date && ['Advance', 'Custom Pay', 'Received', 'Online App'].includes(ptx.type));
+                                    if(payTx) paidAmount = payTx.amount;
+                                }
+                                break; 
+                            }
+                        }
+                    }
+
+                    if (match) {
+                        count++; totalShortfall += c.overdue; totalCollected += paidAmount;
+                        html += `
+                        <div class="bg-white p-4 border border-amber-200 rounded-2xl shadow-sm hover-scale cursor-pointer" onclick="closeGlobalModal(); showClientFullInfo('${m}')">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="text-xs font-black text-slate-800 flex items-center gap-1">${c.name} <span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full">ℹ️ Profile</span></p>
+                                    <p class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">${m} | ${c.center}</p>
+                                </div>
+                                <span class="text-[8px] bg-amber-50 text-amber-600 border border-amber-200 px-2 py-1 rounded font-black uppercase">Partial Due</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
+                                <div class="bg-emerald-50 p-2 rounded-lg text-center shadow-inner">
+                                    <span class="block text-[8px] font-bold text-emerald-500 uppercase">Paid Amount</span>
+                                    <span class="font-black text-emerald-700">₹${paidAmount}</span>
+                                </div>
+                                <div class="bg-rose-50 p-2 rounded-lg text-center shadow-inner">
+                                    <span class="block text-[8px] font-bold text-rose-400 uppercase">Shortfall (Due)</span>
+                                    <span class="font-black text-rose-600">₹${c.overdue}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                }
+            });
+
+            if (count === 0) { html += `<p class="text-[10px] text-center text-slate-400 py-6 bg-slate-50 rounded-xl border border-slate-200 border-dashed uppercase font-bold tracking-widest">No Partial Payments Found.</p>`; }
+
+            html += `</div>
+            <div class="mt-4 pt-4 border-t border-slate-200 grid grid-cols-2 gap-2">
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-center"><p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest">Collected</p><p class="text-sm font-black text-amber-700 mt-0.5">₹${totalCollected.toLocaleString()}</p></div>
+                <div class="bg-rose-50 p-3 rounded-xl border border-rose-200 text-center"><p class="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Total Shortfall</p><p class="text-sm font-black text-rose-600 mt-0.5">₹${totalShortfall.toLocaleString()}</p></div>
+            </div>
+            <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase mt-3 shadow-md transition-colors">Close Window</button>`;
+            
+            openGlobalModal(html);
+        }
+
         function refreshHeadDashboardStats() {
             try {
                 const headSelector = document.getElementById('head-analytics-branch-selector')?.value || "ALL";
@@ -3051,6 +3377,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayBounceAmt = 0; let insT = 0, insM = 0;
+                let todayPartialCount = 0, monthPartialCount = 0; // 🌟 NAYA: Tracker
                 let todayStr = formatSysDate(new Date());
                 let localUnmarkedAmt = 0; // BUG FIX: Switched to safe local scope variable
                 
@@ -3113,8 +3440,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             if (isCurrentMonth && f.approvalDate === todayStr) insT += (f.insuranceAmt || 0);
                             if (appDateMonth === selectedMonthVal) insM += (f.insuranceAmt || 0);
                             
-                            // Fix: Today's disbursal shouldn't artificially inflate when viewing past months
-                            if (f.approvalDate === todayStr) dT += (f.principal||0); 
+                            // 🌟 BUG FIX: History Leak Stopped. Today's metric only shows if current month is active.
+                            if (isCurrentMonth && f.approvalDate === todayStr) dT += (f.principal||0); 
                             if (appDateMonth === selectedMonthVal) dM += (f.principal||0);
 
                             if(f.transactions) {
@@ -3123,8 +3450,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                     let matchMY = (txMY === selectedMonthVal);
                                     let matchToday = (tx.date === todayStr);
 
-                                    // 💰 FIX: Include Advance and Direct Settle in total collections to balance cash in hand
-                                    if(tx.type === 'Received' || tx.type === 'Online App' || tx.type === 'Advance' || tx.type === 'Direct Settle') {
+                                    // 💰 FIX: Include Custom Pay and Direct Settle in total collections to balance cash in hand
+                                    if(['Received', 'Online App', 'Custom Pay', 'Advance', 'Advance (Pre-Settle)', 'Direct Settle'].includes(tx.type)) {
                                         if (isCurrentMonth && matchToday) cT += tx.amount;
                                         if (matchMY) cM += tx.amount;
                                     }
@@ -3138,6 +3465,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                     }
                                     if(tx.type === 'Bounced') {
                                         if (isCurrentMonth && matchToday) todayBounceAmt += tx.amount;
+                                    }
+                                    if(tx.type === 'Shortfall Penalty') { // 🌟 NAYA: Catch Partial
+                                        if (isCurrentMonth && matchToday) todayPartialCount++;
+                                        if (matchMY) monthPartialCount++;
                                     }
                                 });
                             }
@@ -3282,7 +3613,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             }
                             if (c.transactions) {
                                 c.transactions.forEach(t => {
-                                    if (t.date === todayStr && (t.type === 'Received' || t.type === 'Online App' || t.type === 'Advance' || t.type === 'Direct Settle')) {
+                                    // 🌟 FIX: Insurance aur Old Import (Pichla jama paisa) ko bhi Cashflow IN me ginna zaroori hai!
+                                    if (t.date === todayStr && ['Received', 'Online App', 'Custom Pay', 'Advance', 'Direct Settle', 'Insurance Fee Deducted (Upfront)', 'Old System Import (Paid)'].includes(t.type)) {
                                         headCollectedToday += t.amount;
                                     }
                                 });
@@ -3314,9 +3646,62 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     setHtmlSafe('head-total-npa', `₹${totalNpa.toLocaleString('en-IN')}`);
                     setHtmlSafe('head-collection-efficiency', `${collectionEfficiency}%`);
                     setHtmlSafe('head-total-clients', cac);
-                }
 
-                setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`); 
+                    // 🌟 BUG FIX: Missing Live Branch Performance Generation added back!
+                    const bpZone = document.getElementById('head-branch-progress-zone');
+                    if (bpZone) {
+                        let branchHtml = '';
+                        let bStats = serverDb["SYSTEM_SETTINGS"]?.branchStats || {};
+                        Object.keys(bStats).forEach(bName => {
+                            let todayStat = bStats[bName][todayStr];
+                            if (todayStat) {
+                                let cPct = Math.min(100, todayStat.colPct || 0).toFixed(0);
+                                let color = cPct >= 85 ? 'text-emerald-500' : 'text-amber-500';
+                                branchHtml += `
+                                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm min-w-[140px] flex-shrink-0 snap-center">
+                                    <p class="text-[9px] font-black text-slate-800 uppercase truncate">${bName}</p>
+                                    <div class="mt-2 flex justify-between items-end">
+                                        <p class="text-xs font-black ${color}">${cPct}% <span class="text-[8px] text-slate-400">Col</span></p>
+                                        <span class="${todayStat.bonusAchieved ? 'text-fuchsia-500' : 'text-slate-300'} text-sm" title="Bonus Hit">🎯</span>
+                                    </div>
+                                </div>`;
+                            }
+                        });
+                        bpZone.innerHTML = branchHtml || `<p class="text-[9px] text-slate-400 italic">No field data uploaded today yet.</p>`;
+                    }
+
+                    // 🌟 NAYA: Migration Posting Tracker Logic
+                    if (serverDb["SYSTEM_SETTINGS"] && !serverDb["SYSTEM_SETTINGS"].hidePostingTracker) {
+                        let totalImported = 0;
+                        let verifiedImported = 0;
+                        Object.keys(serverDb).forEach(k => {
+                            if (k !== "SYSTEM_SETTINGS" && serverDb[k]) {
+                                let c = serverDb[k];
+                                // Identify old imported loans
+                                if (c.customAppDate && c.customAppDate !== "N/A" && c.status !== "Deleted" && c.status !== "Rejected") {
+                                    totalImported++;
+                                    if (c.postingVerified) verifiedImported++;
+                                }
+                            }
+                        });
+                        
+                        const trackerBox = document.getElementById('head-posting-tracker-box');
+                        if (trackerBox) {
+                            if (totalImported > 0) {
+                                trackerBox.classList.remove('hidden');
+                                let pct = Math.round((verifiedImported / totalImported) * 100);
+                                setHtmlSafe('posting-tracker-text', `${verifiedImported} / ${totalImported} (${pct}%)`);
+                                document.getElementById('posting-tracker-bar').style.width = `${pct}%`;
+                            } else {
+                                trackerBox.classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        document.getElementById('head-posting-tracker-box')?.classList.add('hidden');
+                    }
+                } // End of Head check
+
+                setHtmlSafe('m-disburse-today', `₹${dT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-disburse-month', `₹${dM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-collection-today', `₹${cT.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-collection-month', `₹${cM.toLocaleString('en-IN')}`); 
@@ -3326,7 +3711,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 setHtmlSafe('head-month-settle', `₹${monthSettle.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-bounce-today', `₹${todayBounceAmt.toLocaleString('en-IN')}`);
-                setHtmlSafe('m-unmarked-today', `₹${(localUnmarkedAmt || 0).toLocaleString('en-IN')}`); 
+                setHtmlSafe('m-partial-today', `${todayPartialCount} Clients`); // 🌟 NAYA
+                setHtmlSafe('m-partial-month', `${monthPartialCount} Clients`); // 🌟 NAYA
+                setHtmlSafe('m-unmarked-today', `₹${(localUnmarkedAmt || 0).toLocaleString('en-IN')}`);
                 setHtmlSafe('m-pending-approval', pendingCount);
                 setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
@@ -3522,7 +3909,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 const cf = document.getElementById('report-centre-filter'); 
                 const bf = document.getElementById('report-branch-filter');
                 const lz = document.getElementById('client-directory-list-zone');
-                const searchQ = getSafeValue('report-name-search').toLowerCase();
+                const searchQ = getSafeValue('report-name-search').trim().toLowerCase(); // 🌟 BUG FIX: Removed trailing spaces causing search fails
 
                 if(rt === 'centre') { 
                     if(cf) cf.classList.remove('hidden'); 
@@ -3566,16 +3953,33 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         // 🚀 FIX: Distinctive Green Badge for Renewed Clients
                         let renewedTag = c.isRenewed ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-sm border border-emerald-200">Renewed</span>` : '';
                         
-                        html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
+                        // 🌟 NAYA: Display Key Financials in Directory for Posting Verification
+                        let financialSummary = '';
+                        if (c.status === "Active") {
+                            let totalEmiDuration = c.duration || 0;
+                            let emisPaid = c.emisPaidCount || 0;
+                            let bal = c.outstanding || 0;
+                            let od = c.overdue || 0;
+                            
+                            financialSummary = `
+                            <div class="col-span-2 bg-slate-50 rounded-xl p-2 mt-1 border border-slate-100 flex justify-between items-center text-center">
+                                <div><span class="block text-[8px] font-bold text-slate-400 uppercase">Paid/Total</span><span class="font-black text-slate-700 text-[10px]">${emisPaid} / ${totalEmiDuration}</span></div>
+                                <div><span class="block text-[8px] font-bold text-emerald-500 uppercase">Remaining Bal</span><span class="font-black text-emerald-600 text-xs">₹${bal.toLocaleString()}</span></div>
+                                <div><span class="block text-[8px] font-bold text-rose-400 uppercase">Overdue</span><span class="font-black text-rose-500 text-[10px]">₹${od.toLocaleString()}</span></div>
+                            </div>`;
+                        }
+
+                        html += `<div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col gap-2 animate-fade hover-scale">
                             <div class="flex justify-between items-start">
                                 <div><p class="text-[9px] font-mono text-indigo-500 font-bold flex items-center">${c.id||'NA'} <span class="ml-2">${tag}${importedTag}${renewedTag}</span></p><p class="font-black text-slate-900 text-sm mt-1">${c.name||'NA'} <span class="text-slate-400 font-bold text-[10px] ml-1">(${mobile})</span></p></div>
                                 <span class="text-[9px] font-black px-3 py-1.5 rounded-xl uppercase bg-blue-50 text-blue-600 shadow-inner">${c.planName||'Plan'}</span>
                             </div>
-                            <div class="grid grid-cols-2 gap-4 mt-1 pt-3 border-t border-slate-50 text-[10px]">
-                                <div><span class="text-slate-400 font-bold uppercase block mb-1">Branch/Centre</span><span class="font-black text-slate-700">${c.branch||'NA'} / ${c.center||'NA'}</span></div>
-                                <div><span class="text-slate-400 font-bold uppercase block mb-1">Status</span><span class="font-black ${statusColor}">${c.status}</span></div>
+                            <div class="grid grid-cols-2 gap-2 mt-1 text-[10px]">
+                                <div><span class="text-slate-400 font-bold uppercase block mb-0.5">Branch/Centre</span><span class="font-black text-slate-700">${c.branch||'NA'} / ${c.center||'NA'}</span></div>
+                                <div><span class="text-slate-400 font-bold uppercase block mb-0.5">Status</span><span class="font-black ${statusColor}">${c.status}</span></div>
+                                ${financialSummary}
                             </div>
-                            <button onclick="showClientFullInfo('${mobile}')" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mt-2">More Information</button>
+                            <button onclick="showClientFullInfo('${mobile}')" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mt-2 transition-colors">More Information</button>
                         </div>`;
                     }
                 });
@@ -3630,14 +4034,22 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <h4 class="text-[9px] font-black uppercase text-blue-600 mb-3 border-b border-slate-200 pb-1">Loan Profile</h4>
+                        <h4 class="text-[9px] font-black uppercase text-blue-600 mb-3 border-b border-slate-200 pb-1">Loan Profile (Live Status)</h4>
                         <div class="grid grid-cols-2 gap-y-3">
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Principal</span><span class="font-black text-slate-800">₹${(c.principal||0).toLocaleString()}</span></div>
-                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Total Payable</span><span class="font-black text-emerald-600">₹${(c.totalPayable||0).toLocaleString()}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Total Payable Base</span><span class="font-bold text-slate-600">₹${(c.totalPayable||0).toLocaleString()}</span></div>
+                            
+                            <!-- 🌟 NAYA: Focus on Remaining Outstanding & Overdue -->
+                            <div class="col-span-2 bg-emerald-50 border border-emerald-100 p-2 rounded-lg flex justify-between items-center">
+                                <span class="block text-[9px] font-bold text-emerald-600 uppercase">Remaining Balance:</span>
+                                <span class="font-black text-emerald-700 text-lg">₹${(c.outstanding||0).toLocaleString()}</span>
+                            </div>
+                            
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Active Cycle EMI</span><span class="font-black text-slate-800">₹${c.cycleEmi||0}</span></div>
-                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Overdue</span><span class="font-black text-rose-500">₹${c.overdue||0}</span></div>
+                            <div><span class="block text-[9px] font-bold text-rose-400 uppercase">Current Overdue</span><span class="font-black text-rose-600 text-sm">₹${c.overdue||0}</span></div>
+                            
                             <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Approval Date</span><span class="font-black text-slate-800">${(c.approvalDate && c.approvalDate !== "N/A") ? c.approvalDate : "Pending"}</span></div>
-                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">Insurance Charge</span><span class="font-black text-indigo-600">₹${c.insuranceAmt||0}</span></div>
+                            <div><span class="block text-[9px] font-bold text-slate-400 uppercase">EMIs Paid</span><span class="font-black text-indigo-600">${c.emisPaidCount||0} / ${c.duration||0}</span></div>
                             ${hybridInfo}
                         </div>
                     </div>
@@ -4089,6 +4501,44 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             renderStaffLedgerSheets();
         }
 
+        // 🌟 NAYA: Partial Pay Modal Logic
+        function openPartialPayModal(mobile, maxDue, name) {
+            let html = `<div class="text-center p-5 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+                <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">🌗</div>
+                <h3 class="text-xl font-black text-slate-900 uppercase tracking-widest mb-1">Custom Payment</h3>
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">${name}</p>
+                
+                <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-5 text-left shadow-inner">
+                    <label class="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block">Amount Received Today (₹)</label>
+                    <input type="number" id="popup-partial-amt" placeholder="e.g. 100, 150" class="w-full p-4 bg-white border border-amber-200 rounded-xl text-lg font-black text-amber-700 focus:outline-none focus:border-amber-500 shadow-sm transition-all text-center">
+                    <p class="text-[8px] font-bold text-amber-600 mt-2 uppercase tracking-widest text-center">Total Due: ₹${maxDue}</p>
+                </div>
+                
+                <button onclick="submitPopupPartialAmount('${mobile}')" class="btn-fluid w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-lg shadow-amber-500/30 transition-all hover-scale">Lock Custom Amount</button>
+                <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3.5 rounded-xl text-[10px] uppercase mt-3 transition-colors">Cancel</button>
+            </div>`;
+            openGlobalModal(html);
+        }
+
+        async function submitPopupPartialAmount(mobile) {
+            const input = document.getElementById('popup-partial-amt');
+            if(!input || !input.value) { alert("Amount enter karein!"); return; }
+            let amt = parseInt(input.value);
+            if(!serverDb[mobile]) return;
+            if(isNaN(amt) || amt <= 0) { alert("Amount zero ya negative nahi ho sakta!"); return; }
+            
+            let totalDebt = (serverDb[mobile].outstanding || 0) + (serverDb[mobile].overdue || 0);
+            // ✅ FIX: Limit hata di gayi hai. Ab staff isme Partial, Full Due, ya Advance kuch bhi type kar sakta hai.
+            
+            serverDb[mobile].advancePaid = amt;
+            serverDb[mobile].emiSettled = null; 
+            await saveDataToCloud(mobile);
+            closeGlobalModal();
+            showNotification('Partial Pay Locked', `₹${amt} save ho gaye. Bacha hua paisa day-end par 'Partial Due' ban jayega.`, '🌗');
+            renderStaffLedgerSheets();
+        }
+
         // NAYA FUNCTION: Smart Receive Popup (Cash vs UPI)
         function openPaymentModeModal(mobile, amount, name) {
             let html = `<div class="text-center p-5 relative overflow-hidden">
@@ -4184,7 +4634,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     </div>
                     
                     <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close QR Scanner</button>
-                    <p class="text-[8px] font-bold text-slate-400 mt-3 uppercase tracking-widest">Payment aane par Ledger se 'Received' dabayein</p>
+<p class="text-[8px] font-bold text-slate-500 mt-3 uppercase tracking-widest leading-tight">Sirf 1 Kist aane par '📥 1 Kist' dabayein. <br><span class="text-rose-500 font-black">Pura bakaaya ya Kam/Zyada aane par '✍️ Custom' button dabayein.</span></p>
                 </div>
             `;
             openGlobalModal(html);
@@ -4228,27 +4678,38 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         if(a.emiSettled==='online_paid') { bc = 'bg-blue-100 text-blue-800'; bt = 'ONLINE PAID'; }
 
                         let aB = '';
-                        let btnState = a.advancePaid > 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''; // UI Lock
+                        let btnState = a.advancePaid > 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''; 
                         
-                        // Overdue aur Active EMI ko alag-alag calculate karein taaki user choose kar sake
                         let activeEmiAmount = Math.min(a.outstanding || 0, a.cycleEmi || 0);
                         let activeOverdueAmount = a.overdue || 0;
-                        
-                        // Naya Smart QR Button
                         let qrSafeName = (a.name || 'Unknown Client').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${qrSafeName}')" class="btn-fluid flex-[0.4] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱 QR</button>`;
+                        
+                        let qrBtn = `<button onclick="openQrSelectionModal('${m}', ${activeEmiAmount}, ${activeOverdueAmount}, '${qrSafeName}')" class="btn-fluid flex-[0.5] py-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-600 hover:text-white text-indigo-600 font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}" title="Show QR">📱</button>`;
 
                         if(a.emiSettled === 'online_paid') { 
                             aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online App Paid</div>`; 
                         } 
+                        else if(a.advancePaid > 0) {
+                            aB = `<div class="flex-1 py-3 bg-amber-50 text-amber-600 font-black text-[10px] uppercase rounded-xl text-center border border-amber-200 shadow-inner">✓ Custom Pay Locked (₹${a.advancePaid})</div>
+                            <button onclick="serverDb['${m}'].advancePaid=0; saveDataToCloud('${m}').then(renderStaffLedgerSheets);" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                        }
+                        // 🌟 NAYA FIX: 1 Kist aur BNC par click hone ke baad buttons chup jayenge aur Locked UI aayega!
+                        else if(a.emiSettled === 'received_cash' || a.emiSettled === 'received_upi' || a.emiSettled === 'received') {
+                            let methodText = a.emiSettled === 'received_upi' ? 'UPI' : 'Cash';
+                            aB = `<div class="flex-1 py-3 bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase rounded-xl text-center border border-emerald-200 shadow-inner">✓ ${methodText} Locked (₹${activeEmiAmount})</div>
+                            <button onclick="setEmiStatus('${m}', null)" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                        }
+                        else if(a.emiSettled === 'bounce') {
+                            aB = `<div class="flex-1 py-3 bg-rose-50 text-rose-600 font-black text-[10px] uppercase rounded-xl text-center border border-rose-200 shadow-inner">❌ Marked as Bounced</div>
+                            <button onclick="setEmiStatus('${m}', null)" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                        }
                         else { 
-                            // 🌟 NAYA: Clean UI with 1 Single Receive Popup Button
                             aB = `${qrBtn}
-                            <button onclick="openPaymentModeModal('${m}', ${activeEmiAmount}, '${qrSafeName}')" class="btn-fluid flex-[1.5] py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">📥 Receive</button>
-                            <button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-1 py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ${btnState}">❌ BNC</button>`; 
+                            <button onclick="openPaymentModeModal('${m}', ${activeEmiAmount}, '${qrSafeName}')" class="btn-fluid flex-[1.2] py-3 bg-slate-50 border border-slate-200 hover:bg-emerald-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ml-1">📥 1 Kist</button>
+                            <button onclick="openPartialPayModal('${m}', ${activeEmiAmount + activeOverdueAmount}, '${qrSafeName}')" class="btn-fluid flex-[1.2] py-3 bg-slate-50 border border-slate-200 hover:bg-amber-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ml-1">✍️ Custom</button>
+                            <button onclick="setEmiStatus('${m}', 'bounce')" class="btn-fluid flex-[0.8] py-3 bg-slate-50 border border-slate-200 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase rounded-xl transition-colors ml-1">❌ BNC</button>`; 
                         }
 
-                        // HYBRID UI BADGE
                         let hybridBadge = a.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mt-1 inline-block">Hybrid Mode</span>` : '';
 
                         h += `<div class="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
@@ -4268,14 +4729,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             </div>
                             <div class="grid grid-cols-3 gap-2 py-2 border-y border-slate-100 text-center">
                                 <div class="bg-slate-50 rounded-lg p-1.5"><span class="text-slate-400 font-bold text-[8px] uppercase tracking-widest block">Rem Bal</span><span class="font-black text-slate-800 text-xs">₹${(a.outstanding||0).toLocaleString()}</span></div>
-                                ${a.overdue > 0 ? `<div class="bg-rose-50 rounded-lg p-1.5"><span class="text-rose-500 font-bold text-[8px] uppercase tracking-widest block">Overdue</span><span class="font-black text-rose-600 text-xs">₹${a.overdue.toLocaleString()}</span></div>` : `<div></div>`}
+                                ${a.overdue > 0 ? `<div class="bg-rose-50 rounded-lg p-1.5"><span class="text-rose-500 font-bold text-[8px] uppercase tracking-widest block">${a.partialOverdue ? 'Partial Due' : 'Overdue'}</span><span class="font-black text-rose-600 text-xs">₹${a.overdue.toLocaleString()}</span></div>` : `<div></div>`}
                                 <div class="bg-blue-50 rounded-lg p-1.5"><span class="text-blue-500 font-bold text-[8px] uppercase tracking-widest block">EMI</span><span class="font-black text-blue-600 text-xs">₹${Math.min(a.outstanding || 0, a.cycleEmi || 0)}</span></div>
                             </div>
-                            <div class="flex gap-1.5">${aB}</div>
-                            <div class="flex items-center gap-2">
-                                <input type="number" id="adv-input-${m}" oninput="serverDb['${m}'].tempAdv = this.value;" placeholder="Overdue / Advance Amt" class="w-2/3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:border-blue-300" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''} ${a.advancePaid > 0 ? `value="${a.advancePaid}" readonly` : `value="${a.tempAdv || ''}"`}>
-                                <button onclick="submitAdvanceSettlementAmount('${m}')" class="w-1/3 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase rounded-lg shadow-md transition-all" ${a.emiSettled || a.advancePaid > 0 ? 'disabled' : ''}>${a.advancePaid > 0 ? 'Locked' : 'Settle'}</button>
-                            </div>
+                            <div class="flex">${aB}</div>
                         </div>`;
                     }
                 });
@@ -4363,12 +4820,14 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         }
                     } 
                     else if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
-                        // 🚨 FIX: Cash aur UPI dono default roop se pura amount (EMI + Overdue) collect karte hain. Partial payment ke liye staff manual 'Advance/Custom' box use karega.
-                        let paidAmt = Math.min((c.outstanding || 0) + (c.overdue || 0), (c.cycleEmi || 0) + (c.overdue || 0));
+                        // ✅ OPTION 2 FIX: Cash/UPI ab default sirf 1 regular EMI (cycleEmi) hi deduct karega.
+                        // Agar overdue hai, toh purana clear hoga aur aaj ka naya overdue ban jayega.
+                        let paidAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                         
                         // Pehle overdue clear karein
                         let overdueToClear = Math.min(c.overdue || 0, paidAmt);
                         c.overdue = Math.max(0, (c.overdue || 0) - paidAmt);
+                        if (c.overdue === 0) c.partialOverdue = false; // 🌟 NAYA: Pura paisa aane par tag hata do
                         
                         // Bacha hua amount outstanding se katega
                         let remainingForPrincipal = paidAmt - overdueToClear;
@@ -4401,12 +4860,14 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         
                         let overdueToClear = Math.min(c.overdue || 0, actualAdv);
                         c.overdue = Math.max(0, (c.overdue || 0) - actualAdv);
+                        if (c.overdue === 0) c.partialOverdue = false; // 🌟 NAYA: Pura paisa aane par tag hata do
                         
                         let remainingForPrincipal = actualAdv - overdueToClear;
                         c.outstanding = Math.max(0, (c.outstanding || 0) - remainingForPrincipal);
                         
                         c.lastPaymentDate = todayStr; 
-                        c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Advance' }); 
+                        // 🌟 FIX: Isko Advance bolna galat tha. Ye partial ya overdue recovery hai.
+                        c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Custom Pay' }); 
                         
                         let remainingAdv = remainingForPrincipal; // Only excess principal payment skips EMIs
                         let emiCoveredToday = false; // FIX: Add flag to track if today's EMI requirement is met
@@ -4431,6 +4892,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             if (remainingAdv < currentPhaseEmi) {
                                 let shortfall = currentPhaseEmi - remainingAdv;
                                 c.overdue = (c.overdue || 0) + shortfall;
+                                c.partialOverdue = true; // 🌟 NAYA: Mark that this overdue is from a partial payment
                                 c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
                                 c.emisPaidCount = (c.emisPaidCount || 0) + 1;
                                 // Fix: Show the exact penalty amount in passbook so customers understand the overdue addition
@@ -4477,7 +4939,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     if(c.isApproved && c.approvalDate === todayStr) branchDisbursed += (c.principal||0);
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(t.date === todayStr && ['Received','Online App','Advance','Direct Settle'].includes(t.type)) branchCollected += t.amount;
+                            if(t.date === todayStr && ['Received','Online App','Advance','Custom Pay','Advance (Pre-Settle)','Direct Settle'].includes(t.type)) branchCollected += t.amount;
                         });
                     }
                     if(c.status === "Active") {
