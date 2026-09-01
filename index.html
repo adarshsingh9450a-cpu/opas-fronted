@@ -507,7 +507,7 @@
                     <div onclick="openPartialPayList('month')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Month's Partial Payments</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-partial-month">0 Clients</div></div>
 
                     <!-- Naya Unmarked Actions Block -->
-                    <div onclick="showDashboardList('unmarked')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Pending Actions (Unmarked)</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-unmarked-today">₹0</div></div>
+                    <div onclick="showDashboardList('unmarked')" class="bg-amber-50 border border-amber-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-amber-600 uppercase ml-1">Today's Unmarked (Pending)</p><div class="bg-white text-amber-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm"><span id="m-unmarked-count" class="text-sm border-r border-amber-200 pr-2 mr-2">0</span><span id="m-unmarked-today">₹0</span></div></div>
 
                     <!-- Staff Pending Approvals Block -->
                     <div onclick="showDashboardList('pending-approval')" class="bg-purple-50 border border-purple-100 p-4 rounded-xl flex justify-between items-center col-span-2 hover-scale cursor-pointer"><p class="text-[10px] font-black text-purple-600 uppercase ml-1">Awaiting Head Approval</p><div class="bg-white text-purple-600 px-4 py-1.5 rounded-lg font-black text-lg shadow-sm" id="m-pending-approval">0</div></div>
@@ -752,23 +752,27 @@
             <div id="view-node-admin-edit" class="view-panel hidden animate-slide-up space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3"><div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">✏️</div><h3 class="text-xs font-black text-rose-600 uppercase">Master Edit & Delete</h3></div>
-                    <div class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
-                        <input type="text" id="admin-edit-search" oninput="debounceSearch(syncAdminEditDropdown)" placeholder="🔍 Search Client Name..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none">
+                    <div id="admin-edit-search-panel" class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4 animate-fade">
+                        <input type="text" id="admin-edit-search" oninput="debounceSearch(syncAdminEditDropdown)" placeholder="🔍 Search Client Name, ID or Mobile..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm transition-all">
                         <div class="grid grid-cols-2 gap-2">
                             <select id="admin-edit-branch" onchange="syncAdminEditCentre(); syncAdminEditDropdown()" class="hidden w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                             <select id="admin-edit-centre" onchange="syncAdminEditDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"><option value="ALL">-- All Centres --</option></select>
                         </div>
                     </div>
-                    <select id="admin-edit-client-select" onchange="loadClientForEdit()" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"></select>
                     
-                    <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade mt-4">
+                    <!-- Naya List UI aur Hidden Input Memory -->
+                    <input type="hidden" id="admin-edit-active-mobile" value="">
+                    <div id="admin-edit-client-list" class="space-y-3 max-h-[55vh] overflow-y-auto pr-1"></div>
+                    
+                    <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade mt-2">
+                        <button onclick="closeEditFormAndShowList()" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mb-2 shadow-sm flex items-center justify-center gap-2 transition-colors">← Back to Search List</button>
                         <!-- 🌟 NAYA: QUICK MIGRATE EDITOR (For Fast Backdate Fixing) -->
                         <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl mb-3 shadow-inner">
                             <label class="block text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-3">⚡ Quick Migration Fixer</label>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Paid EMIs (Register se)</label>
-                                    <input type="number" id="quick-edit-paid-emis" oninput="document.getElementById('edit-cust-emis-paid').value=this.value; autoCalcEditPassbook();" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-sm" placeholder="Kitni aayi?">
+                                    <input type="number" id="quick-edit-paid-emis" oninput="autoCalcEditPassbook();" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-sm" placeholder="Kitni aayi?">
                                 </div>
                                 <div>
                                     <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Real Disbursal Date</label>
@@ -1750,7 +1754,11 @@
             Object.keys(serverDb).forEach(m => {
                 if (m === "SYSTEM_SETTINGS") return;
                 let c = serverDb[m];
-                if (c && c.customAppDate && c.customAppDate !== "N/A" && c.status !== "Deleted" && c.status !== "Rejected" && !c.postingVerified) {
+                
+                // 🌟 SMART LINKING: Skip unko karo jo manually pehle edit ho chuke hain
+                let hasBeenEdited = c && c.transactions && c.transactions.some(t => t.type && t.type.includes('(Edit)'));
+                
+                if (c && c.customAppDate && c.customAppDate !== "N/A" && c.status !== "Deleted" && c.status !== "Rejected" && !c.postingVerified && !hasBeenEdited) {
                     found = true;
                     html += `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
                         <div class="flex justify-between items-start">
@@ -2768,6 +2776,12 @@
             if(centreDropdown) centreDropdown.innerHTML = opts;
         }
 
+        function closeEditFormAndShowList() {
+            document.getElementById('admin-edit-form-block')?.classList.add('hidden');
+            document.getElementById('admin-edit-client-list')?.classList.remove('hidden');
+            document.getElementById('admin-edit-search-panel')?.classList.remove('hidden');
+        }
+
         function syncAdminEditDropdown() {
             try {
                 const branchDropdown = document.getElementById('admin-edit-branch');
@@ -2781,16 +2795,16 @@
                     }
                 } else {
                     branchDropdown.classList.add('hidden');
-                    // BUG FIX: Staff ke liye option pehle create karein warna filter blank aayega
                     let staffBranch = getSafeValue('dashboard-active-branch-select');
                     if (branchDropdown.innerHTML === "") branchDropdown.innerHTML = `<option value="${staffBranch}">${staffBranch}</option>`;
                     branchDropdown.value = staffBranch; 
                     if (document.getElementById('admin-edit-centre').options.length <= 1) syncAdminEditCentre();
                 }
 
-                const sel = document.getElementById('admin-edit-client-select'); 
-                let opts = `<option value="">-- Select Client --</option>`;
-                const searchQ = getSafeValue('admin-edit-search').toLowerCase();
+                const listZone = document.getElementById('admin-edit-client-list'); 
+                let html = ``;
+                
+                const searchQ = getSafeValue('admin-edit-search').trim().toLowerCase(); 
                 const activeBranch = branchDropdown.value;
                 const activeCentre = getSafeValue('admin-edit-centre');
 
@@ -2800,17 +2814,41 @@
                     
                     if (activeBranch !== "ALL" && c.branch !== activeBranch) return;
                     if (activeCentre !== "ALL" && c.center !== activeCentre) return;
-                    // BUG FIX: Safer Mobile Number 'm' ko bhi search criteria mein add kiya hai
+                    
                     let safeName = (c.name || "").toString().toLowerCase();
                     let safeId = (c.id || "").toString().toLowerCase();
+                    
                     if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !String(m).includes(searchQ)) return;
 
-                    opts += `<option value="${m}">${c.name||'Unknown'} (${m}) - ${c.status}</option>`; 
+                    let statusColor = c.status === 'Active' ? 'text-emerald-500' : (c.status === 'Pending Approval' ? 'text-amber-500' : 'text-rose-500');
+                    let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Hybrid</span>` : '';
+                    let bal = c.status === 'Active' ? `| Due: ₹${(c.outstanding||0) + (c.overdue||0)}` : '';
+                    
+                    html += `
+                    <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex flex-col gap-2 hover-scale transition-all animate-fade">
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1 cursor-pointer" onclick="showClientFullInfo('${m}')" title="Click to view full directory detail">
+                                <p class="text-xs font-black text-slate-900 flex items-center gap-1">${c.name||'Unknown'} <span class="text-blue-500 text-[9px] bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full shadow-sm">ℹ️ Profile</span></p>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
+                                <div class="mt-1 flex items-center gap-2">
+                                    <span class="text-[8px] font-black uppercase ${statusColor} bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">${c.status} ${bal}</span>
+                                    ${tag}
+                                </div>
+                            </div>
+                            <button onclick="loadClientForEdit('${m}')" class="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-black px-4 py-3 rounded-xl text-[10px] uppercase shadow-sm transition-all ml-2 flex flex-col items-center"><span class="text-xs mb-0.5">✏️</span>Edit</button>
+                        </div>
+                    </div>`;
                 });
                 
-                if(sel) sel.innerHTML = opts; 
-                document.getElementById('admin-edit-form-block')?.classList.add('hidden');
-            } catch(e) {}
+                if(listZone) {
+                    listZone.innerHTML = html || `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No clients found for edit.</p></div>`;
+                }
+                
+                // Show list by default
+                closeEditFormAndShowList();
+            } catch(e) {
+                console.error(e);
+            }
         }
         function syncKycCentreDropdown() {
             const branch = document.getElementById('new-cust-branch').value;
@@ -3033,56 +3071,79 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 if(renewSelect && backupSettledClientMobile) renewSelect.value = backupSettledClientMobile;
             }, 300);
         }
-        function loadClientForEdit() {
+        function loadClientForEdit(mobilePassed) {
             try {
-                const m = getSafeValue('admin-edit-client-select'); const b = document.getElementById('admin-edit-form-block');
-                if(!m) { b?.classList.add('hidden'); return; } let c = serverDb[m];
+                // List se direct mobile aayega ya memory se uthayenge
+                let m = mobilePassed || getSafeValue('admin-edit-active-mobile');
+                const b = document.getElementById('admin-edit-form-block');
+                if(!m) { b?.classList.add('hidden'); return; } 
                 
-                document.getElementById('edit-cust-name').value = c.name||""; 
+                // Memory save karo
+                const hiddenInput = document.getElementById('admin-edit-active-mobile');
+                if(hiddenInput) hiddenInput.value = m;
+
+                let c = serverDb[m];
+                if(!c) { b?.classList.add('hidden'); return; }
                 
-                // Auto-generate Dropdown based on Plan Duration
+                // Naya UX: Jab form khule to search list hide ho jaye
+                document.getElementById('admin-edit-search-panel')?.classList.add('hidden');
+                document.getElementById('admin-edit-client-list')?.classList.add('hidden');
+                
+                let elName = document.getElementById('edit-cust-name'); if(elName) elName.value = c.name||""; 
+                
                 let emiDropdown = document.getElementById('edit-cust-emis-paid');
                 if (emiDropdown) {
                     let opts = `<option value="0">0 (No EMI Paid)</option>`;
-                    let maxEmis = c.duration || 100; // Plan limit
+                    let maxEmis = c.duration || 100;
                     for(let i=1; i<=maxEmis; i++) { opts += `<option value="${i}">${i} EMIs Paid</option>`; }
                     emiDropdown.innerHTML = opts;
                     emiDropdown.value = c.emisPaidCount || 0;
                 }
-                document.getElementById('edit-cust-historic-od').value = c.overdue || 0;
-
-                document.getElementById('edit-cust-outstanding').value = c.outstanding||0; 
-                document.getElementById('edit-cust-emi').value = c.cycleEmi||0; 
-                document.getElementById('edit-cust-od').value = c.overdue||0; 
-                document.getElementById('edit-cust-status').value = c.status||"Active"; 
-                document.getElementById('edit-cust-due-date').value = c.nextEmiDate||"N/A";
-                let disbDate = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : (c.approvalDate || "N/A");
-                document.getElementById('edit-cust-disbursal-date').value = disbDate;
                 
-                // 🌟 NAYA: Populate Quick Editor
+                let historicOdEl = document.getElementById('edit-cust-historic-od');
+                if (historicOdEl) historicOdEl.value = c.overdue || 0;
+
+                let elOut = document.getElementById('edit-cust-outstanding'); if(elOut) elOut.value = c.outstanding||0; 
+                let elEmi = document.getElementById('edit-cust-emi'); if(elEmi) elEmi.value = c.cycleEmi||0; 
+                let elOd = document.getElementById('edit-cust-od'); if(elOd) elOd.value = c.overdue||0; 
+                let elStatus = document.getElementById('edit-cust-status'); if(elStatus) elStatus.value = c.status||"Active"; 
+                let elDueDate = document.getElementById('edit-cust-due-date'); if(elDueDate) elDueDate.value = c.nextEmiDate||"N/A";
+                
+                let disbDate = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : (c.approvalDate || "N/A");
+                let elDisbDate = document.getElementById('edit-cust-disbursal-date'); if(elDisbDate) elDisbDate.value = disbDate;
+                
                 if (disbDate !== "N/A") {
                     let dp = disbDate.split('-');
-                    if(dp.length === 3) document.getElementById('quick-edit-date').value = `${dp[2]}-${dp[1]}-${dp[0]}`;
+                    let qDate = document.getElementById('quick-edit-date');
+                    if(dp.length === 3 && qDate) qDate.value = `${dp[2]}-${dp[1]}-${dp[0]}`;
                 }
-                document.getElementById('quick-edit-paid-emis').value = c.emisPaidCount || 0;
                 
-                document.getElementById('edit-cust-insurance').value = c.insuranceAmt || 0;
+                let qPaidEmis = document.getElementById('quick-edit-paid-emis');
+                if(qPaidEmis) qPaidEmis.value = c.emisPaidCount || 0;
                 
+                let editIns = document.getElementById('edit-cust-insurance');
+                if(editIns) editIns.value = c.insuranceAmt || 0;
+                
+                let statusContainer = document.getElementById('edit-status-container');
+                let deleteBtn = document.getElementById('edit-delete-btn');
                 if (currentLoggedInRole === 'staff') {
-                    document.getElementById('edit-status-container').classList.add('hidden');
-                    document.getElementById('edit-delete-btn').classList.add('hidden');
+                    statusContainer?.classList.add('hidden');
+                    deleteBtn?.classList.add('hidden');
                 } else {
-                    document.getElementById('edit-status-container').classList.remove('hidden');
-                    document.getElementById('edit-delete-btn').classList.remove('hidden');
+                    statusContainer?.classList.remove('hidden');
+                    deleteBtn?.classList.remove('hidden');
                 }
 
                 b?.classList.remove('hidden');
-            } catch(e) {}
+            } catch(e) {
+                alert("Bhai error aayi hai: " + e.message);
+                console.error(e);
+            }
         }
 
         // Dropdown Logic Calculator
         function autoCalcEditPassbook() {
-            const m = getSafeValue('admin-edit-client-select'); if(!m) return;
+            const m = getSafeValue('admin-edit-active-mobile'); if(!m) return;
             let c = serverDb[m]; if(!c) return;
 
             // 🌟 NAYA: Purane dropdown ki jagah naye Quick Fixer box se value uthayega
@@ -3124,8 +3185,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
         }
 
         async function saveClientEdits() {
-             const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-             try {
+            const m = getSafeValue('admin-edit-active-mobile'); if(!m) return;
+            try {
                  // 1. Gather Details First
                  let newOut = Math.max(0, parseInt(getSafeValue('edit-cust-outstanding')) || 0);
                  let newOd = Math.max(0, parseInt(getSafeValue('edit-cust-od')) || 0);
@@ -3160,8 +3221,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                  // 3. ✅ SAFE TO MUTATE DATABASE MEMORY
                  let oldOut = parseInt(serverDb[m].outstanding) || 0; 
                  let oldOd = parseInt(serverDb[m].overdue) || 0;
+                 let currentStatus = serverDb[m].status; // 🌟 BUG FIX: Missing variable added
                  
-                 if (newStatus === 'Deactive' || newStatus === 'Deleted') { 
+                 if (newStatus === 'Deactive' || newStatus === 'Deleted') {
                      newOut = 0; 
                      newOd = 0; 
                      serverDb[m].advancePaid = 0; 
@@ -3185,7 +3247,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                      }
                  }
 
-                 let parsedEmisPaid = parseInt(getSafeValue('edit-cust-emis-paid'));
+                 // Read from the new quick-edit input safely
+let rawEmis = getSafeValue('quick-edit-paid-emis');
+let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue('edit-cust-emis-paid'));
                  if(!isNaN(parsedEmisPaid)) { 
                      serverDb[m].emisPaidCount = parsedEmisPaid; 
                      // 🌟 NAYA FIX 2: Pending Imported files ke liye paid amount update karein (Taaki Approval receipt sahi kate)
@@ -3237,7 +3301,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                  
                  await saveDataToCloud(m); 
                  showNotification('Profile Edited ✏️', "Client records have been successfully updated.", '✅');
-                 document.getElementById('admin-edit-form-block')?.classList.add('hidden'); 
+                 
+                 // Ab proper list par wapas bhejega
+                 closeEditFormAndShowList();
+                 syncAdminEditDropdown(); 
                  refreshHeadDashboardStats();
                  
                  // Agar Modal khula hai toh usko bhi refresh karo taaki wahan se bhi hat jaye
@@ -3248,8 +3315,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
              } catch(e) { alert("Error saving data."); }
         }
         async function deleteClientRecord() {
-            const m = getSafeValue('admin-edit-client-select'); if(!m) return;
-            if(confirm("⚠ WARNING: Completely DELETE client? (Saara data, collection aur disbursal hamesha ke liye WIPE OUT ho jayega)")) { 
+            const m = getSafeValue('admin-edit-active-mobile'); if(!m) return;
+            if(confirm("⚠ WARNING: Completely DELETE client? (Saara data, collection aur disbursal hamesha ke liye WIPE OUT ho jayega)")) {
                 try { 
                     // FIX: Hard Delete causes ghost data sync bugs from offline staff devices. Using Soft-Delete Override instead.
                     serverDb[m].status = "Deleted";
@@ -3269,9 +3336,10 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     await saveDataToCloud(m);
                     
                     alert("Client completely wiped out. Staff can now safely enter correct details without duplicate errors."); 
+                    closeEditFormAndShowList();
                     syncAdminEditDropdown(); 
                     refreshHeadDashboardStats(); 
-                    routePanelSection('dashboard');
+                    // routePanelSection('dashboard'); <- Isko hata diya, ab tu list par hi rahega
                 } catch(e) {} 
             }
         }
@@ -3311,10 +3379,15 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                 if (timeframe === 'today' && tx.date === todayStr) { match = true; } 
                                 else if (timeframe === 'month' && txMY === selectedMonthVal) { match = true; }
                                 
+                                let modeBadge = '';
                                 if (match) {
                                     // 🌟 FIX: Custom Pay ko bhi array me add karo warna list me amount ₹0 dikhega!
                                     let payTx = c.transactions.find(ptx => ptx.date === tx.date && ['Advance', 'Custom Pay', 'Received', 'Online App'].includes(ptx.type));
-                                    if(payTx) paidAmount = payTx.amount;
+                                    if(payTx) {
+                                        paidAmount = payTx.amount;
+                                        let m = payTx.mode || (payTx.type === 'Online App' ? 'upi' : 'cash');
+                                        modeBadge = m === 'upi' ? `<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">📱 UPI</span>` : `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">💵 Cash</span>`;
+                                    }
                                 }
                                 break; 
                             }
@@ -3333,9 +3406,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                 <span class="text-[8px] bg-amber-50 text-amber-600 border border-amber-200 px-2 py-1 rounded font-black uppercase">Partial Due</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
-                                <div class="bg-emerald-50 p-2 rounded-lg text-center shadow-inner">
-                                    <span class="block text-[8px] font-bold text-emerald-500 uppercase">Paid Amount</span>
-                                    <span class="font-black text-emerald-700">₹${paidAmount}</span>
+                                <div class="bg-emerald-50 p-2 rounded-lg text-center shadow-inner flex flex-col items-center justify-center">
+                                    <span class="block text-[8px] font-bold text-emerald-500 uppercase mb-0.5">Paid Amount</span>
+                                    <span class="font-black text-emerald-700 flex items-center justify-center">₹${paidAmount} ${modeBadge}</span>
                                 </div>
                                 <div class="bg-rose-50 p-2 rounded-lg text-center shadow-inner">
                                     <span class="block text-[8px] font-bold text-rose-400 uppercase">Shortfall (Due)</span>
@@ -3455,7 +3528,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                         if (isCurrentMonth && matchToday) cT += tx.amount;
                                         if (matchMY) cM += tx.amount;
                                     }
-                                    if(tx.type === 'Advance') {
+                                    // 🌟 FIX: Ab Custom Pay ko bhi Advance me count karega taaki 0 na dikhe
+                                    if(tx.type === 'Advance' || tx.type === 'Custom Pay') {
                                         if (isCurrentMonth && matchToday) todayAdv += tx.amount;
                                         if (matchMY) monthAdv += tx.amount;
                                     }
@@ -3477,7 +3551,28 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         if (f.status === "Active") { 
                             aC++; oT += (f.overdue||0); 
                             
-                            // NAYA: Unmarked Clients Logic
+                            // 🌟 NAYA: LIVE STATE TRACKING (Real-time updates before Day-End)
+                            let isDayEndDoneToday = (f.lastDayEndProcessed === todayStr);
+                            
+                            if (!isDayEndDoneToday && isCurrentMonth) {
+                                let activeEmiAmount = Math.min(f.outstanding || 0, f.cycleEmi || 0);
+                                
+                                if (f.emiSettled === 'bounce') {
+                                    todayBounceAmt += activeEmiAmount;
+                                } 
+                                else if (f.emiSettled === 'received_cash' || f.emiSettled === 'received_upi' || f.emiSettled === 'received') {
+                                    cT += activeEmiAmount;
+                                    cM += activeEmiAmount;
+                                }
+                                else if (f.advancePaid > 0) {
+                                    cT += f.advancePaid;
+                                    cM += f.advancePaid;
+                                    todayAdv += f.advancePaid;
+                                    monthAdv += f.advancePaid;
+                                }
+                            }
+                            
+                            // Unmarked Clients Logic
                             if (f.outstanding > 0 || f.overdue > 0) {
                                 let tDate = new Date(); tDate.setHours(0,0,0,0);
                                 let isDue = false;
@@ -3487,11 +3582,12 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                 } else if (!f.nextEmiDate || f.nextEmiDate === "N/A") {
                                     isDue = true; 
                                 }
-                                let hasTxToday = f.transactions && f.transactions.some(tx => tx.date === todayStr);
+                                let hasTxToday = f.transactions && f.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle'].includes(tx.type));
                                 
-                                // Condition: Aaj EMI Due thi (ya overdue thi) par staff ne button touch nahi kiya
                                 if ((isDue || f.overdue > 0) && !f.emiSettled && !f.advancePaid && !hasTxToday) {
                                     localUnmarkedAmt += Math.min(f.outstanding || 0, f.cycleEmi || 0) + (f.overdue || 0);
+                                    // Make sure variable is defined globally at top of function
+                                    window.localUnmarkedCount = (window.localUnmarkedCount || 0) + 1;
                                 }
                             }
                         }
@@ -3680,7 +3776,15 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                                 // Identify old imported loans
                                 if (c.customAppDate && c.customAppDate !== "N/A" && c.status !== "Deleted" && c.status !== "Rejected") {
                                     totalImported++;
-                                    if (c.postingVerified) verifiedImported++;
+                                    
+                                    // 🌟 SMART LINKING: Agar client pehle kabhi edit hua tha toh use automatically Verified manenge
+                                    let hasBeenEdited = c.transactions && c.transactions.some(t => t.type && t.type.includes('(Edit)'));
+                                    
+                                    if (c.postingVerified || hasBeenEdited) {
+                                        verifiedImported++;
+                                        // Memory auto-heal kar do taaki baar baar scan na karna pade
+                                        if(!c.postingVerified) c.postingVerified = true; 
+                                    }
                                 }
                             }
                         });
@@ -3712,9 +3816,11 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 setHtmlSafe('m-od-today', `₹${oT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-bounce-today', `₹${todayBounceAmt.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-partial-today', `${todayPartialCount} Clients`); // 🌟 NAYA
-                setHtmlSafe('m-partial-month', `${monthPartialCount} Clients`); // 🌟 NAYA
+                setHtmlSafe('m-partial-month', `${monthPartialCount} Clients`); 
                 setHtmlSafe('m-unmarked-today', `₹${(localUnmarkedAmt || 0).toLocaleString('en-IN')}`);
+                setHtmlSafe('m-unmarked-count', `${window.localUnmarkedCount || 0}`);
                 setHtmlSafe('m-pending-approval', pendingCount);
+                window.localUnmarkedCount = 0; // Reset for next refresh
                 setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
@@ -3993,7 +4099,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             const c = serverDb[mobile]; if(!c) return;
             let editBtn = '';
             if(currentLoggedInRole === 'head') {
-                editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-branch').value='ALL'; syncAdminEditCentre(); syncAdminEditDropdown(); document.getElementById('admin-edit-client-select').value='${mobile}'; loadClientForEdit();" class="btn-fluid w-full bg-rose-100 text-rose-600 hover:bg-rose-200 font-black py-4 rounded-xl text-[10px] uppercase mt-4 transition-colors">✏️ Edit Profile</button>`;
+                editBtn = `<button onclick="closeGlobalModal(); routePanelSection('admin-edit'); document.getElementById('admin-edit-branch').value='ALL'; syncAdminEditCentre(); syncAdminEditDropdown(); loadClientForEdit('${mobile}');" class="btn-fluid w-full bg-rose-100 text-rose-600 hover:bg-rose-200 font-black py-4 rounded-xl text-[10px] uppercase mt-4 transition-colors">✏️ Edit Profile</button>`;
             }
 
             let hybridInfo = c.isHybrid ? `<div class="col-span-2 mt-2 p-2 bg-amber-50 rounded-lg text-amber-700 text-[9px] font-bold">Hybrid Master: ${c.emisPaidCount}/${c.duration} Paid. Current Active EMI: ₹${c.cycleEmi}</div>` : '';
@@ -4101,7 +4207,15 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 for(let i = c.transactions.length - 1; i >= 0; i--) { 
                     let t = c.transactions[i]; 
                     let color = t.type==='Advance' ? 'text-blue-500' : (t.type==='Bounced'?'text-rose-500':(t.type==='Direct Settle'?'text-amber-500':'text-emerald-500'));
-                    txHtml += `<div class="flex justify-between items-center py-3 border-b border-slate-100 last:border-0"><span class="text-[10px] font-black text-slate-500 uppercase">${t.date}</span><span class="text-xs font-bold text-slate-800">${t.type}</span><span class="text-xs font-black ${color}">₹${t.amount}</span></div>`; 
+                    
+                    // 🌟 FIX: Apply proper badge logic including Custom Pay
+                    let modeBadge = '';
+                    if (['Received', 'Online App', 'Custom Pay', 'Advance', 'Direct Settle'].includes(t.type)) {
+                        let m = t.mode || (t.type === 'Online App' ? 'upi' : 'cash');
+                        modeBadge = m === 'upi' ? `<span class="bg-blue-100 border border-blue-200 text-blue-700 px-1.5 py-0.5 rounded text-[8px] ml-2 uppercase shadow-sm font-black">📱 UPI</span>` : `<span class="bg-emerald-100 border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] ml-2 uppercase shadow-sm font-black">💵 Cash</span>`;
+                    }
+                    
+                    txHtml += `<div class="flex justify-between items-center py-3 border-b border-slate-100 last:border-0"><span class="text-[10px] font-black text-slate-500 uppercase">${t.date}</span><span class="text-xs font-bold text-slate-800 flex items-center">${t.type} ${modeBadge}</span><span class="text-xs font-black ${color}">₹${t.amount}</span></div>`; 
                 }
             } else {
                 txHtml += `<div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100 border-dashed"><p class="text-2xl mb-2">🗓️</p><p class="text-[9px] font-bold text-slate-400 uppercase">No EMI received yet.</p></div>`;
@@ -4474,6 +4588,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             } catch(e) {}
         }
         async function setEmiStatus(mobile, status) {
+            // 🌟 CRITICAL BUG FIX: Data loss se bachne ke liye sync ke dauran payments block karna
+            if (isSystemBusy) { showNotification('System Busy', 'Background Data Sync chal raha hai, kripya 3-4 seconds rukein.', '⏳'); return; }
+            
             if(!serverDb[mobile]) return;
             if(serverDb[mobile].status === "Deactive" || serverDb[mobile].outstanding <= 0) { 
                 alert("⚠️ Ye account settle ho chuka hai. Action blocked!"); 
@@ -4503,6 +4620,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
         // 🌟 NAYA: Partial Pay Modal Logic
         function openPartialPayModal(mobile, maxDue, name) {
+            if (isSystemBusy) { showNotification('System Busy', 'Background Data Sync chal raha hai, kripya 3-4 seconds rukein.', '⏳'); return; }
             let html = `<div class="text-center p-5 relative overflow-hidden">
                 <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
                 <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">🌗</div>
@@ -4515,32 +4633,39 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     <p class="text-[8px] font-bold text-amber-600 mt-2 uppercase tracking-widest text-center">Total Due: ₹${maxDue}</p>
                 </div>
                 
-                <button onclick="submitPopupPartialAmount('${mobile}')" class="btn-fluid w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-lg shadow-amber-500/30 transition-all hover-scale">Lock Custom Amount</button>
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <button onclick="submitPopupPartialAmount('${mobile}', 'cash')" class="btn-fluid bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-all hover-scale">
+                        💵 Lock Cash
+                    </button>
+                    <button onclick="submitPopupPartialAmount('${mobile}', 'upi')" class="btn-fluid bg-blue-500 hover:bg-blue-600 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-all hover-scale">
+                        📱 Lock UPI
+                    </button>
+                </div>
                 <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-black py-3.5 rounded-xl text-[10px] uppercase mt-3 transition-colors">Cancel</button>
             </div>`;
             openGlobalModal(html);
         }
 
-        async function submitPopupPartialAmount(mobile) {
+        async function submitPopupPartialAmount(mobile, mode = 'cash') {
             const input = document.getElementById('popup-partial-amt');
             if(!input || !input.value) { alert("Amount enter karein!"); return; }
             let amt = parseInt(input.value);
             if(!serverDb[mobile]) return;
             if(isNaN(amt) || amt <= 0) { alert("Amount zero ya negative nahi ho sakta!"); return; }
             
-            let totalDebt = (serverDb[mobile].outstanding || 0) + (serverDb[mobile].overdue || 0);
-            // ✅ FIX: Limit hata di gayi hai. Ab staff isme Partial, Full Due, ya Advance kuch bhi type kar sakta hai.
-            
             serverDb[mobile].advancePaid = amt;
+            serverDb[mobile].customPayMode = mode; // 🌟 NAYA: Track Cash or UPI
             serverDb[mobile].emiSettled = null; 
             await saveDataToCloud(mobile);
             closeGlobalModal();
-            showNotification('Partial Pay Locked', `₹${amt} save ho gaye. Bacha hua paisa day-end par 'Partial Due' ban jayega.`, '🌗');
+            let modeText = mode === 'upi' ? '📱 UPI' : '💵 Cash';
+            showNotification('Custom Pay Locked', `₹${amt} (${modeText}) save ho gaye. Day-end par exactly auto-set ho jayega.`, '🌗');
             renderStaffLedgerSheets();
         }
 
         // NAYA FUNCTION: Smart Receive Popup (Cash vs UPI)
         function openPaymentModeModal(mobile, amount, name) {
+            if (isSystemBusy) { showNotification('System Busy', 'Background Data Sync chal raha hai, kripya 3-4 seconds rukein.', '⏳'); return; }
             let html = `<div class="text-center p-5 relative overflow-hidden">
                 <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
                 <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">📥</div>
@@ -4690,8 +4815,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                             aB = `<div class="flex-1 py-3 bg-blue-50 text-blue-600 font-black text-[10px] uppercase rounded-xl text-center border border-blue-200 shadow-inner">✓ Online App Paid</div>`; 
                         } 
                         else if(a.advancePaid > 0) {
-                            aB = `<div class="flex-1 py-3 bg-amber-50 text-amber-600 font-black text-[10px] uppercase rounded-xl text-center border border-amber-200 shadow-inner">✓ Custom Pay Locked (₹${a.advancePaid})</div>
-                            <button onclick="serverDb['${m}'].advancePaid=0; saveDataToCloud('${m}').then(renderStaffLedgerSheets);" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                            let mText = a.customPayMode === 'upi' ? '📱 UPI' : '💵 Cash';
+                            aB = `<div class="flex-1 py-3 bg-amber-50 text-amber-600 font-black text-[10px] uppercase rounded-xl text-center border border-amber-200 shadow-inner">✓ Custom Pay Locked (₹${a.advancePaid} | ${mText})</div>
+                            <button onclick="serverDb['${m}'].advancePaid=0; serverDb['${m}'].customPayMode=null; saveDataToCloud('${m}').then(renderStaffLedgerSheets);" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
                         }
                         // 🌟 NAYA FIX: 1 Kist aur BNC par click hone ke baad buttons chup jayenge aur Locked UI aayega!
                         else if(a.emiSettled === 'received_cash' || a.emiSettled === 'received_upi' || a.emiSettled === 'received') {
@@ -4803,11 +4929,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     // 🚀 FIX: Date-based lock prevents duplicate math on retry AND auto-unlocks next day
                     if (c.lastDayEndProcessed !== todayStr) {
 
-                    if (isClientDue && c.status === "Active" && c.outstanding > 0) {
-                        if (!c.emiSettled && !c.advancePaid) { c.emiSettled = 'bounce'; }
-                    }
-
-                    if (c.emiSettled === 'bounce') { 
+                    // 🌟 BUG FIX: Removed Auto-Bounce logic. Unmarked clients will stay Unmarked.
+                    if (c.emiSettled === 'bounce') {
                         // FIX: Ensure exact penalty is applied using Hybrid Phase logic
                         if (isClientDue) {
                             let penaltyEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
@@ -4835,8 +4958,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
 
                         c.lastPaymentDate = todayStr; 
                         let txType = 'Received';
-                        if(c.emiSettled === 'online_paid' || c.emiSettled === 'received_upi') txType = 'Online App';
-                        c.transactions.push({ date: todayStr, amount: paidAmt, type: txType });
+                        let txMode = 'cash';
+                        if(c.emiSettled === 'online_paid' || c.emiSettled === 'received_upi') { txType = 'Online App'; txMode = 'upi'; }
+                        c.transactions.push({ date: todayStr, amount: paidAmt, type: txType, mode: txMode });
                         
                         // Date aur cycle tabhi aage push hoga agar aaj actually EMI day tha
                         if (isClientDue) {
@@ -4867,7 +4991,8 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         
                         c.lastPaymentDate = todayStr; 
                         // 🌟 FIX: Isko Advance bolna galat tha. Ye partial ya overdue recovery hai.
-                        c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Custom Pay' }); 
+                        let advMode = c.customPayMode || 'cash';
+                        c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Custom Pay', mode: advMode }); 
                         
                         let remainingAdv = remainingForPrincipal; // Only excess principal payment skips EMIs
                         let emiCoveredToday = false; // FIX: Add flag to track if today's EMI requirement is met
@@ -5196,10 +5321,11 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 const u = getSafeValue('emp-username').trim(); 
                 const p = getSafeValue('emp-password');
                 
-                if (!u || !p) { alert('Username aur Password dalein!'); return; }
+                if (!u || !p) { showNotification('Invalid Details', 'Kripya Username aur Password dono dalein!', '⚠️'); return; }
 
                 let oldText = btn.innerText;
-                btn.innerText = "Authenticating...";
+                btn.innerText = "Authenticating... 🔒";
+                btn.disabled = true;
 
                 // Backend API se login verify karein aur Token lein
                 const response = await fetch(API_URL.replace('/clients', '/login'), {
@@ -5209,32 +5335,35 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 });
 
                 const data = await response.json();
-                btn.innerText = oldText;
 
                 if (data.success) {
-                    
-                    // 🔑 FIX: Actually save the JWT token from the server response so API calls work
                     if (data.token) localStorage.setItem('opas_jwt_token', data.token);
-
-                    // 🔐 FIX: Save session to prevent auto-logout on page refresh
                     setAuthSession(data.role, u);
 
+                    // 🌟 CRITICAL BUG FIX: Naye phone par login par cloud sync (Infinite Lockout se bachane ke liye)
+                    btn.innerText = "Syncing Profile... ☁️";
+                    await loadDataFromCloud(); 
+
                     if (data.role === 'head') {
-                        currentLoggedInRole = 'head'; // 🚀 BUG FIX: Head manual login ke time role set nahi tha!
+                        currentLoggedInRole = 'head'; 
+                        showNotification('Login Success', 'Welcome Admin! System is ready.', '👑');
                         showDashboard('head'); 
                         if(headPendingRadar) clearInterval(headPendingRadar);
                         headPendingRadar = setInterval(silentHeadRadar, 60000);
                         silentHeadRadar();
                     } else if (data.role === 'staff') { 
                         let staff = staffDb[u];
-                        // 🛡️ CRITICAL FIX: Agar Staff account abhi sync nahi hua hai, toh crash hone se bachao aur case-insensitive dhundho
+                        
+                        // 🛡️ Agar Staff account abhi sync nahi hua hai, toh crash hone se bachao aur case-insensitive dhundho
                         if (!staff) {
                             let realKey = Object.keys(staffDb).find(k => k.toLowerCase() === u.toLowerCase());
                             if (realKey) staff = staffDb[realKey];
                         }
                         if (!staff) {
-                            alert("Account Syncing... Thodi der me dobara try karein. (Agar lagatar aaye toh Head se apni branch config karwayein)");
-                            return; // Yahan se script wapas bhej do, aage UI crash na ho!
+                            btn.innerText = oldText;
+                            btn.disabled = false;
+                            showNotification('Account Syncing', 'Aapka account cloud se sync ho raha hai. 5 sec me dobara try karein.', '⏳');
+                            return; 
                         }
 
                         const df = document.getElementById('dashboard-active-branch-select'); 
@@ -5250,15 +5379,24 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         let ini = "ST"; if(staff.name) ini = staff.name.substring(0,2).toUpperCase(); 
                         setHtmlSafe('sidebar-avatar', ini);
                         
+                        showNotification('Login Success', `Welcome back ${staff.name}!`, '👋');
                         showDashboard('staff'); 
                         updatePendingRequestsBadge();
-                        syncSetupDropdowns(); // 🌟 FIX: Lock cross-branch access for newly logged in Staff
+                        syncSetupDropdowns(); 
                     }
+                    
+                    // Reset button in case they log out later
+                    btn.innerText = oldText;
+                    btn.disabled = false;
                 } else {
-                    alert(data.message || 'Galat Credentials!');
+                    btn.innerText = oldText;
+                    btn.disabled = false;
+                    showNotification('Access Denied', data.message || 'Galat Username ya Password!', '❌');
                 }
             } catch(e) { 
-                alert('Server Connection Error!'); 
+                let btn = event.currentTarget;
+                if(btn) { btn.innerText = "Authorize Access"; btn.disabled = false; }
+                showNotification('Server Error', 'Internet ya server connection check karein!', '⚠️'); 
                 console.error(e);
             }
         }
@@ -5427,11 +5565,9 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
             let todayStr = formatSysDate(new Date());
             let title = '';
             
-            // Get currently selected month directly from the filter
             let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
             let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
             if(!selectedMonthVal) { selectedMonthVal = currentYYYYMM; }
-            let isCurrentMonth = (selectedMonthVal === currentYYYYMM); // BUG FIX: Match dashboard logic
 
             const activeFilter = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (document.getElementById('dashboard-active-branch-select')?.value || "ALL");
 
@@ -5443,43 +5579,62 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 if (!matchBranch) return;
 
                 let amount = 0; let match = false;
+                let hasCash = false; let hasUpi = false; // 🌟 NAYA: Payment Mode Tracker
                 
+                // Smart Tracker Logic
+                const trackMode = (t) => {
+                    let mType = t.mode || (t.type === 'Online App' || t.type === 'received_upi' ? 'upi' : 'cash');
+                    if (mType === 'upi') hasUpi = true;
+                    if (mType === 'cash') hasCash = true;
+                };
+
                 let appDateMonth = "";
                 if(c.approvalDate && c.approvalDate !== "N/A" && c.approvalDate !== "Completed") {
                     let pts = c.approvalDate.split('-');
                     if(pts.length === 3) appDateMonth = `${pts[2]}-${pts[1]}`;
                 }
 
+                let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
+                let activeEmiAmount = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+
                 if (type === 'advance') {
-                    title = "Today's Advance Collections";
-                    let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Advance');
-                    if(tx) { match = true; amount = tx.amount; }
-                } else if (type === 'advance-month') { 
-                    title = "Month's Advance Collections";
+                    title = "Today's Advance / Custom Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(t.type === 'Advance' && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) {
-                                match = true; amount += t.amount;
-                            }
+                            if((t.type === 'Advance' || t.type === 'Custom Pay') && t.date === todayStr) { match = true; amount += t.amount; trackMode(t); }
+                        });
+                    }
+                    if (!isDayEndDoneToday && c.advancePaid > 0) {
+                        match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
+                    }
+                } else if (type === 'advance-month') { 
+                    title = "Month's Advance / Custom Collections";
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if((t.type === 'Advance' || t.type === 'Custom Pay') && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
                         });
                     }
                 } else if (type === 'settle') {
                     title = "Today's Direct Settlements";
-                    let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Direct Settle');
-                    if(tx) { match = true; amount = tx.amount; }
+                    if(c.transactions) {
+                        c.transactions.forEach(t => {
+                            if(t.type === 'Direct Settle' && t.date === todayStr) { match = true; amount += t.amount; trackMode(t); }
+                        });
+                    }
                 } else if (type === 'settle-month') { 
                     title = "Month's Direct Settlements";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(t.type === 'Direct Settle' && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) {
-                                match = true; amount += t.amount;
-                            }
+                            if(t.type === 'Direct Settle' && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
                         });
                     }
                 } else if (type === 'today-bounce') {
                     title = "Today's Bounced EMIs";
                     let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Bounced');
-                    if(tx) { match = true; amount = tx.amount; }
+                    if(tx) { match = true; amount += tx.amount; }
+                    if (!isDayEndDoneToday && c.emiSettled === 'bounce') {
+                        match = true; amount += activeEmiAmount;
+                    }
                 } else if (type === 'total-risk') {
                     title = "Total Overdue (Risk) Clients";
                     if(c.overdue && c.overdue > 0 && c.status === "Active") { match = true; amount = c.overdue; }
@@ -5493,14 +5648,21 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     title = "Today's Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(['Received', 'Online App', 'Advance', 'Direct Settle'].includes(t.type) && t.date === todayStr) { match = true; amount += t.amount; }
+                            if(['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(t.type) && t.date === todayStr) { match = true; amount += t.amount; trackMode(t); }
                         });
+                    }
+                    if (!isDayEndDoneToday && c.status === "Active") {
+                        if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received') {
+                            match = true; amount += activeEmiAmount; trackMode({mode: c.emiSettled.includes('upi') ? 'upi' : 'cash'});
+                        } else if (c.advancePaid > 0) {
+                            match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
+                        }
                     }
                 } else if (type === 'collect-month') {
                     title = "Month's Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(['Received', 'Online App', 'Advance', 'Direct Settle'].includes(t.type) && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; }
+                            if(['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(t.type) && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
                         });
                     }
                 } else if (type === 'ins-today') {
@@ -5522,38 +5684,40 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     title = "Renewed Loans (Month)";
                     if(c.isApproved && c.isRenewed && appDateMonth === selectedMonthVal) { match = true; amount = c.principal; }
                 } else if (type === 'unmarked') {
-                    title = "Pending Actions (Unmarked Clients)";
+                    title = "Today's Unmarked (Pending Action)";
                     if (c.status === "Active" && (c.outstanding > 0 || c.overdue > 0)) {
                         let tDate = new Date(); tDate.setHours(0,0,0,0);
                         let isDue = false;
                         if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
                             let eDate = parseSysDate(c.nextEmiDate);
                             if(tDate >= eDate) isDue = true;
-                        } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
-                            isDue = true; 
-                        }
-                        let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
-                        if ((isDue || c.overdue > 0) && !c.emiSettled && !c.advancePaid && !hasTxToday) {
+                        } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") { isDue = true; }
+                        
+                        let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+                        
+                        if ((isDue || c.overdue > 0) && !c.emiSettled && !c.advancePaid && !hasTxToday) { 
                             match = true; 
-                            amount = Math.min(c.outstanding || 0, c.cycleEmi || 0) + (c.overdue || 0);
+                            amount = activeEmiAmount + (c.overdue || 0); 
                         }
                     }
                 } else if (type === 'pending-approval') {
                     title = "Awaiting Head Approval";
-                    if (c.status === "Pending Approval") { 
-                        match = true; 
-                        amount = c.principal; 
-                    }
+                    if (c.status === "Pending Approval") { match = true; amount = c.principal; }
                 }
 
                 if(match) {
-                    // Color formatting logic based on the action type
+                    let modeBadges = '';
+                    if(type.includes('collect') || type.includes('advance') || type.includes('settle')) {
+                        if (hasUpi) modeBadges += `<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] uppercase ml-1 shadow-sm font-black border border-blue-200">📱 UPI</span>`;
+                        if (hasCash) modeBadges += `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] uppercase ml-1 shadow-sm font-black border border-emerald-200">💵 Cash</span>`;
+                    }
+
                     let amtLabel = type === 'deactive' ? `<span class="text-sm font-black text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">Closed</span>` : `<span class="text-sm font-black text-rose-600 bg-white border border-rose-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     
                     if(type.includes('disburse') || type.includes('new') || type.includes('renew') || type === 'active') {
                         amtLabel = `<span class="text-sm font-black text-emerald-600 bg-white border border-emerald-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     } else if (type.includes('collect') || type.includes('advance') || type.includes('settle')) {
-                        amtLabel = `<span class="text-sm font-black text-blue-600 bg-white border border-blue-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
+                        amtLabel = `<div class="flex flex-col items-end gap-1"><span class="text-sm font-black text-blue-600 bg-white border border-blue-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span><div class="flex mt-0.5">${modeBadges}</div></div>`;
                     } else if (type === 'unmarked') {
                         amtLabel = `<span class="text-sm font-black text-amber-600 bg-white border border-amber-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     } else if (type === 'pending-approval') {
@@ -5562,7 +5726,7 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                         amtLabel = `<span class="text-sm font-black text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
                     }
                     
-                    html += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-2 flex justify-between items-center hover-scale cursor-pointer shadow-sm transition-all hover:bg-slate-100" onclick="showClientFullInfo('${m}')">
+                    html += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-2 flex justify-between items-center hover-scale cursor-pointer shadow-sm transition-all hover:bg-slate-100" onclick="closeGlobalModal(); showClientFullInfo('${m}')">
                         <div>
                             <p class="text-xs font-black text-slate-800">${c.name}</p>
                             <p class="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-widest">${c.id} | ${m}</p>
@@ -5581,9 +5745,11 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                 </div>
                 <div class="max-h-[60vh] overflow-y-auto pr-1">
                     ${html}
-                </div>`;
+                </div>
+                <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase mt-4 shadow-md transition-colors">Close Window</button>
+            `;
             openGlobalModal(wrapper);
-        }    
+        }
 
         // =========================================================================
         // 🗓️ WEEKLY CENTRE ALIGNMENT (BINDING) ENGINE
