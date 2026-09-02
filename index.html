@@ -211,7 +211,7 @@
                 <button onclick="routePanelSection('settlement')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-amber-400 mt-4 hidden transition-colors"><span class="text-lg mr-2">💰</span> Direct Settle</button>
                 <button onclick="routePanelSection('renew')" class="menu-item role-staff role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 hover:bg-slate-700 text-slate-300 hidden transition-colors"><span class="text-lg mr-2">🔄</span> Renew Client</button>
                 
-                <button onclick="routePanelSection('weekly-bind')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-400 border border-indigo-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">📅</span> Centre Binding</button>
+                <button id="menu-weekly-bind" onclick="routePanelSection('weekly-bind')" class="menu-item role-head w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-400 border border-indigo-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">📅</span> Centre Binding</button>
                 <button onclick="routePanelSection('admin-edit')" class="menu-item role-head role-staff w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-rose-900/20 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 mt-4 hidden transition-colors"><span class="text-lg mr-2">✏️</span> Edit Data</button>
                 
                 <!-- Staff Profile Sidebar Name se khulega -->
@@ -323,8 +323,8 @@
             <div id="view-node-dashboard" class="view-panel space-y-4 animate-fade hidden">
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200 hover-scale">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Time Filter:</label>
-                        <input type="month" id="dashboard-month-filter" onchange="refreshHeadDashboardStats()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none">
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Date Filter:</label>
+                        <input type="date" id="dashboard-date-filter" onchange="refreshHeadDashboardStats()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none shadow-sm cursor-pointer hover-scale">
                     </div>
                     <div class="flex justify-between items-center hidden" id="dash-branch-filter-zone">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch View:</label>
@@ -560,7 +560,19 @@
 
             <div id="view-node-ledger" class="view-panel hidden space-y-4 animate-slide-up">
                 <div class="glass-card p-5 rounded-[2rem] space-y-5">
-                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch:</label><select id="ledger-active-branch-select" onchange="renderStaffLedgerSheets()" class="p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none"></select></div>
+                    <!-- 🌟 NAYA: Grid layout for Branch and Centre Selection -->
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div>
+                            <label class="text-[9px] font-black text-slate-500 uppercase ml-1 block mb-1">Branch</label>
+                            <select id="ledger-active-branch-select" onchange="syncLedgerCentreDropdown(); renderStaffLedgerSheets();" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none shadow-sm"></select>
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black text-slate-500 uppercase ml-1 block mb-1">Centre</label>
+                            <select id="ledger-active-centre-select" onchange="renderStaffLedgerSheets()" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:outline-none shadow-sm">
+                                <option value="ALL">-- All Centres --</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="flex justify-between items-center"><span class="text-xs font-black uppercase text-slate-800">Sheets</span><div class="flex gap-1 bg-slate-100 p-1.5 rounded-lg border border-slate-200"><button onclick="switchStaffTab('daily')" id="tab-daily" class="text-[10px] px-4 py-2 rounded-md font-black bg-white text-blue-600 shadow-sm transition-all">DAILY</button><button onclick="switchStaffTab('weekly')" id="tab-weekly" class="text-[10px] px-4 py-2 rounded-md font-bold text-slate-400 transition-all">WEEKLY</button></div></div>
                     
                     <input type="text" id="ledger-search" oninput="debounceSearch(renderStaffLedgerSheets)" placeholder="🔍 Search in Ledger..." class="w-full p-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300 shadow-sm">
@@ -710,7 +722,7 @@
                 <div class="glass-card rounded-[2rem] p-6 space-y-4">
                     <div class="text-center border-b border-slate-100 pb-3">
                         <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale">📅</div>
-                        <h3 class="text-xs font-black text-indigo-600 uppercase">Head Centre Binding</h3>
+                        <h3 class="text-xs font-black text-indigo-600 uppercase">Centre Binding Manager</h3>
                     </div>
                     
                     <!-- 🌟 VIEW 1: DAY WISE CENTRE SCHEDULE -->
@@ -766,12 +778,16 @@
                     
                     <div id="admin-edit-form-block" class="space-y-3 hidden animate-fade mt-2">
                         <button onclick="closeEditFormAndShowList()" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mb-2 shadow-sm flex items-center justify-center gap-2 transition-colors">← Back to Search List</button>
+                        
+                        <!-- 🌟 NAYA: Plan Info Banner -->
+                        <div id="edit-active-plan-badge" class="bg-indigo-600 text-white p-3 rounded-xl text-xs font-black uppercase text-center shadow-md animate-pulse tracking-widest"></div>
+
                         <!-- 🌟 NAYA: QUICK MIGRATE EDITOR (For Fast Backdate Fixing) -->
                         <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl mb-3 shadow-inner">
                             <label class="block text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-3">⚡ Quick Migration Fixer</label>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Paid EMIs (Register se)</label>
+                                    <label id="lbl-quick-edit-emis" class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Paid EMIs (Register se)</label>
                                     <input type="number" id="quick-edit-paid-emis" oninput="autoCalcEditPassbook();" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-sm" placeholder="Kitni aayi?">
                                 </div>
                                 <div>
@@ -902,6 +918,18 @@
                             </div>
                         </div>
                         <p class="text-[8px] font-bold text-fuchsia-800/70 mt-3 leading-tight relative z-10 bg-white/50 p-2 rounded-lg">Rule: Agar branch par Collection Set % se zyada rha AND Aaj ka loan disbursal target (Yesterday EMI × Multiplier) poora hua, toh Day-End par branch ke sabhi staff ki salary me auto-bonus jud jayega.</p>
+                    </div>
+
+                    <!-- 🌟 NAYA: Staff Binding Control Panel -->
+                    <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-200 mt-6 flex justify-between items-center shadow-inner">
+                        <div>
+                            <p class="text-[9px] font-black uppercase text-indigo-600">Staff Centre Binding Access</p>
+                            <p class="text-[8px] text-indigo-500 font-bold mt-0.5">Allow field staff to change EMI days</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer hover-scale">
+                          <input type="checkbox" id="staff-bind-toggle" onchange="toggleStaffBindingAccess()" class="sr-only peer">
+                          <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 shadow-sm"></div>
+                        </label>
                     </div>
 
                     <!-- 🚀 FIX: Dynamic UPI Update Panel -->
@@ -1585,6 +1613,7 @@
                         if (cloudData["SYSTEM_SETTINGS"].companyUpi) serverDb["SYSTEM_SETTINGS"].companyUpi = cloudData["SYSTEM_SETTINGS"].companyUpi;
                         if (cloudData["SYSTEM_SETTINGS"].bonusConfig) serverDb["SYSTEM_SETTINGS"].bonusConfig = cloudData["SYSTEM_SETTINGS"].bonusConfig;
                         if (cloudData["SYSTEM_SETTINGS"].leaves) serverDb["SYSTEM_SETTINGS"].leaves = cloudData["SYSTEM_SETTINGS"].leaves;
+                        if (cloudData["SYSTEM_SETTINGS"].allowStaffBinding !== undefined) serverDb["SYSTEM_SETTINGS"].allowStaffBinding = cloudData["SYSTEM_SETTINGS"].allowStaffBinding;
                     }
                 }
             } catch(e) { 
@@ -1598,11 +1627,12 @@
             let bConfig = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
             let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
             let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
+            let allowBind = serverDb["SYSTEM_SETTINGS"].allowStaffBinding || false;
 
             serverDb["SYSTEM_SETTINGS"] = { 
                 branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans, 
                 branchCoords: serverDb["SYSTEM_SETTINGS"].branchCoords, companyUpi: currentUpi,
-                bonusConfig: bConfig, branchStats: bStats, leaves: leaves
+                bonusConfig: bConfig, branchStats: bStats, leaves: leaves, allowStaffBinding: allowBind
             };
             await saveDataToCloud("SYSTEM_SETTINGS");
         }
@@ -1614,6 +1644,18 @@
             document.getElementById('bonus-min-pct').value = config.minCollectionPct;
             document.getElementById('bonus-amt').value = config.bonusAmount;
             document.getElementById('bonus-multiplier').value = config.targetMultiplier;
+            
+            // Setup Toggle status for Staff Binding
+            let bindToggle = document.getElementById('staff-bind-toggle');
+            if(bindToggle) bindToggle.checked = serverDb["SYSTEM_SETTINGS"].allowStaffBinding || false;
+        }
+
+        async function toggleStaffBindingAccess() {
+            await saveSystemSettings(); // Pehle latest server data layein
+            if(!serverDb["SYSTEM_SETTINGS"]) serverDb["SYSTEM_SETTINGS"] = {};
+            serverDb["SYSTEM_SETTINGS"].allowStaffBinding = document.getElementById('staff-bind-toggle').checked;
+            await saveDataToCloud("SYSTEM_SETTINGS");
+            showNotification("Permission Updated", "Staff Centre Binding access setting saved.", "⚙️");
         }
 
         async function saveBonusConfig() {
@@ -1915,8 +1957,8 @@
                 if(splash) splash.style.display = 'none'; 
             }, 3200);
 
-            let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear();
-            let df = document.getElementById('dashboard-month-filter'); if(df) df.value = `${cy}-${cm}`;
+            let d = new Date(); let cm = (d.getMonth()+1).toString().padStart(2,'0'); let cy = d.getFullYear(); let cd = d.getDate().toString().padStart(2,'0');
+            let df = document.getElementById('dashboard-date-filter'); if(df) df.value = `${cy}-${cm}-${cd}`;
             
             let kycPanel = document.getElementById('view-node-kyc');
             if(kycPanel) {
@@ -2371,7 +2413,7 @@
                     if (kycBranch && !kycBranch.value) { kycBranch.innerHTML = `<option value="${b}">${b}</option>`; kycBranch.value = b; syncKycCentreDropdown(); }
                 }
 
-                if(panelId === 'ledger') renderStaffLedgerSheets();
+                if(panelId === 'ledger') { syncLedgerCentreDropdown(); renderStaffLedgerSheets(); }
                 if(panelId === 'clients') { syncReportDropdowns(); renderClientDirectory(); }
                 if(panelId === 'renew') { 
                     try { syncKycPlanDropdown(); } catch(e) { console.error(e); }
@@ -2522,7 +2564,10 @@
                 if(db && (!isStaff || db.options.length === 0)) db.innerHTML = fOpt;
                 
                 let lb = document.getElementById('ledger-active-branch-select'); 
-                if(lb && (!isStaff || lb.options.length === 0)) lb.innerHTML = fOpt;
+                if(lb && (!isStaff || lb.options.length === 0)) {
+                    lb.innerHTML = fOpt;
+                    syncLedgerCentreDropdown(); // 🌟 NAYA: Pre-fill centre dropdown based on assigned branch
+                }
 
                 if (!isStaff) {
                     let hOpt = `<option value="ALL">Global View (All Branches)</option>`; branchList.forEach(b => { hOpt += `<option value="${b}">Branch: ${b}</option>`; });
@@ -2821,7 +2866,8 @@
                     if (searchQ && !safeName.includes(searchQ) && !safeId.includes(searchQ) && !String(m).includes(searchQ)) return;
 
                     let statusColor = c.status === 'Active' ? 'text-emerald-500' : (c.status === 'Pending Approval' ? 'text-amber-500' : 'text-rose-500');
-                    let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Hybrid</span>` : '';
+                    let tag = c.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">Hybrid</span>` : '';
+                    let planTag = `<span class="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">${c.planName || 'Plan'}</span>`;
                     let bal = c.status === 'Active' ? `| Due: ₹${(c.outstanding||0) + (c.overdue||0)}` : '';
                     
                     html += `
@@ -2830,8 +2876,9 @@
                             <div class="flex-1 cursor-pointer" onclick="showClientFullInfo('${m}')" title="Click to view full directory detail">
                                 <p class="text-xs font-black text-slate-900 flex items-center gap-1">${c.name||'Unknown'} <span class="text-blue-500 text-[9px] bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full shadow-sm">ℹ️ Profile</span></p>
                                 <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
-                                <div class="mt-1 flex items-center gap-2">
-                                    <span class="text-[8px] font-black uppercase ${statusColor} bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">${c.status} ${bal}</span>
+                                <div class="mt-1.5 flex items-center flex-wrap gap-1">
+                                    <span class="text-[8px] font-black uppercase ${statusColor} bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 mr-1">${c.status} ${bal}</span>
+                                    ${planTag}
                                     ${tag}
                                 </div>
                             </div>
@@ -2890,7 +2937,10 @@
                         <div onclick="showClientFullInfo('${m}')" class="cursor-pointer flex-1">
                             <p class="text-xs font-black text-slate-900 flex items-center gap-1">${c.name} <span class="text-blue-500 text-[10px] bg-blue-50 px-1 rounded-full" title="View Profile">ℹ️</span></p>
                             <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${c.id} | ${m}</p>
-                            <p class="text-[9px] font-black text-rose-500 mt-1 uppercase tracking-widest bg-rose-50 inline-block px-1.5 py-0.5 rounded">Due: ₹${totalDebt}</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-1">
+                                <span class="text-[9px] font-black text-rose-500 uppercase tracking-widest bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">Due: ₹${totalDebt}</span>
+                                <span class="text-[8px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">${c.planName || 'Plan'}</span>
+                            </div>
                         </div>
                         <button onclick="selectSettlementClient('${m}')" class="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-md transition-all ml-2">Select</button>
                     </div>`;
@@ -3047,7 +3097,8 @@ if (settlementAmount > 0) { // 🚀 FIX: Zero amount ki fake entry ko rokein
     serverDb[m].transactions.push({
         date: formatSysDate(new Date()),
         amount: settlementAmount,
-        type: 'Direct Settle'
+        type: 'Direct Settle',
+        by: currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff')
     });
 }
 
@@ -3118,8 +3169,18 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                     if(dp.length === 3 && qDate) qDate.value = `${dp[2]}-${dp[1]}-${dp[0]}`;
                 }
                 
+                // 🌟 NAYA: Set Banner & Input Limit
+                let planBadge = document.getElementById('edit-active-plan-badge');
+                if(planBadge) planBadge.innerText = `📋 Plan: ${c.planName || 'N/A'} | Total EMIs: ${c.duration || 0}`;
+                
+                let lblQuick = document.getElementById('lbl-quick-edit-emis');
+                if (lblQuick) lblQuick.innerText = `Paid EMIs (Max: ${c.duration || 0})`;
+                
                 let qPaidEmis = document.getElementById('quick-edit-paid-emis');
-                if(qPaidEmis) qPaidEmis.value = c.emisPaidCount || 0;
+                if(qPaidEmis) {
+                    qPaidEmis.value = c.emisPaidCount || 0;
+                    qPaidEmis.max = c.duration || 100; // HTML Max Limit validation
+                }
                 
                 let editIns = document.getElementById('edit-cust-insurance');
                 if(editIns) editIns.value = c.insuranceAmt || 0;
@@ -3234,15 +3295,16 @@ serverDb[m].advancePaid = 0; // Hisaab likhne ke baad hi memory zero karein
                  // Pending files me log mat karo, warna Passbook me double entry (Edit + Import) ho jayegi!
                  if ((currentStatus === 'Active' || currentStatus === 'Deactive') && (oldOut !== newOut || oldOd !== newOd)) {
                      if (!serverDb[m].transactions) serverDb[m].transactions = [];
+                     let actionByStr = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
                      
                      if (oldOut !== newOut) {
                          serverDb[m].transactions.push({
-                             date: formatSysDate(new Date()), amount: Math.abs(oldOut - newOut), type: newOut < oldOut ? 'System Reduction (Edit)' : 'System Addition (Edit)'
+                             date: formatSysDate(new Date()), amount: Math.abs(oldOut - newOut), type: newOut < oldOut ? 'System Reduction (Edit)' : 'System Addition (Edit)', by: actionByStr
                          });
                      }
                      if (oldOd !== newOd) {
                          serverDb[m].transactions.push({
-                             date: formatSysDate(new Date()), amount: Math.abs(oldOd - newOd), type: newOd < oldOd ? 'Penalty Waived (Edit)' : 'Penalty Added (Edit)'
+                             date: formatSysDate(new Date()), amount: Math.abs(oldOd - newOd), type: newOd < oldOd ? 'Penalty Waived (Edit)' : 'Penalty Added (Edit)', by: actionByStr
                          });
                      }
                  }
@@ -3366,57 +3428,68 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 if (!c || c.status !== 'Active') return;
                 if (activeFilter !== "ALL" && c.branch !== activeFilter) return;
 
-                // Agar partialOverdue laga hua hai toh check karenge
-                if (c.partialOverdue && c.overdue > 0) {
-                    let match = false; let paidAmount = 0;
+                let match = false; let paidAmount = 0; let modeBadge = ''; let displayShortfall = c.overdue;
 
-                    if (c.transactions) {
-                        // Pichli transaction history se Shortfall aur Advance dhundhenge
-                        for (let i = c.transactions.length - 1; i >= 0; i--) {
-                            let tx = c.transactions[i];
-                            if (tx.type === 'Shortfall Penalty') {
-                                let txMY = tx.date.substring(6,10) + "-" + tx.date.substring(3,5);
-                                if (timeframe === 'today' && tx.date === todayStr) { match = true; } 
-                                else if (timeframe === 'month' && txMY === selectedMonthVal) { match = true; }
-                                
-                                let modeBadge = '';
-                                if (match) {
-                                    // 🌟 FIX: Custom Pay ko bhi array me add karo warna list me amount ₹0 dikhega!
-                                    let payTx = c.transactions.find(ptx => ptx.date === tx.date && ['Advance', 'Custom Pay', 'Received', 'Online App'].includes(ptx.type));
-                                    if(payTx) {
-                                        paidAmount = payTx.amount;
-                                        let m = payTx.mode || (payTx.type === 'Online App' ? 'upi' : 'cash');
-                                        modeBadge = m === 'upi' ? `<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">📱 UPI</span>` : `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">💵 Cash</span>`;
-                                    }
+                // 1. Post Day-End Tracker
+                if (c.partialOverdue && c.overdue > 0 && c.transactions) {
+                    for (let i = c.transactions.length - 1; i >= 0; i--) {
+                        let tx = c.transactions[i];
+                        if (tx.type === 'Shortfall Penalty') {
+                            let txMY = tx.date.substring(6,10) + "-" + tx.date.substring(3,5);
+                            if (timeframe === 'today' && tx.date === todayStr) { match = true; } 
+                            else if (timeframe === 'month' && txMY === selectedMonthVal) { match = true; }
+                            
+                            if (match) {
+                                let payTx = c.transactions.find(ptx => ptx.date === tx.date && ['Advance', 'Custom Pay', 'Received', 'Online App'].includes(ptx.type));
+                                if(payTx) {
+                                    paidAmount = payTx.amount;
+                                    let m = payTx.mode || (payTx.type === 'Online App' ? 'upi' : 'cash');
+                                    modeBadge = m === 'upi' ? `<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">📱 UPI</span>` : `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">💵 Cash</span>`;
                                 }
-                                break; 
                             }
+                            break; 
                         }
                     }
+                }
 
-                    if (match) {
-                        count++; totalShortfall += c.overdue; totalCollected += paidAmount;
-                        html += `
-                        <div class="bg-white p-4 border border-amber-200 rounded-2xl shadow-sm hover-scale cursor-pointer" onclick="closeGlobalModal(); showClientFullInfo('${m}')">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="text-xs font-black text-slate-800 flex items-center gap-1">${c.name} <span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full">ℹ️ Profile</span></p>
-                                    <p class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">${m} | ${c.center}</p>
-                                </div>
-                                <span class="text-[8px] bg-amber-50 text-amber-600 border border-amber-200 px-2 py-1 rounded font-black uppercase">Partial Due</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
-                                <div class="bg-emerald-50 p-2 rounded-lg text-center shadow-inner flex flex-col items-center justify-center">
-                                    <span class="block text-[8px] font-bold text-emerald-500 uppercase mb-0.5">Paid Amount</span>
-                                    <span class="font-black text-emerald-700 flex items-center justify-center">₹${paidAmount} ${modeBadge}</span>
-                                </div>
-                                <div class="bg-rose-50 p-2 rounded-lg text-center shadow-inner">
-                                    <span class="block text-[8px] font-bold text-rose-400 uppercase">Shortfall (Due)</span>
-                                    <span class="font-black text-rose-600">₹${c.overdue}</span>
-                                </div>
-                            </div>
-                        </div>`;
+                // 🌟 CRITICAL FIX: 2. Pre Day-End (Live) Partial Pay Tracker
+                let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
+                let activeEmiAmount = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+                let totalDueToday = activeEmiAmount + (c.overdue || 0);
+                
+                if (!isDayEndDoneToday && c.advancePaid > 0 && c.advancePaid < totalDueToday) {
+                    let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
+                    if (timeframe === 'today' || (timeframe === 'month' && selectedMonthVal === currentYYYYMM)) {
+                        match = true;
+                        paidAmount = c.advancePaid;
+                        displayShortfall = totalDueToday - c.advancePaid;
+                        let m = c.customPayMode || 'cash';
+                        modeBadge = m === 'upi' ? `<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">📱 UPI (Live)</span>` : `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm ml-1">💵 Cash (Live)</span>`;
                     }
+                }
+
+                if (match) {
+                    count++; totalShortfall += displayShortfall; totalCollected += paidAmount;
+                    html += `
+                    <div class="bg-white p-4 border border-amber-200 rounded-2xl shadow-sm hover-scale cursor-pointer" onclick="closeGlobalModal(); showClientFullInfo('${m}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="text-xs font-black text-slate-800 flex items-center gap-1">${c.name} <span class="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full">ℹ️ Profile</span></p>
+                                <p class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">${m} | ${c.center}</p>
+                            </div>
+                            <span class="text-[8px] bg-amber-50 text-amber-600 border border-amber-200 px-2 py-1 rounded font-black uppercase">Partial Due</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
+                            <div class="bg-emerald-50 p-2 rounded-lg text-center shadow-inner flex flex-col items-center justify-center">
+                                <span class="block text-[8px] font-bold text-emerald-500 uppercase mb-0.5">Paid Amount</span>
+                                <span class="font-black text-emerald-700 flex items-center justify-center">₹${paidAmount} ${modeBadge}</span>
+                            </div>
+                            <div class="bg-rose-50 p-2 rounded-lg text-center shadow-inner">
+                                <span class="block text-[8px] font-bold text-rose-400 uppercase">Shortfall (Due)</span>
+                                <span class="font-black text-rose-600">₹${displayShortfall}</span>
+                            </div>
+                        </div>
+                    </div>`;
                 }
             });
 
@@ -3439,20 +3512,23 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 
                 const activeFilter = currentLoggedInRole === 'head' ? headSelector : (staffSelector || "ALL");
 
-                let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
-                let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
-                if(!selectedMonthVal) { selectedMonthVal = currentYYYYMM; }
-                let isCurrentMonth = (selectedMonthVal === currentYYYYMM);
-
-                // FIX: Removed buggy label overriding that caused duplicate "Month's" titles and destroyed "Today" UI when viewing past records.
+                let selectedDateVal = getSafeValue('dashboard-date-filter'); 
+                let targetDateObj = new Date();
+                if(selectedDateVal) {
+                    let parts = selectedDateVal.split('-');
+                    targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+                }
+                let todayStr = formatSysDate(targetDateObj); // Ye ab selected date ban gaya
+                let selectedMonthVal = `${targetDateObj.getFullYear()}-${(targetDateObj.getMonth()+1).toString().padStart(2,'0')}`;
+                let isCurrentMonth = true; // By-pass to allow daily stats for ANY selected day!
 
                 let cp = 0, cac = 0, pendingCount = 0;
                 let dT = 0, dM = 0, cT = 0, cM = 0, oT = 0, aC = 0, deC = 0, nC = 0, rC = 0;
                 let todayAdv = 0, monthAdv = 0, todaySettle = 0, monthSettle = 0;
                 let todayBounceAmt = 0; let insT = 0, insM = 0;
-                let todayPartialCount = 0, monthPartialCount = 0; // 🌟 NAYA: Tracker
-                let todayStr = formatSysDate(new Date());
-                let localUnmarkedAmt = 0; // BUG FIX: Switched to safe local scope variable
+                let todayPartialCount = 0, monthPartialCount = 0; 
+                let localUnmarkedAmt = 0;
+                let localUnmarkedCount = 0; // 🌟 BUG FIX: Removed Global Window Object Leak
                 
                 let pendingApprovalHtml = '';
                 let neftHtml = '';
@@ -3569,6 +3645,13 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                                     cM += f.advancePaid;
                                     todayAdv += f.advancePaid;
                                     monthAdv += f.advancePaid;
+                                    
+                                    // 🌟 CRITICAL FIX: Live Partial Pay Detection (Before Day-End)
+                                    let totalDue = activeEmiAmount + (f.overdue || 0);
+                                    if (f.advancePaid < totalDue) {
+                                        todayPartialCount++;
+                                        monthPartialCount++;
+                                    }
                                 }
                             }
                             
@@ -3586,8 +3669,7 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                                 
                                 if ((isDue || f.overdue > 0) && !f.emiSettled && !f.advancePaid && !hasTxToday) {
                                     localUnmarkedAmt += Math.min(f.outstanding || 0, f.cycleEmi || 0) + (f.overdue || 0);
-                                    // Make sure variable is defined globally at top of function
-                                    window.localUnmarkedCount = (window.localUnmarkedCount || 0) + 1;
+                                    localUnmarkedCount++; // 🌟 BUG FIX: Safely scoped
                                 }
                             }
                         }
@@ -3660,9 +3742,9 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                     let expectedToday = 0;
                     let realMonthlyProfit = 0;
                     
-                    let todayCheck = new Date(); 
+                    let todayCheck = targetDateObj; // 🌟 NAYA: Synchronized with Date Filter
                     todayCheck.setHours(0,0,0,0);
-                    let todayStr = formatSysDate(new Date());
+                    // todayStr has already been set accurately above
                     
                     let headCollectedToday = 0;
                     let headDisbursedToday = 0;
@@ -3818,9 +3900,8 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 setHtmlSafe('m-partial-today', `${todayPartialCount} Clients`); // 🌟 NAYA
                 setHtmlSafe('m-partial-month', `${monthPartialCount} Clients`); 
                 setHtmlSafe('m-unmarked-today', `₹${(localUnmarkedAmt || 0).toLocaleString('en-IN')}`);
-                setHtmlSafe('m-unmarked-count', `${window.localUnmarkedCount || 0}`);
+                setHtmlSafe('m-unmarked-count', `${localUnmarkedCount}`);
                 setHtmlSafe('m-pending-approval', pendingCount);
-                window.localUnmarkedCount = 0; // Reset for next refresh
                 setHtmlSafe('m-ins-today', `₹${insT.toLocaleString('en-IN')}`);
                 setHtmlSafe('m-ins-month', `₹${insM.toLocaleString('en-IN')}`); 
                 setHtmlSafe('m-active-count', aC); 
@@ -3981,6 +4062,21 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 await saveDataToCloud(mobile);
                 showNotification('Disbursement Done 💸', `${c.name} ka account Active ho gaya hai aur kal se Ledger me EMI show hogi!`, '✅');
                 refreshHeadDashboardStats(); 
+            } catch(e) {}
+        }
+
+        function syncLedgerCentreDropdown() {
+            try {
+                const branchFilter = document.getElementById('ledger-active-branch-select')?.value || "ALL";
+                const centreDropdown = document.getElementById('ledger-active-centre-select');
+                if(!centreDropdown) return;
+                let opts = '<option value="ALL">-- All Centres --</option>';
+                centreList.forEach(c => { 
+                    if (branchFilter === "ALL" || c.branch === branchFilter) {
+                        opts += `<option value="${c.name}">${c.name}</option>`; 
+                    }
+                });
+                centreDropdown.innerHTML = opts;
             } catch(e) {}
         }
 
@@ -4588,17 +4684,29 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
             } catch(e) {}
         }
         async function setEmiStatus(mobile, status) {
-            // 🌟 CRITICAL BUG FIX: Data loss se bachne ke liye sync ke dauran payments block karna
             if (isSystemBusy) { showNotification('System Busy', 'Background Data Sync chal raha hai, kripya 3-4 seconds rukein.', '⏳'); return; }
-            
             if(!serverDb[mobile]) return;
-            if(serverDb[mobile].status === "Deactive" || serverDb[mobile].outstanding <= 0) { 
-                alert("⚠️ Ye account settle ho chuka hai. Action blocked!"); 
-                return; 
-            }
+            if(serverDb[mobile].status === "Deactive" || serverDb[mobile].outstanding <= 0) { alert("⚠️ Ye account settle ho chuka hai. Action blocked!"); return; }
+            
             serverDb[mobile].emiSettled = status;
-            serverDb[mobile].advancePaid = 0; // Fix: Clear advance state if standard EMI is pressed
+            serverDb[mobile].advancePaid = 0; 
+            serverDb[mobile].lockedBy = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
+            
             await saveDataToCloud(mobile);
+            renderStaffLedgerSheets();
+        }
+
+        async function undoEmiAction(mobile) {
+            if (isSystemBusy) { showNotification('System Busy', 'Background Data Sync chal raha hai, kripya 3-4 seconds rukein.', '⏳'); return; }
+            if(!serverDb[mobile]) return;
+            
+            serverDb[mobile].emiSettled = null;
+            serverDb[mobile].advancePaid = 0;
+            serverDb[mobile].customPayMode = null;
+            serverDb[mobile].lockedBy = null;
+            
+            await saveDataToCloud(mobile);
+            showNotification('Action Undone', 'Client ki entry wapas Unmarked kar di gayi hai.', '↺');
             renderStaffLedgerSheets();
         }
 
@@ -4654,8 +4762,10 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
             if(isNaN(amt) || amt <= 0) { alert("Amount zero ya negative nahi ho sakta!"); return; }
             
             serverDb[mobile].advancePaid = amt;
-            serverDb[mobile].customPayMode = mode; // 🌟 NAYA: Track Cash or UPI
+            serverDb[mobile].customPayMode = mode; 
             serverDb[mobile].emiSettled = null; 
+            // 🌟 NAYA: Track Staff Name
+            serverDb[mobile].lockedBy = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
             await saveDataToCloud(mobile);
             closeGlobalModal();
             let modeText = mode === 'upi' ? '📱 UPI' : '💵 Cash';
@@ -4767,7 +4877,9 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
 
         function renderStaffLedgerSheets() {
             try {
-                const con = document.getElementById('staff-cycle-list-zone'); const bf = getSafeValue('ledger-active-branch-select'); 
+                const con = document.getElementById('staff-cycle-list-zone'); 
+                const bf = getSafeValue('ledger-active-branch-select'); 
+                const cf = getSafeValue('ledger-active-centre-select'); // 🌟 NAYA: Centre Filter Get
                 if(!con) return; con.innerHTML = ''; let h = '';
                 
                 let todayDateObj = new Date();
@@ -4787,8 +4899,10 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                         isClientDue = true; 
                     }
 
+                    let matchCentre = (cf === "ALL" || !cf || a.center === cf); // 🌟 NAYA: Compare Centre
+
                     // Fix: Clients with overdue must appear on ledger even if not their exact EMI day
-                    if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0)) {
+                    if (a.planType === currentActiveStaffTab && a.isApproved && a.branch === bf && matchCentre && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0)) {
                         
                         // 🚀 FIX: Safer Ledger Search Logic (Prevents Null Matching Bug)
                         let safeName = (a.name || "").toString().toLowerCase();
@@ -4817,17 +4931,17 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                         else if(a.advancePaid > 0) {
                             let mText = a.customPayMode === 'upi' ? '📱 UPI' : '💵 Cash';
                             aB = `<div class="flex-1 py-3 bg-amber-50 text-amber-600 font-black text-[10px] uppercase rounded-xl text-center border border-amber-200 shadow-inner">✓ Custom Pay Locked (₹${a.advancePaid} | ${mText})</div>
-                            <button onclick="serverDb['${m}'].advancePaid=0; serverDb['${m}'].customPayMode=null; saveDataToCloud('${m}').then(renderStaffLedgerSheets);" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                            <button onclick="undoEmiAction('${m}')" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
                         }
                         // 🌟 NAYA FIX: 1 Kist aur BNC par click hone ke baad buttons chup jayenge aur Locked UI aayega!
                         else if(a.emiSettled === 'received_cash' || a.emiSettled === 'received_upi' || a.emiSettled === 'received') {
                             let methodText = a.emiSettled === 'received_upi' ? 'UPI' : 'Cash';
                             aB = `<div class="flex-1 py-3 bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase rounded-xl text-center border border-emerald-200 shadow-inner">✓ ${methodText} Locked (₹${activeEmiAmount})</div>
-                            <button onclick="setEmiStatus('${m}', null)" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                            <button onclick="undoEmiAction('${m}')" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
                         }
                         else if(a.emiSettled === 'bounce') {
                             aB = `<div class="flex-1 py-3 bg-rose-50 text-rose-600 font-black text-[10px] uppercase rounded-xl text-center border border-rose-200 shadow-inner">❌ Marked as Bounced</div>
-                            <button onclick="setEmiStatus('${m}', null)" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
+                            <button onclick="undoEmiAction('${m}')" class="btn-fluid flex-[0.3] py-3 bg-slate-100 border border-slate-300 text-slate-600 font-black text-[10px] rounded-xl hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors ml-1" title="Undo">↺</button>`;
                         }
                         else { 
                             aB = `${qrBtn}
@@ -4893,27 +5007,14 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 todayDateObj.setHours(0,0,0,0);
                 let todayStr = formatSysDate(new Date());
 
-                const staffBranch = getSafeValue('ledger-active-branch-select'); // Staff ka active branch
+                const staffBranch = getSafeValue('ledger-active-branch-select'); 
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
-                    let c = serverDb[m]; if(!c || c.branch !== staffBranch) return; // Fix: Dusri branch ke clients ko process hone se rokein
+                    let c = serverDb[m]; if(!c || c.branch !== staffBranch) return; 
                     if(!c.transactions) c.transactions = [];
                     
-                    // UX FIX: Agar staff ne "Advance" box me amount type kiya par "Settle" dabana bhool kar tab switch kar diya, toh memory (tempAdv) se auto-grab karein
-                    try {
-                        let rawAdvVal = c.tempAdv;
-                        let advInput = document.getElementById(`adv-input-${m}`);
-                        if (advInput && !advInput.disabled) rawAdvVal = advInput.value; // Prefer live DOM if visible
-                        
-                        if (rawAdvVal && !c.emiSettled && !c.advancePaid) {
-                            let amt = parseInt(rawAdvVal) || 0;
-                            let totalDebt = (c.outstanding || 0) + (c.overdue || 0);
-                            if (amt > 0 && amt <= totalDebt) {
-                                c.advancePaid = amt;
-                            }
-                        }
-                        c.tempAdv = ""; // Clear temporary memory after grab
-                    } catch(e) {}
+                    // 🌟 CRITICAL FIX: Safe Tracker for Day-End (Prevents Infinite Call Stack Crash)
+                    let initialTxLength = c.transactions.length;
                     
                     let isClientDue = false;
                     if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
@@ -5043,6 +5144,13 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                         }
                     }
                     } // 🚀 FIX: Closing bracket to lock the Math Calculation block
+
+                    // 🌟 CRITICAL FIX: Safely tag staff names to new transactions WITHOUT mutating Array.push
+                    for (let i = initialTxLength; i < c.transactions.length; i++) {
+                        if (!c.transactions[i].by) {
+                            c.transactions[i].by = c.lockedBy || (currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'System'));
+                        }
+                    }
 
                     // 🚀 FIX: Update processing date lock
                     c.lastDayEndProcessed = todayStr;
@@ -5531,6 +5639,17 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 }
                 else if (role === 'staff') {
                     document.querySelectorAll('.role-staff, #dash-active-acc-block, #dash-closed-acc-block').forEach(el => el.classList.remove('hidden'));
+                    
+                    // 🌟 NAYA: Check if Head has given staff the permission for Binding
+                    const bindMenu = document.getElementById('menu-weekly-bind');
+                    if (bindMenu) {
+                        if (serverDb["SYSTEM_SETTINGS"] && serverDb["SYSTEM_SETTINGS"].allowStaffBinding) {
+                            bindMenu.classList.remove('hidden');
+                        } else {
+                            bindMenu.classList.add('hidden');
+                        }
+                    }
+                    
                     routePanelSection('dashboard'); 
                 }
             } catch(e) { console.error("Error showing dashboard:", e); }
@@ -5562,12 +5681,16 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
     
     function showDashboardList(type) {
             let html = ''; 
-            let todayStr = formatSysDate(new Date());
             let title = '';
             
-            let selectedMonthVal = getSafeValue('dashboard-month-filter'); 
-            let d = new Date(); let currentYYYYMM = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
-            if(!selectedMonthVal) { selectedMonthVal = currentYYYYMM; }
+            let selectedDateVal = getSafeValue('dashboard-date-filter'); 
+            let targetDateObj = new Date();
+            if(selectedDateVal) {
+                let parts = selectedDateVal.split('-');
+                targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+            }
+            let todayStr = formatSysDate(targetDateObj);
+            let selectedMonthVal = `${targetDateObj.getFullYear()}-${(targetDateObj.getMonth()+1).toString().padStart(2,'0')}`;
 
             const activeFilter = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (document.getElementById('dashboard-active-branch-select')?.value || "ALL");
 
@@ -5579,13 +5702,16 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 if (!matchBranch) return;
 
                 let amount = 0; let match = false;
-                let hasCash = false; let hasUpi = false; // 🌟 NAYA: Payment Mode Tracker
+                let hasCash = false; let hasUpi = false; 
+                let actionBy = ''; // 🌟 NAYA: Staff Name Tracker
                 
-                // Smart Tracker Logic
+                // Smart Tracker Logic (Records Staff Name & Mode)
                 const trackMode = (t) => {
                     let mType = t.mode || (t.type === 'Online App' || t.type === 'received_upi' ? 'upi' : 'cash');
                     if (mType === 'upi') hasUpi = true;
                     if (mType === 'cash') hasCash = true;
+                    if (t.by) actionBy = t.by;
+                    else if (c.lockedBy && type.includes('today')) actionBy = c.lockedBy; // Instant Fallback for un-uploaded day-end
                 };
 
                 let appDateMonth = "";
@@ -5710,6 +5836,7 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                     if(type.includes('collect') || type.includes('advance') || type.includes('settle')) {
                         if (hasUpi) modeBadges += `<span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] uppercase ml-1 shadow-sm font-black border border-blue-200">📱 UPI</span>`;
                         if (hasCash) modeBadges += `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] uppercase ml-1 shadow-sm font-black border border-emerald-200">💵 Cash</span>`;
+                        if (actionBy) modeBadges += `<span class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-[8px] uppercase ml-1 shadow-sm font-black border border-purple-200 flex items-center">👤 ${actionBy}</span>`;
                     }
 
                     let amtLabel = type === 'deactive' ? `<span class="text-sm font-black text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">Closed</span>` : `<span class="text-sm font-black text-rose-600 bg-white border border-rose-100 px-3 py-1.5 rounded-lg shadow-sm">₹${amount.toLocaleString('en-IN')}</span>`;
@@ -5767,7 +5894,14 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                 });
                 if(schedBranch) schedBranch.innerHTML = bOptsSched;
                 if(bindBranch) bindBranch.innerHTML = bOptsBind;
+            } else if (currentLoggedInRole === 'staff') {
+                // 🔒 STAFF SECURITY LOCK: Lock to their own branch
+                let staffBranch = getSafeValue('dashboard-active-branch-select');
+                let bOptsStaff = `<option value="${staffBranch}">${staffBranch}</option>`;
+                if(schedBranch) schedBranch.innerHTML = bOptsStaff;
+                if(bindBranch) bindBranch.innerHTML = bOptsStaff;
             }
+            
             document.getElementById('bind-clients-list').classList.add('hidden');
             document.getElementById('btn-execute-bind').classList.add('hidden');
             document.getElementById('bind-centre-summary').classList.add('hidden');
@@ -5793,7 +5927,8 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                         let emiDate = parseSysDate(c.nextEmiDate);
                         if(emiDate.getDay() === targetDay) {
                             let key = `${c.branch} | ${c.center}`;
-                            centreCounts[key] = (centreCounts[key] || 0) + 1;
+                            if (!centreCounts[key]) centreCounts[key] = { count: 0, branch: c.branch, center: c.center };
+                            centreCounts[key].count++;
                         }
                     }
                 }
@@ -5802,13 +5937,46 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
             let html = `<p class="text-[9px] text-slate-500 font-black uppercase mb-2">Meetings on ${dayNames[targetDay]}:</p>`;
             let keys = Object.keys(centreCounts);
             if(keys.length === 0) {
-                html += `<div class="bg-white p-3 rounded-xl border border-slate-100 text-[10px] text-slate-400 font-bold text-center">Koi meeting schedule nahi hai.</div>`;
+                html += `<div class="bg-white p-3 rounded-xl border border-slate-200 text-[10px] text-slate-400 font-bold text-center border-dashed">Koi meeting schedule nahi hai.</div>`;
             } else {
                 keys.forEach(k => {
-                    html += `<div class="flex justify-between items-center bg-white p-3 rounded-xl border border-indigo-100 shadow-sm mb-1"><span class="text-[10px] font-black text-slate-700">${k}</span><span class="text-[9px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded shadow-sm">${centreCounts[k]} Clients</span></div>`;
+                    let data = centreCounts[k];
+                    let safeB = data.branch.replace(/'/g, "\\'");
+                    let safeC = data.center.replace(/'/g, "\\'");
+                    html += `<div onclick="quickLoadBinding('${safeB}', '${safeC}')" class="flex justify-between items-center bg-white p-3 rounded-xl border border-indigo-200 shadow-sm mb-2 hover-scale cursor-pointer hover:bg-indigo-50 transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-black group-hover:scale-110 transition-transform">📁</div>
+                            <div>
+                                <span class="text-[11px] font-black text-slate-800 block leading-tight">${data.center}</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">${data.branch}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[9px] font-black bg-indigo-600 text-white px-2 py-1 rounded-md shadow-sm">${data.count} Clients</span>
+                            <p class="text-[7px] font-black text-indigo-500 uppercase mt-1 group-hover:underline">Click to Re-Bind ✏️</p>
+                        </div>
+                    </div>`;
                 });
             }
             resultBox.innerHTML = html;
+        }
+
+        function quickLoadBinding(branch, center) {
+            let bindBranch = document.getElementById('bind-branch');
+            let bindCentre = document.getElementById('bind-centre');
+            
+            if(bindBranch) {
+                bindBranch.value = branch;
+                syncWeeklyBindCentre();
+            }
+            if(bindCentre) {
+                setTimeout(() => {
+                    bindCentre.value = center;
+                    loadClientsForBinding();
+                    // Smooth scroll seedha List wale section par
+                    document.getElementById('bind-branch').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
         }
 
         function syncWeeklyBindCentre() {
@@ -5859,17 +6027,21 @@ let parsedEmisPaid = rawEmis !== "" ? parseInt(rawEmis) : parseInt(getSafeValue(
                         dayDistribution["Unknown"]++;
                     }
 
+                    let dayBadgeColor = currentDayName === 'Unknown' ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-indigo-100 text-indigo-700 border-indigo-200';
                     html += `
-                    <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm mb-2 hover-scale">
-                        <div class="flex items-center gap-3">
-                            <!-- Chota sa security: Unchecked by default diya hai taaki accidentally sabka din change na ho jaye -->
-                            <input type="checkbox" id="bind-chk-${m}" class="w-5 h-5 accent-indigo-600 bind-checkbox cursor-pointer">
+                    <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm mb-2 hover-scale transition-colors hover:bg-slate-50">
+                        <div class="flex items-start gap-3">
+                            <!-- Unchecked by default for safety -->
+                            <input type="checkbox" id="bind-chk-${m}" class="w-5 h-5 accent-indigo-600 bind-checkbox cursor-pointer mt-1">
                             <div>
-                                <p class="text-[11px] font-black text-slate-800">${client.name}</p>
-                                <p class="text-[9px] text-slate-500 font-bold mt-0.5">Currently on: <span class="text-indigo-600 font-black">${currentDayName}</span> (${client.nextEmiDate})</p>
+                                <p class="text-[11px] font-black text-slate-900">${client.name}</p>
+                                <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest shadow-sm ${dayBadgeColor}">📅 ${currentDayName}</span>
+                                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded border border-blue-100 bg-blue-50 text-blue-600 uppercase tracking-widest shadow-sm">${client.planName || 'Plan'}</span>
+                                </div>
                             </div>
                         </div>
-                        <span class="text-[9px] font-black px-2 py-1 bg-slate-100 text-slate-600 rounded">₹${client.cycleEmi}</span>
+                        <span class="text-[10px] font-black px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-lg shadow-inner">₹${client.cycleEmi}</span>
                     </div>`;
                 }
             });
