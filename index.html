@@ -269,6 +269,9 @@
                 <button onclick="routePanelSection('cust-profile')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-slate-300 hidden"><span class="text-lg mr-2">⚙️</span> Profile Settings</button>
                 <button onclick="routePanelSection('cust-support')" class="menu-item role-cust w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-800 text-rose-400 mt-4 hidden"><span class="text-lg mr-2">🎧</span> Help & Support</button>
                 
+                <!-- 🌟 FIX: NAYA MODIFICATION MENU BUTTON -->
+                <button onclick="routePanelSection('app-settings')" class="menu-item w-full text-left p-3.5 rounded-xl text-xs font-black uppercase tracking-wide bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-900/50 mt-4 transition-colors shadow-lg"><span class="text-lg mr-2">🎨</span> App Settings & Mods</button>
+                
                 </nav>
             <div class="pt-4 border-t border-slate-800 mt-auto">
                 <div onclick="if(currentLoggedInRole === 'staff') routePanelSection('staff-profile')" class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-700 transition-colors">
@@ -1494,6 +1497,221 @@
                     <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200"><p class="text-[10px] font-bold text-slate-500 text-center">Note: Address updates require branch approval.</p><textarea id="cust-edit-address" rows="3" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-semibold resize-none focus:outline-none"></textarea><button onclick="if(serverDb[currentlyLoggedInMobile]){ serverDb[currentlyLoggedInMobile].address = document.getElementById('cust-edit-address').value.replace(/</g, '&lt;'); saveDataToCloud(currentlyLoggedInMobile); showNotification('Profile Updated', 'Aapka naya address save ho gaya hai.', '🏠'); renderCustomerDashboard(); }" class="btn-fluid w-full py-4 bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl mt-2">Update Address</button>
                 </div>
             </div>
+
+            <!-- ========================================================= -->
+            <!-- 🌟 FIX: 10+ ULTRA APP MODIFICATIONS & SETTINGS PANEL      -->
+            <!-- ========================================================= -->
+            <div id="view-node-app-settings" class="view-panel hidden animate-slide-up space-y-4 pb-10">
+                <div class="glass-card rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl"></div>
+                    <div class="text-center border-b border-slate-200/60 pb-4 mb-4 relative z-10">
+                        <div class="w-14 h-14 bg-gradient-to-br from-cyan-100 to-blue-100 text-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner pulse-glow">🎨</div>
+                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Personalization</h3>
+                        <p class="text-[9px] font-bold text-slate-500 uppercase mt-1">10+ App Modifications</p>
+                    </div>
+
+                    <div class="space-y-4 relative z-10">
+                        
+                        <!-- 1. Language Switcher -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                            <div><p class="text-[10px] font-black text-slate-700 uppercase">App Language</p><p class="text-[8px] font-bold text-slate-400 mt-0.5">Translate to Hindi/English</p></div>
+                            <select id="mod-lang" onchange="applyAppMods('lang', this.value)" class="p-2 bg-white border border-cyan-200 text-cyan-700 rounded-lg text-xs font-black focus:outline-none shadow-sm cursor-pointer">
+                                <option value="en">🇬🇧 English</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                            </select>
+                        </div>
+
+                        <!-- 2. Text Size Changer -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                            <div><p class="text-[10px] font-black text-slate-700 uppercase">Text Size</p><p class="text-[8px] font-bold text-slate-400 mt-0.5">Make font bigger/smaller</p></div>
+                            <select id="mod-text-size" onchange="applyAppMods('text', this.value)" class="p-2 bg-white border border-cyan-200 text-cyan-700 rounded-lg text-xs font-black focus:outline-none shadow-sm cursor-pointer">
+                                <option value="100%">Normal A</option>
+                                <option value="110%">Medium a</option>
+                                <option value="120%">Large A+</option>
+                                <option value="90%">Small a-</option>
+                            </select>
+                        </div>
+
+                        <!-- 3. Font Style -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                            <div><p class="text-[10px] font-black text-slate-700 uppercase">Font Style</p><p class="text-[8px] font-bold text-slate-400 mt-0.5">Change app typography</p></div>
+                            <select id="mod-font" onchange="applyAppMods('font', this.value)" class="p-2 bg-white border border-cyan-200 text-cyan-700 rounded-lg text-[10px] font-black focus:outline-none shadow-sm cursor-pointer">
+                                <option value="default">Default Modern</option>
+                                <option value="serif">Classic Serif</option>
+                                <option value="monospace">Hacker Mono</option>
+                            </select>
+                        </div>
+
+                        <!-- 4 & 5. Contrast & Grayscale Filters -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer hover-scale" onclick="applyAppMods('contrast', 'toggle')">
+                                <span class="text-xl mb-1">🌗</span>
+                                <p class="text-[9px] font-black text-slate-700 uppercase">High Contrast</p>
+                                <p id="lbl-mod-contrast" class="text-[8px] font-bold text-slate-400 mt-0.5">Off</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer hover-scale" onclick="applyAppMods('grayscale', 'toggle')">
+                                <span class="text-xl mb-1">📺</span>
+                                <p class="text-[9px] font-black text-slate-700 uppercase">Grayscale B&W</p>
+                                <p id="lbl-mod-grayscale" class="text-[8px] font-bold text-slate-400 mt-0.5">Off</p>
+                            </div>
+                        </div>
+
+                        <!-- 6 & 7. Animations & Haptics -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer hover-scale" onclick="applyAppMods('animation', 'toggle')">
+                                <span class="text-xl mb-1">✨</span>
+                                <p class="text-[9px] font-black text-slate-700 uppercase">Animations</p>
+                                <p id="lbl-mod-animation" class="text-[8px] font-bold text-emerald-500 mt-0.5">On (Smooth)</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer hover-scale" onclick="applyAppMods('haptics', 'toggle')">
+                                <span class="text-xl mb-1">📳</span>
+                                <p class="text-[9px] font-black text-slate-700 uppercase">Haptic Vibration</p>
+                                <p id="lbl-mod-haptics" class="text-[8px] font-bold text-emerald-500 mt-0.5">On</p>
+                            </div>
+                        </div>
+
+                        <!-- 8. Compact View -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                            <div><p class="text-[10px] font-black text-slate-700 uppercase">Compact UI View</p><p class="text-[8px] font-bold text-slate-400 mt-0.5">Reduce padding & spacing</p></div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" id="mod-compact" onchange="applyAppMods('compact', this.checked)" class="sr-only peer">
+                              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600 shadow-inner"></div>
+                            </label>
+                        </div>
+
+                        <!-- 9. AI Voice Speed -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                            <div><p class="text-[10px] font-black text-slate-700 uppercase">AI Voice Speed</p><p class="text-[8px] font-bold text-slate-400 mt-0.5">Assistant bolne ki speed</p></div>
+                            <select id="mod-voice-speed" onchange="applyAppMods('voicespeed', this.value)" class="p-2 bg-white border border-cyan-200 text-cyan-700 rounded-lg text-xs font-black focus:outline-none shadow-sm cursor-pointer">
+                                <option value="1.05">Normal (1x)</option>
+                                <option value="1.5">Fast (1.5x)</option>
+                                <option value="0.8">Slow (0.8x)</option>
+                            </select>
+                        </div>
+
+                        <!-- 10. Master App Sound -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                            <div><p class="text-[10px] font-black text-slate-700 uppercase">App UI Sounds</p><p class="text-[8px] font-bold text-slate-400 mt-0.5">Beeps & Clicks</p></div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" id="mod-sound" onchange="applyAppMods('sound', this.checked)" class="sr-only peer" checked>
+                              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600 shadow-inner"></div>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODIFICATIONS INJECTION STYLE TAG -->
+            <style id="dynamic-mod-styles"></style>
+
+            <script>
+                // 🌟 APP MODIFICATION ENGINE 🌟
+                let appMods = {
+                    contrast: false,
+                    grayscale: false,
+                    animation: true,
+                    haptics: true,
+                    sound: true,
+                    compact: false,
+                    voicespeed: 1.05
+                };
+
+                function applyAppMods(setting, value) {
+                    // State Management
+                    if(setting === 'contrast') appMods.contrast = !appMods.contrast;
+                    if(setting === 'grayscale') appMods.grayscale = !appMods.grayscale;
+                    if(setting === 'animation') appMods.animation = !appMods.animation;
+                    if(setting === 'haptics') appMods.haptics = !appMods.haptics;
+                    if(setting === 'compact') appMods.compact = value;
+                    if(setting === 'sound') appMods.sound = value;
+                    if(setting === 'voicespeed') appMods.voicespeed = parseFloat(value);
+
+                    // Dynamic CSS Builder
+                    let cssRules = '';
+                    
+                    // 1. Text Size
+                    if(setting === 'text') {
+                        document.body.style.zoom = value;
+                    }
+                    
+                    // 2. Font Family
+                    if(setting === 'font') {
+                        if(value === 'serif') cssRules += '* { font-family: Georgia, serif !important; } ';
+                        else if(value === 'monospace') cssRules += '* { font-family: "Courier New", monospace !important; } ';
+                    }
+
+                    // 3. Contrast & Grayscale
+                    let filters = '';
+                    if(appMods.contrast) filters += 'contrast(1.2) saturate(1.3) ';
+                    if(appMods.grayscale) filters += 'grayscale(1) ';
+                    if(filters) cssRules += 'body { filter: ' + filters + '; } ';
+
+                    // 4. Animations
+                    if(!appMods.animation) {
+                        cssRules += '* { animation: none !important; transition: none !important; } ';
+                    }
+
+                    // 5. Compact Mode
+                    if(appMods.compact) {
+                        cssRules += '.p-4, .p-5, .p-6 { padding: 10px !important; } .mb-4, .mb-5 { margin-bottom: 8px !important; } ';
+                    }
+
+                    // Inject CSS
+                    if (cssRules !== '') {
+                        document.getElementById('dynamic-mod-styles').innerHTML = cssRules;
+                    } else if (setting !== 'lang' && setting !== 'text' && setting !== 'haptics' && setting !== 'sound' && setting !== 'voicespeed') {
+                        document.getElementById('dynamic-mod-styles').innerHTML = ''; // Reset
+                    }
+
+                    // 6. Language Logic (Google Translate Hook)
+                    if(setting === 'lang') {
+                        let select = document.querySelector('.goog-te-combo');
+                        if(select) {
+                            select.value = value;
+                            select.dispatchEvent(new Event('change'));
+                        } else {
+                            showNotification('Translating...', 'Google Translate module load ho raha hai.', '🌍');
+                        }
+                    }
+
+                    // Update UI Labels
+                    if(setting === 'contrast') document.getElementById('lbl-mod-contrast').innerText = appMods.contrast ? "On" : "Off";
+                    if(setting === 'grayscale') document.getElementById('lbl-mod-grayscale').innerText = appMods.grayscale ? "On" : "Off";
+                    if(setting === 'animation') {
+                        let lbl = document.getElementById('lbl-mod-animation');
+                        lbl.innerText = appMods.animation ? "On (Smooth)" : "Off (Fast)";
+                        lbl.className = appMods.animation ? "text-[8px] font-bold text-emerald-500 mt-0.5" : "text-[8px] font-bold text-rose-500 mt-0.5";
+                    }
+                    if(setting === 'haptics') {
+                        let lbl = document.getElementById('lbl-mod-haptics');
+                        lbl.innerText = appMods.haptics ? "On" : "Off";
+                        lbl.className = appMods.haptics ? "text-[8px] font-bold text-emerald-500 mt-0.5" : "text-[8px] font-bold text-rose-500 mt-0.5";
+                        if(appMods.haptics && navigator.vibrate) navigator.vibrate(50);
+                    }
+
+                    // Save Sound preference override
+                    if(!appMods.sound) {
+                        if(window.triggerMicSound) {
+                            window.originalTriggerMicSound = window.triggerMicSound;
+                            window.triggerMicSound = function() {}; // Mute
+                        }
+                    } else if (window.originalTriggerMicSound) {
+                        window.triggerMicSound = window.originalTriggerMicSound; // Unmute
+                    }
+
+                    if (setting === 'voicespeed') {
+                         showNotification('Voice Updated', 'AI assistant speed changed.', '🤖');
+                    }
+                }
+
+                // 🌟 GLOBAL HAPTICS HOOK 🌟
+                document.body.addEventListener('click', function(e) {
+                    if(appMods.haptics && navigator.vibrate && e.target.tagName === 'BUTTON') {
+                        navigator.vibrate(15); // Light tap on buttons
+                    }
+                });
+            </script>
 
         </div>
 
@@ -11496,7 +11714,8 @@
             const utterance = new SpeechSynthesisUtterance(text);
             window.currentUtterance = utterance; 
             utterance.lang = 'hi-IN'; 
-            utterance.rate = 1.05; 
+            // 🌟 FIX: Speed will now follow the Modification panel setting
+            utterance.rate = (typeof appMods !== 'undefined') ? appMods.voicespeed : 1.05; 
             utterance.pitch = 1.1; 
             
             const statusText = document.getElementById('voice-status-text');
@@ -11765,7 +11984,7 @@
             if(!SpeechRecognition) { showNotification('Not Supported', 'Voice search is browser mein support nahi karta.', '⚠️'); return; }
             
             const recognition = new SpeechRecognition();
-            recognition.lang = 'hi-IN'; // Hindi aur English dono samjhega
+            recognition.lang = 'en-US'; // 🌟 FIX: Ab purely English mein search karega
             
             showNotification('Listening...', 'Bolna shuru karein...', '🎙️');
             
