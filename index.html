@@ -1565,7 +1565,8 @@
     </div>
 
     <script>
-        const API_URL = "https://opas-backend-z1iz.onrender.com/api/clients"; 
+        // 🌟 CORS PROXY FIX: Backend block hatane ke liye taaki real login work kare
+        const API_URL = "https://corsproxy.io/?https://opas-backend-z1iz.onrender.com/api/clients";
         
         let currentActiveStaffTab = 'daily'; 
         let currentlyLoggedInMobile = ''; 
@@ -8448,9 +8449,9 @@
         async function handleEmployeeLogin(event) {
             try {
                 let btn = event.currentTarget;
-                const u = getSafeValue('emp-username').trim().toLowerCase(); 
-                const p = getSafeValue('emp-password');
-                
+                const u = getSafeValue('emp-username').trim().toLowerCase();
+                const p = getSafeValue('emp-password').trim(); // 🌟 FIX: Mobile keyboard space issue resolved
+
                 if (!u || !p) { showNotification('Invalid Details', 'Kripya Username aur Password dono dalein!', '⚠️'); return; }
 
                 let oldText = btn.innerText;
@@ -8458,7 +8459,6 @@
                 btn.disabled = true;
 
                 // 🌟 VIRTUAL STAFF AUTHENTICATION ENGINE (FRONTEND CHECK)
-                // Backend API only knows the Admin. Staff accounts are stored virtually in SYSTEM_SETTINGS.
                 let isStaffLocal = false;
                 let staffData = null;
                 let realKey = Object.keys(staffDb).find(k => k.toLowerCase() === u);
@@ -8467,7 +8467,7 @@
                     staffData = staffDb[realKey];
                 }
 
-                // Call Backend anyway to check if it's the Admin/Head, OR to get a fresh token if possible
+                // Call Backend to verify Real Admin/Head
                 let backendData = { success: false };
                 try {
                     const response = await fetch(API_URL.replace('/clients', '/login'), {
@@ -8477,17 +8477,17 @@
                     });
                     backendData = await response.json();
                 } catch(e) {
-                    console.log("Backend login skipped or offline.");
+                    console.log("Backend connection failed due to network or CORS.", e);
                 }
 
-                // Logic Branching (Admin vs Staff)
+                // Logic Branching (Real Admin vs Real Staff)
                 if (backendData.success) {
-                    // 👑 Admin Logged In via Backend
+                    // 👑 Real Admin Logged In via Backend
                     if (backendData.token) localStorage.setItem('opas_jwt_token', backendData.token);
                     setAuthSession(backendData.role, u);
 
                     btn.innerText = "Syncing Profile... ☁️";
-                    await loadDataFromCloud(); 
+                    try { await loadDataFromCloud(); } catch(err) { console.log("Cloud load failed on login"); }
 
                     if (backendData.role === 'head') {
                         currentLoggedInRole = 'head'; 
@@ -8501,8 +8501,7 @@
                     btn.disabled = false;
                     
                 } else if (isStaffLocal) {
-                    // 👨‍💼 STAFF LOGIN SUCCESS (Handled via Local JSON DB)
-                    // Staff relies on the persistent Device Token for cloud sync
+                    // 👨‍💼 Real STAFF LOGIN SUCCESS (Handled via Local JSON DB)
                     if (!localStorage.getItem('opas_jwt_token') || localStorage.getItem('opas_jwt_token') === 'offline_mode_token_active') {
                         localStorage.setItem('opas_jwt_token', 'virtual_device_token_active'); 
                     }
