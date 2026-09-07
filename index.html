@@ -1926,13 +1926,19 @@
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     
-                    // 🚀 FIX: Force logout if token expires to prevent fake offline data entry
+                    // 🚀 FIX: Force logout if real token expires, but safely bypass if it's a virtual fallback token
                     if (response.status === 401 || response.status === 403) {
-                        alert("Session Expired! Please login again to sync data. Your offline data is SAFE.");
-                        localStorage.removeItem('opas_jwt_token');
-                        localStorage.removeItem('opas_sess_role');
-                        setTimeout(() => { window.location.reload(); }, 1500); 
-                        throw new Error("Session Expired, halting execution."); 
+                        if (token === 'virtual_device_token_active' || token === 'offline_mode_token_active') {
+                            console.warn("Virtual token syncing gracefully.");
+                            hasMore = false;
+                            break; // Loop safely exit karega bina app crash kiye
+                        } else {
+                            alert("Session Expired! Please login again to sync data. Your offline data is SAFE.");
+                            localStorage.removeItem('opas_jwt_token');
+                            localStorage.removeItem('opas_sess_role');
+                            setTimeout(() => { window.location.reload(); }, 1500); 
+                            throw new Error("Session Expired, halting execution."); 
+                        }
                     }
                     if (!response.ok) throw new Error("Cloud Error");
                     
@@ -8699,9 +8705,11 @@
 
                 // Logic Branching (Real Admin vs Real Staff)
                 if (backendData.success) {
-                    // 👑 Real Admin Logged In via Backend
                     if (backendData.token) localStorage.setItem('opas_jwt_token', backendData.token);
-                    setAuthSession(backendData.role, u);
+                    
+                    // NAYA FIX: Fetch correct case-sensitive username from backend
+                    let actualUser = backendData.username || u;
+                    setAuthSession(backendData.role, actualUser);
 
                     btn.innerText = "Syncing Profile... ☁️";
                     try { await loadDataFromCloud(); } catch(err) { console.log("Cloud load failed on login"); }
@@ -8713,7 +8721,36 @@
                         if(headPendingRadar) clearInterval(headPendingRadar);
                         headPendingRadar = setInterval(silentHeadRadar, 60000);
                         silentHeadRadar();
+                    } 
+                    // 🚨 CRITICAL BUG FIX: Ye block missing tha! Jisse Staff login hone ke baad bhi fasa rehta tha.
+                    else if (backendData.role === 'staff') {
+                        currentLoggedInRole = 'staff'; 
+                        currentlyLoggedInMobile = actualUser;
+                        
+                        let sData = staffDb[actualUser] || staffDb[Object.keys(staffDb).find(k => k.toLowerCase() === actualUser.toLowerCase())];
+                        if (sData) {
+                            const df = document.getElementById('dashboard-active-branch-select'); 
+                            const lf = document.getElementById('ledger-active-branch-select');
+                            const sf = document.getElementById('settle-branch-filter'); 
+
+                            if(df) df.innerHTML = `<option value="${sData.branch}">${sData.branch}</option>`; 
+                            if(lf) lf.innerHTML = `<option value="${sData.branch}">${sData.branch}</option>`;
+                            if(sf) { sf.innerHTML = `<option value="${sData.branch}">${sData.branch}</option>`; syncSettleCentreFilter(); }
+                            
+                            setHtmlSafe('sidebar-name', sData.name||'Unk'); 
+                            setHtmlSafe('sidebar-role', `Staff (${sData.empId||''})`);
+                            let ini = "ST"; if(sData.name) ini = sData.name.substring(0,2).toUpperCase(); 
+                            setHtmlSafe('sidebar-avatar', ini);
+                            showNotification('Login Success', `Welcome back ${sData.name}!`, '👋');
+                        } else {
+                            showNotification('Login Success', `Welcome back!`, '👋');
+                        }
+                        
+                        showDashboard('staff'); 
+                        updatePendingRequestsBadge();
+                        syncSetupDropdowns(); 
                     }
+                    
                     btn.innerText = oldText;
                     btn.disabled = false;
                     
