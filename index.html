@@ -1692,7 +1692,7 @@
                 // 🌟 FIX 1: ACTUAL PAGINATION LOOP YAHAN HONA CHAHIYE
                 let cloudData = {};
                 let lastMobile = ''; 
-                let limit = 500; 
+                let limit = 5000; // 🚀 BUG FIX: Limit increased to 5000. Ek hi request me poora data aayega bina kate!
                 let hasMore = true;
 
                 while (hasMore) {
@@ -1711,10 +1711,9 @@
                     // 🚀 FIX: Force logout if token expires to prevent fake offline data entry
                     if (response.status === 401 || response.status === 403) {
                         alert("Session Expired! Please login again to sync data. Your offline data is SAFE.");
-                        // DO NOT call full logout() as it wipes local DB. Just clear tokens and reload.
                         localStorage.removeItem('opas_jwt_token');
                         localStorage.removeItem('opas_sess_role');
-                        setTimeout(() => { window.location.reload(); }, 1500); // 🚀 FIX: Added delay to halt completely before reload
+                        setTimeout(() => { window.location.reload(); }, 1500); 
                         throw new Error("Session Expired, halting execution."); 
                     }
                     if (!response.ok) throw new Error("Cloud Error");
@@ -1722,13 +1721,10 @@
                     let chunk = await response.json();
                     let keys = Object.keys(chunk);
                     
-                    // 🌟 BUG FIX 1: THE PAGINATION BLACK HOLE PREVENTER!
-                    // SYSTEM_SETTINGS ko sorting se bahar nikalna zaroori hai, warna ASCII code me 'S' > '9' hone ki wajah se database aage ke numbers fetch karna band kar dega!
                     let sortedKeys = keys.filter(k => k !== "SYSTEM_SETTINGS").sort();
                     
-                    // 🛡️ ULTRA-SMART FIX: Prevents Infinite RAM Loop if API returns same last record
+                    // 🛡️ ULTRA-SMART FIX: Agar koi client nahi bacha toh loop rok do
                     if (sortedKeys.length === 0 || lastMobile === sortedKeys[sortedKeys.length - 1]) {
-                        // Bacha hua data (Jaise SYSTEM_SETTINGS) add karke loop tod do
                         Object.assign(cloudData, chunk); 
                         hasMore = false; 
                     } else {
@@ -1737,7 +1733,9 @@
                         let cStatus = document.getElementById('cloud-status');
                         if(cStatus) cStatus.innerText = `☁️ Syncing... (${Object.keys(cloudData).length})`;
                     }
-                    if (keys.length < limit) hasMore = false; // Failsafe break
+                    
+                    // 🚨 THE CULPRIT REMOVED: Ye line deleted rows ke chalte frontend ka fetch block kar rahi thi!
+                    // isliye isko yahan se permanently delete kar diya gaya hai.
                 }
 
                 if (Object.keys(cloudData).length > 0) {
