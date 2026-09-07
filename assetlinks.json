@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.opas_fronted.twa",
+        "sha256_cert_fingerprints": ["E0:A6:0C:76:3E:0B:C0:40:EF:98:47:28:DB:2D:04:02:CB:6D:76:DD:29:E6:CA:C3:11:AC:FF:F2:BB:A3:C8:48"]
+      }
+    }]
