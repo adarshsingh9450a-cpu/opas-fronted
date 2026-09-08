@@ -1,17 +1,18 @@
 // OPAS Auto-Updating Service Worker
-const CACHE_NAME = 'opas-app-cache-v3'; // Version zaroor badlein
+const CACHE_NAME = 'opas-app-cache-v4'; // Version update kar diya (v4)
 
 // 1. Install & Force Takeover
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // NAYA: Ye line purane fawicon/code ko turant maar degi
+    self.skipWaiting(); // Purane fawicon/code ko turant maar degi
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
+            // 🚨 SAARE PATHS MEIN DOT (.) LAGA DIYA HAI GITHUB KE LIYE
             return cache.addAll([
-                '/',
-                '/index.html',
-                '/manifest.json',
-                '/icon-192.png',
-                '/icon-512.png'
+                './',
+                './index.html',
+                './manifest.json',
+                './icon-192.png',
+                './icon-512.png'
             ]);
         })
     );
@@ -37,7 +38,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .then((networkResponse) => {
-                // Agar net chal raha hai, toh Vercel se naya code laao aur save karo
+                // Agar net chal raha hai, toh naya code laao aur save karo
                 return caches.open(CACHE_NAME).then((cache) => {
                     cache.put(event.request, networkResponse.clone());
                     return networkResponse;
