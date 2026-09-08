@@ -445,7 +445,7 @@
                 <div class="glass-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm border border-slate-200 hover-scale">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Date Filter:</label>
-                        <input type="date" id="dashboard-date-filter" onchange="refreshHeadDashboardStats()" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none shadow-sm cursor-pointer hover-scale">
+<input type="date" id="dashboard-date-filter" onchange="refreshHeadDashboardStats(); if(typeof renderStaffLedgerSheets === 'function') renderStaffLedgerSheets();" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-blue-700 focus:outline-none shadow-sm cursor-pointer hover-scale">
                     </div>
                     <div class="flex justify-between items-center hidden" id="dash-branch-filter-zone">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Branch View:</label>
@@ -4558,6 +4558,7 @@
                 if (planEditBox && planSelectDropdown) {
                     if (currentLoggedInRole === 'head') {
                         planEditBox.classList.remove('hidden');
+                        planEditBox.style.display = 'block'; // 🌟 FORCE FIX: Tailwind ka bug bypass karke 100% box show karega
                         let pOpts = `<option value="">-- Keep Current Plan --</option>`;
                         loanPlans.forEach(p => {
                             let emiText = p.isHybrid ? `₹${p.phase1Emi}` : `₹${p.baseEmi}`;
@@ -4566,9 +4567,12 @@
                         });
                         planSelectDropdown.innerHTML = pOpts;
                         planSelectDropdown.value = ""; // Default reset
-                        document.getElementById('edit-reset-emi-chk').checked = false; // Default uncheck
+                        
+                        let resetChk = document.getElementById('edit-reset-emi-chk');
+                        if (resetChk) resetChk.checked = false; // 🌟 SAFE FIX: Ab checkbox dhoondhne mein error aakar code nahi rukega
                     } else {
                         planEditBox.classList.add('hidden'); // Hide for Staff
+                        planEditBox.style.display = 'none'; // 🔒 Strict Force Hide
                     }
                 }
                 
@@ -5033,7 +5037,7 @@
             openGlobalModal(html);
         }
 
-        // 🌟 NAYA: Smart Date-Wise "Unmarked Hisaab" Manager
+        // 🌟 NAYA: Smart "Unmarked Hisaab" Manager (Grouped by Role)
         function openUnmarkedHisaabManager(filterType = 'total') {
             const activeRole = currentLoggedInRole;
             let staffBranch = "ALL";
@@ -5050,7 +5054,7 @@
             }
             let todayStr = formatSysDate(targetDateObj);
 
-            let dateGroups = {};
+            let locationGroups = {};
             let totalPendingCount = 0;
             let totalPendingAmt = 0;
 
@@ -5059,7 +5063,6 @@
                 let c = serverDb[m];
                 if (!c || c.status !== 'Active') return;
 
-                // 🛡️ SECURITY: Stop cross-branch leakage immediately
                 if (activeRole === 'staff' && c.branch !== staffBranch) return;
 
                 let tDate = new Date(targetDateObj); tDate.setHours(0,0,0,0);
@@ -5073,53 +5076,50 @@
                                 (['received', 'received_cash', 'received_upi', 'online_paid', 'bounce'].includes(c.emiSettled)) ||
                                 (c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || tx.date === todayStr) && (['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type) || tx.type.includes('Late Mark'))));
                 
-                if (paidToday || c.outstanding <= 0) return; // Client ne jama kar diya hai toh bypass karo
+                if (paidToday || c.outstanding <= 0) return;
 
                 let qualifies = false;
-                let groupDate = "N/A";
                 let pendingAmt = 0;
 
-                // 🌟 LOGIC 1: Daily Unmarked (Strictly Today only)
                 if (filterType === 'today') {
                     let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
                     if (isExactToday) {
                          qualifies = true;
-                         groupDate = "Today's Unmarked (Pending Post)";
                          pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                     }
                 } 
-                // 🌟 LOGIC 2: Total/Old Unmarked (Past Dates & Penalties)
                 else {
                     if (c.overdue > 0) {
                         qualifies = true;
-                        groupDate = "Past Penalty / Arrears";
                         pendingAmt = Math.min(c.outstanding || 0, (c.overdue || 0) + (isExactToday ? (c.cycleEmi || 0) : 0));
                     } else if (isPastDue) {
                         qualifies = true;
-                        groupDate = c.nextEmiDate;
                         pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                     } else if (isExactToday && c.lastDayEndProcessed === todayStr) {
-                        // Agar Day-End ho chuka par kist nahi aayi toh wo Total Hisaab me "Bypassed" ban jayega
                         qualifies = true;
-                        groupDate = todayStr + " (Bypassed)";
                         pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                     }
                 }
 
                 if (qualifies && pendingAmt > 0) {
-                    if (!dateGroups[groupDate]) dateGroups[groupDate] = { clients: [], totalAmt: 0, count: 0 };
                     let safeDomCenter = (c.center || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     let safeBranch = (c.branch || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     
-                    dateGroups[groupDate].clients.push({ mobile: m, name: c.name, amt: pendingAmt, center: safeDomCenter, branch: safeBranch, id: c.id });
-                    dateGroups[groupDate].totalAmt += pendingAmt;
-                    dateGroups[groupDate].count++;
+                    // 🌟 ROLE WISE GROUPING LOGIC
+                    let groupKey = activeRole === 'head' ? safeBranch : safeDomCenter;
+                    let groupLabel = activeRole === 'head' ? `🏢 Branch: ${safeBranch}` : `📍 Centre: ${safeDomCenter}`;
+
+                    if (!locationGroups[groupKey]) locationGroups[groupKey] = { label: groupLabel, clients: [], totalAmt: 0, count: 0 };
+                    
+                    locationGroups[groupKey].clients.push({ mobile: m, name: c.name, amt: pendingAmt, center: safeDomCenter, branch: safeBranch, id: c.id });
+                    locationGroups[groupKey].totalAmt += pendingAmt;
+                    locationGroups[groupKey].count++;
+                    
                     totalPendingCount++;
                     totalPendingAmt += pendingAmt;
                 }
             });
 
-            // --- BUILD DYNAMIC SECURITY UI FILTERS ---
             let branchOptions = `<option value="ALL">-- All Branches --</option>`;
             if (activeRole === 'head') branchList.forEach(b => branchOptions += `<option value="${b}">${b}</option>`);
             
@@ -5148,17 +5148,13 @@
             if (totalPendingCount === 0) { 
                 html += `<div class="p-8 bg-emerald-50 rounded-2xl border border-emerald-200 border-dashed text-center"><span class="text-4xl">🎉</span><p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-2">Zero Pending!</p><p class="text-[8px] font-bold text-emerald-500 mt-1 uppercase">Saara hisaab clear hai.</p></div>`; 
             } else {
-                let sortedKeys = Object.keys(dateGroups).sort((a,b) => {
-                    if (a.includes('Today')) return -1;
-                    if (b.includes('Today')) return 1;
-                    if (a.includes('Penalty')) return -1;
-                    if (b.includes('Penalty')) return 1;
-                    return parseSysDate(a) - parseSysDate(b);
-                });
+                let sortedGroupKeys = Object.keys(locationGroups).sort();
 
-                sortedKeys.forEach(dateKey => {
-                    let group = dateGroups[dateKey];
-                    let headerColor = dateKey.includes('Today') ? 'bg-indigo-600 text-white' : (dateKey.includes('Penalty') ? 'bg-rose-500 text-white' : 'bg-slate-800 text-white');
+                sortedGroupKeys.forEach(gKey => {
+                    let group = locationGroups[gKey];
+                    let headerColor = activeRole === 'head' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white';
+                    
+                    group.clients.sort((a, b) => a.name.localeCompare(b.name));
                     
                     let clientsHtml = group.clients.map(cl => `
                         <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center transition-colors hover:bg-slate-50 dashboard-list-item-row" data-branch="${cl.branch}" data-center="${cl.center}" data-amt="${cl.amt}">
@@ -5171,10 +5167,10 @@
                         </div>`).join('');
 
                     html += `
-                    <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm animate-slide-up date-group-wrapper">
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm animate-slide-up location-group-wrapper">
                         <div class="${headerColor} px-4 py-3 flex justify-between items-center">
-                            <span class="text-[10px] font-black uppercase tracking-widest">${dateKey}</span>
-                            <span class="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded shadow-sm date-group-stats">${group.count} Left | ₹${group.totalAmt}</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">${group.label}</span>
+                            <span class="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded shadow-sm location-group-stats">${group.count} Left | ₹${group.totalAmt}</span>
                         </div>
                         <div class="p-3 bg-slate-50 space-y-2 group-client-container">
                             ${clientsHtml}
@@ -5226,7 +5222,7 @@
                 }
             });
 
-            let wrappers = document.querySelectorAll('#modal-injection-zone .date-group-wrapper');
+            let wrappers = document.querySelectorAll('#modal-injection-zone .location-group-wrapper');
             wrappers.forEach(wrap => {
                 let visibleChildren = wrap.querySelectorAll('.dashboard-list-item-row[style="display: flex;"]');
                 if (visibleChildren.length === 0) {
@@ -5235,7 +5231,7 @@
                     wrap.style.display = 'block';
                     let wrapAmt = 0;
                     visibleChildren.forEach(c => wrapAmt += parseInt(c.getAttribute('data-amt') || 0));
-                    let statSpan = wrap.querySelector('.date-group-stats');
+                    let statSpan = wrap.querySelector('.location-group-stats');
                     if (statSpan) statSpan.innerHTML = `${visibleChildren.length} Left | ₹${wrapAmt}`;
                 }
             });
@@ -7993,7 +7989,15 @@
         // 🌟 MASTER LEDGER RENDER FUNCTION (Bug Fixed)
         function renderStaffLedgerSheets() {
             try {
+                // 🌟 DASHBOARD SYNC FIX: Ab Ledger hamesha Dashboard ke Date Filter se sync rahega
+                let selectedDateVal = getSafeValue('dashboard-date-filter'); 
                 let todayDateObj = new Date();
+                if(selectedDateVal && selectedDateVal.includes('-')) {
+                    let parts = selectedDateVal.split('-');
+                    if (parts.length === 3 && !isNaN(parts[0])) {
+                        todayDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+                    }
+                }
                 todayDateObj.setHours(0,0,0,0);
                 let currentTodayStr = formatSysDate(todayDateObj);
 
@@ -8398,7 +8402,7 @@
 
                             c.transactions.push({
                                 date: todayStr,
-                                timestamp: tsStamp,
+                                timestamp: c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                                 amount: paidAmt,
                                 type: txType,
                                 mode: txMode,
@@ -8416,6 +8420,7 @@
                                     if (trueShortfall > 0) {
                                         c.overdue = (c.overdue || 0) + trueShortfall;
                                         c.partialOverdue = true;
+                                        let tsStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                                         c.transactions.push({ date: todayStr, timestamp: tsStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
                                     }
                                 }
@@ -8452,7 +8457,7 @@
                                     c.emisPaidCount = (c.emisPaidCount || 0) + 1;
 
                                     let emiCounterStr = `${c.emisPaidCount}/${c.duration}`;
-                                    let actStamp = c.tempActionTime || tsStamp;
+                                    let actStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                                     
                                     c.transactions.push({
                                         date: todayStr,
@@ -8479,7 +8484,7 @@
                                     if (trueShortfall > 0) {
                                         c.overdue = (c.overdue || 0) + trueShortfall;
                                         c.partialOverdue = true;
-                                        let actStamp = c.tempActionTime || tsStamp;
+                                        let actStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                                         c.transactions.push({ date: todayStr, timestamp: actStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
                                     }
                                 }
@@ -8518,6 +8523,10 @@
                     c.lastDayEndProcessed = todayStr;
                     c.lastUpdated = Date.now(); 
                 });
+
+                // 🚨 THE CRITICAL BUG FIX: Create a 100% clone of the Database BEFORE making any changes. 
+                // If the internet drops, we will paste this clone back, preventing clients from vanishing!
+                let safeDatabaseBackup = JSON.parse(JSON.stringify(serverDb));
 
                 await localforage.setItem('opas_local_db', serverDb);
 
@@ -8572,6 +8581,7 @@
                 let validMultiplier = (rawMul === "" || isNaN(rawMul)) ? 1.0 : parseFloat(rawMul);
                 
                 // 🛡️ ATOM-LEVEL FIX 2: Agar kal ki collection sirf ₹200 thi, toh rounding usko 0 bana dega, aur system fallback karke Staff ko 10,000 ka target de dega! (Gamification Flaw). Isko minimum 500 par lock kiya hai.
+                let todayTarget = Math.round((yCollected * validMultiplier) / 500) * 500;
                 if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
                 if (todayTarget === 0 && bConfig.enabled) todayTarget = 10000;
                 
@@ -8594,42 +8604,77 @@
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
                 
                 if (btn) btn.innerText = `Syncing Bulk Data... ☁️`;
-                try {
-                    let bulkPayload = keys.map(k => {
-                        let cleanData = JSON.parse(JSON.stringify(serverDb[k]));
-                        cleanData.advancePaid = 0;
-                        cleanData.emiSettled = null;
-                        return { mobile: k, data: cleanData };
+                
+                // ✅ CLEAR EMI SETTLED FLAG LOCALLY SO THE PAYLOAD IS CLEAN
+                    Object.keys(serverDb).forEach(m => {
+                        if (serverDb[m] && serverDb[m].lastDayEndProcessed === todayStr && serverDb[m].branch === staffBranch) {
+                            serverDb[m].advancePaid = 0; 
+                            serverDb[m].emiSettled = null;
+                        }
                     });
                     
-                    const token = localStorage.getItem('opas_jwt_token');
-                    let res = await fetch(API_URL + '/bulk', {
-                        method: 'POST', 
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ clients: bulkPayload })
-                    });
-                    
-                    if(res.ok) {
-                        Object.keys(serverDb).forEach(m => {
-                            if (serverDb[m] && serverDb[m].lastDayEndProcessed === todayStr) {
-                                serverDb[m].advancePaid = 0; 
-                                serverDb[m].emiSettled = null;
-                            }
-                        });
-                        await localforage.setItem('opas_local_db', serverDb);
+                    try {
+                        const token = localStorage.getItem('opas_jwt_token');
+                        
+                        // 🛡️ OFFLINE TOKEN FIX: Agar staff ne subah offline login kiya tha, toh asali cloud token chahiye!
+                        if (!token || token === 'virtual_device_token_active' || token === 'offline_mode_token_active') {
+                            throw new Error("Aapne subah Offline mode mein app shuru kiya tha. Kripya Logout karke ek baar Online (Internet chalu karke) wapas Login karein, taaki asali security token mil sake.\n\n(Aapka aaj ka kaam Local Memory mein 100% SAFE hai, delete nahi hoga!)");
+                        }
 
+                        let bulkPayload = keys.map(k => ({ mobile: k, data: serverDb[k] }));
+                        
+                        // 🚀 CRITICAL FIX: PAYLOAD CHUNKING (Anti-Crash)
+                        // Bade data ko 50-50 clients ke packets mein bhejenge taaki Server 413 (Payload Too Large) error na de.
+                        const CHUNK_SIZE = 50;
+                        for (let i = 0; i < bulkPayload.length; i += CHUNK_SIZE) {
+                            let chunk = bulkPayload.slice(i, i + CHUNK_SIZE);
+                            if (btn) btn.innerText = `Syncing Batch ${Math.ceil((i+1)/CHUNK_SIZE)} of ${Math.ceil(bulkPayload.length/CHUNK_SIZE)}... ☁️`;
+                            
+                            let res = await fetch(API_URL + '/bulk', {
+                                method: 'POST', 
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ clients: chunk })
+                            });
+                            
+                            if (!res.ok) {
+                                if (res.status === 413) throw new Error("Data pack too large. Contact Admin.");
+                                if (res.status === 502 || res.status === 504) throw new Error("Server is waking up (Cold Start). Please wait 30s and retry.");
+                                throw new Error(`Server returned error ${res.status}`);
+                            }
+                        }
+                        
+                        // Agar saare batches success hue tabhi Local DB final save karega!
+                        await localforage.setItem('opas_local_db', serverDb);
                         if (btn) btn.innerText = `Synced ${keys.length}/${keys.length} ☁️`;
-                        await saveSystemSettings();
-                    } else {
-                        throw new Error("Bulk sync failed due to server error");
+                        await saveSystemSettings(); // Push branch stats
+
+                    } catch(e) {
+                    // 🚨 ROLLBACK ENGINE: Network fail hone par purana data wapas daal do taaki list se log gayab na hon!
+                    serverDb = safeDatabaseBackup;
+                    await localforage.setItem('opas_local_db', serverDb);
+                    
+                    // Re-map global variables securely
+                    if (serverDb["SYSTEM_SETTINGS"]) {
+                        branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
+                        centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
+                        staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
+                        loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans;
                     }
-                } catch(e) {
-                    console.error("Bulk sync error:", e);
-                    if (btn) btn.innerText = `Sync Failed ⚠️`;
-                    throw e; 
+                    
+                    isSystemBusy = false; 
+                    console.error(e);
+                    let btn = document.getElementById('upload-day-btn');
+                    if(btn) { 
+                        btn.disabled = false; 
+                        btn.className = "btn-fluid w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-rose-600/30 transition-all pulse-glow cursor-pointer hover-scale";
+                        btn.innerHTML = "Retry Upload ⚠️"; 
+                    }
+                    alert("Network Error! Day-End upload fail ho gaya. Aapka data safe hai, clients gayab nahi honge. Kripya thoda wait karke 'Retry Upload' dabayein.");
+                    renderStaffLedgerSheets(); // Refresh UI back to normal so staff can see clients again
+                    return;
                 }
 
                 showNotification('Day-End Synced ☁️', "Ledger uploaded & Synced to Cloud Successfully!", '✅');
