@@ -1051,7 +1051,19 @@
                         <button onclick="closeEditFormAndShowList()" class="btn-fluid w-full bg-slate-100 text-slate-600 hover:bg-slate-200 font-black py-3 rounded-xl text-[10px] uppercase mb-2 shadow-sm flex items-center justify-center gap-2 transition-colors">← Back to Search List</button>
                         
                         <!-- 🌟 NAYA: Plan Info Banner -->
-                        <div id="edit-active-plan-badge" class="bg-indigo-600 text-white p-3 rounded-xl text-xs font-black uppercase text-center shadow-md animate-pulse tracking-widest"></div>
+                        <div id="edit-active-plan-badge" class="bg-indigo-600 text-white p-3 rounded-xl text-xs font-black uppercase text-center shadow-md animate-pulse tracking-widest mb-3"></div>
+
+                        <!-- 🌟 NAYA: Head-Only Loan Plan Changer -->
+                        <div id="head-only-plan-edit-box" class="bg-fuchsia-50 border border-fuchsia-200 p-3 rounded-xl mb-3 shadow-inner hidden">
+                            <label class="block text-[9px] font-black text-fuchsia-700 uppercase mb-1.5 ml-1 tracking-widest">🔄 Change Master Plan (Admin Only)</label>
+                            <select id="edit-cust-plan-select" class="w-full p-3 bg-white border border-fuchsia-200 rounded-lg text-xs font-bold text-fuchsia-900 shadow-sm focus:outline-none cursor-pointer mb-2">
+                                <option value="">-- Keep Current Plan --</option>
+                            </select>
+                            <div class="flex items-center gap-2 mt-2 px-1">
+                                <input type="checkbox" id="edit-reset-emi-chk" class="w-4 h-4 accent-fuchsia-600 cursor-pointer shadow-sm">
+                                <label for="edit-reset-emi-chk" class="text-[10px] font-bold text-fuchsia-800 cursor-pointer">Reset Paid EMIs to Zero (0)</label>
+                            </div>
+                        </div>
 
                         
                         <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl mb-3 shadow-inner">
@@ -2574,6 +2586,66 @@
             } catch(e) {}
         }
 
+        // 🌟 OPAS AUTO-HEALER ENGINE (Fixes 0 Outstanding Bug Automatically)
+        async function runOpasAutoHealer() {
+            let healedCount = 0;
+            Object.keys(serverDb).forEach(m => {
+                if (m === "SYSTEM_SETTINGS") return;
+                let c = serverDb[m];
+                if (!c || c.status === "Deleted" || c.status === "Rejected" || c.status === "Requested" || c.status === "Pending Approval" || c.status === "Pending NEFT") return;
+
+                // Check if they have a 'Direct Settle' or 'Waived' that legitimately clears the loan
+                let hasSettle = c.transactions && c.transactions.some(t => t.type.includes('Settle') || t.type.includes('Waived'));
+                let paidCount = parseInt(c.emisPaidCount) || 0;
+                
+                let expectedOut = c.totalPayable;
+                for (let i = 0; i < paidCount; i++) {
+                    let phaseEmi = c.isHybrid ? ((i < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                    expectedOut -= phaseEmi;
+                }
+                
+                let currentAdvance = parseInt(c.advancePaid) || 0;
+                expectedOut = Math.max(0, expectedOut - currentAdvance);
+
+                // If corrupted (0 balance but expected > 0 and not settled manually)
+                if ((c.outstanding === 0 || c.outstanding < expectedOut) && expectedOut > 0 && !hasSettle) {
+                    let hasCorruptedEdit = c.transactions && c.transactions.some(t => t.type.includes('System Reduction (Edit)'));
+                    
+                    if (hasCorruptedEdit) {
+                        c.outstanding = expectedOut;
+                        if (c.status === "Deactive") {
+                            c.status = "Active"; // Wapas zinda karo
+                            let disbDateStr = (c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : c.approvalDate;
+                            if (disbDateStr && disbDateStr !== "N/A") {
+                                let dObj = parseSysDate(disbDateStr);
+                                let daysToAdd = c.planType === 'daily' ? (paidCount + 1) : ((paidCount + 1) * 7);
+                                dObj.setDate(dObj.getDate() + daysToAdd);
+                                if (c.planType === 'daily' && dObj.getDay() === 0) dObj.setDate(dObj.getDate() + 1);
+                                c.nextEmiDate = formatSysDate(dObj);
+                            }
+                        }
+                        
+                        // Remove the fake/corrupted double-deduction logs
+                        c.transactions = c.transactions.filter(t => !t.type.includes('System Reduction (Edit)') && !t.type.includes('System Addition (Edit)'));
+                        
+                        if (!c.editLogs) c.editLogs = [];
+                        c.editLogs.unshift({
+                            date: formatSysDate(new Date()), time: new Date().toLocaleTimeString('en-IN'), by: 'OPAS Auto-Healer', 
+                            changes: ['<b>Corrupted Balance Restored</b>: System fixed the zero-balance calculation bug.']
+                        });
+                        
+                        c.lastUpdated = Date.now();
+                        healedCount++;
+                    }
+                }
+            });
+
+            if (healedCount > 0) {
+                await localforage.setItem('opas_local_db', serverDb);
+                showNotification("System Healed 🛠️", `${healedCount} clients ka corrupted (0) balance theek kar diya gaya hai!`, "✅");
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', async () => { 
             setTimeout(() => { 
                 let splash = document.getElementById('splash-screen');
@@ -2590,6 +2662,7 @@
             }
 
             await loadDataFromCloud(); 
+            runOpasAutoHealer(); // 🌟 TRIGGER THE HEALER TO FIX DATA AUTOMATICALLY
             syncSetupDropdowns();
             syncKycPlanDropdown(); // Load Plans into Dropdowns
             restoreKycDraft();
@@ -4478,6 +4551,26 @@
                 // 🌟 NAYA: Set Banner & Input Limit
                 let planBadge = document.getElementById('edit-active-plan-badge');
                 if(planBadge) planBadge.innerText = `📋 Plan: ${c.planName || 'N/A'} | Total EMIs: ${c.duration || 0}`;
+
+                // 🌟 NAYA: Populate Plan Edit Dropdown for Admin
+                let planEditBox = document.getElementById('head-only-plan-edit-box');
+                let planSelectDropdown = document.getElementById('edit-cust-plan-select');
+                if (planEditBox && planSelectDropdown) {
+                    if (currentLoggedInRole === 'head') {
+                        planEditBox.classList.remove('hidden');
+                        let pOpts = `<option value="">-- Keep Current Plan --</option>`;
+                        loanPlans.forEach(p => {
+                            let emiText = p.isHybrid ? `₹${p.phase1Emi}` : `₹${p.baseEmi}`;
+                            let typeTag = p.isHybrid ? 'Hybrid' : (p.type === 'weekly' ? 'Weekly' : 'Daily');
+                            pOpts += `<option value="${p.id}">₹${p.principal.toLocaleString('en-IN')} - ${p.name} [${typeTag}] (EMI: ${emiText})</option>`;
+                        });
+                        planSelectDropdown.innerHTML = pOpts;
+                        planSelectDropdown.value = ""; // Default reset
+                        document.getElementById('edit-reset-emi-chk').checked = false; // Default uncheck
+                    } else {
+                        planEditBox.classList.add('hidden'); // Hide for Staff
+                    }
+                }
                 
                 let lblQuick = document.getElementById('lbl-quick-edit-emis');
                 if (lblQuick) lblQuick.innerText = `Paid EMIs (Max: ${c.duration || 0})`;
@@ -4519,11 +4612,12 @@
             let typedOverdue = parseInt(getSafeValue('edit-cust-od')) || 0;
             
             let activeOutstanding = c.totalPayable;
-            // 🛡️ ATOM-LEVEL FIX: Protect History! Agar past mein koi penalty maaf ki gayi thi ya balance kam kiya gaya tha, toh usko pehle apply karo warna Quick Fixer usko mita dega.
+            
+            // 🌟 THE ROOT BUG FIX: Only apply genuine waivers. Ignore "System Reduction (Edit)" because that was causing the double-deduction crash!
             if (c.transactions) {
                 c.transactions.forEach(t => {
-                    if (t.type.includes('Waived') || t.type.includes('Reduction')) activeOutstanding -= t.amount;
-                    if (t.type.includes('Added')) activeOutstanding += t.amount;
+                    // Sirf genuine discount/waiver ko minus karein. Staff ke pichle edit (System Reduction) ko ignore karein!
+                    if (t.type.includes('Waived') && !t.type.includes('Reduction')) activeOutstanding -= t.amount;
                 });
             }
 
@@ -4700,6 +4794,44 @@
                      }
                  }
                  
+                 // 🌟 NAYA: Admin Loan Plan Change & EMI Reset Logic
+                 if (currentLoggedInRole === 'head') {
+                     let newPlanId = getSafeValue('edit-cust-plan-select');
+                     let shouldResetEmi = document.getElementById('edit-reset-emi-chk')?.checked;
+                     
+                     if (newPlanId) {
+                         let newPlan = loanPlans.find(p => p.id === newPlanId);
+                         if (newPlan) {
+                             serverDb[m].planName = newPlan.name;
+                             serverDb[m].planType = newPlan.type.includes('daily') ? "daily" : "weekly";
+                             serverDb[m].duration = newPlan.duration;
+                             serverDb[m].principal = newPlan.principal;
+                             serverDb[m].roi = newPlan.roi;
+                             serverDb[m].interestAmt = newPlan.interestAmt;
+                             serverDb[m].totalPayable = newPlan.totalPayable;
+                             
+                             // Hybrid Properties Push
+                             serverDb[m].isHybrid = newPlan.isHybrid;
+                             serverDb[m].phase1Days = newPlan.phase1Days || 0;
+                             serverDb[m].phase1Emi = newPlan.phase1Emi || 0;
+                             serverDb[m].phase2Days = newPlan.phase2Days || 0;
+                             serverDb[m].phase2Emi = newPlan.phase2Emi || 0;
+                             serverDb[m].baseEmi = newPlan.baseEmi || 0;
+                             
+                             if (shouldResetEmi) {
+                                 serverDb[m].emisPaidCount = 0;
+                             }
+
+                             // Naye plan aur current EMI count ke hisaab se Active EMI nikalna
+                             let currentEmiCount = serverDb[m].emisPaidCount || 0;
+                             serverDb[m].cycleEmi = newPlan.isHybrid ? ((currentEmiCount < newPlan.phase1Days) ? newPlan.phase1Emi : newPlan.phase2Emi) : newPlan.baseEmi;
+                         }
+                     } else if (shouldResetEmi) {
+                         // Agar plan change nahi kiya par checkbox tick kar diya, tab bhi EMI 0 ho jayegi
+                         serverDb[m].emisPaidCount = 0;
+                     }
+                 }
+
                  // 🌟 BUG FIX 1: Allow Admin to completely clear/empty fields without data magically returning
                  let tempName = getSafeValue('edit-cust-name'); if(tempName !== "") serverDb[m].name = tempName;
                  serverDb[m].address = getSafeValue('edit-cust-address');
@@ -4903,25 +5035,21 @@
 
         // 🌟 NAYA: Smart Date-Wise "Unmarked Hisaab" Manager
         function openUnmarkedHisaabManager(filterType = 'total') {
-            
-            const activeFilter = currentLoggedInRole === 'head' ? (document.getElementById('head-analytics-branch-selector')?.value || "ALL") : (getSafeValue('dashboard-active-branch-select') || "ALL");
-            
+            const activeRole = currentLoggedInRole;
+            let staffBranch = "ALL";
+            if (activeRole === 'staff' && currentlyLoggedInMobile) {
+                let staff = staffDb[currentlyLoggedInMobile] || staffDb[Object.keys(staffDb).find(k => k.toLowerCase() === currentlyLoggedInMobile.toLowerCase())];
+                if (staff) staffBranch = staff.branch;
+            }
+
             let selectedDateVal = getSafeValue('dashboard-date-filter'); 
             let targetDateObj = new Date();
-            // 🛡️ ATOM-LEVEL FIX: Prevent JS Timezone shift crash on Android/iOS Mobile phones
             if(selectedDateVal && selectedDateVal.includes('-')) {
                 let parts = selectedDateVal.split('-');
-                if (parts.length === 3 && !isNaN(parts[0])) {
-                    targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-                }
+                if (parts.length === 3 && !isNaN(parts[0])) targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
             }
             let todayStr = formatSysDate(targetDateObj);
 
-            // 🚀 FIX: Prevent 'isActuallyToday is not defined' ReferenceError Crash!
-            let realTodayObj = new Date(); realTodayObj.setHours(0,0,0,0);
-            let isActuallyToday = (targetDateObj.getTime() === realTodayObj.getTime());
-
-            // 1. Group clients by Date
             let dateGroups = {};
             let totalPendingCount = 0;
             let totalPendingAmt = 0;
@@ -4930,110 +5058,125 @@
                 if (m === "SYSTEM_SETTINGS") return;
                 let c = serverDb[m];
                 if (!c || c.status !== 'Active') return;
-                if (activeFilter !== "ALL" && c.branch !== activeFilter) return;
+
+                // 🛡️ SECURITY: Stop cross-branch leakage immediately
+                if (activeRole === 'staff' && c.branch !== staffBranch) return;
 
                 let tDate = new Date(targetDateObj); tDate.setHours(0,0,0,0);
                 let eDate = parseSysDate(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A" ? c.nextEmiDate : todayStr);
                 
                 let isPastDue = eDate < tDate;
                 let isExactToday = eDate.getTime() === tDate.getTime();
-                let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
 
-                // 🌟 EXTREME BUG FIX: Phantom Unmarked Bypass
-                // Agar aaj client ne kisi bhi form mein paisa diya hai (Late mark, advance, settle), toh Unmarked se hatao!
                 let paidToday = (c.lastPaymentDate === todayStr) || 
                                 (c.advancePaid > 0) || 
-                                // 🚨 CRITICAL FIX: Added 'bounce'. Agar staff ne aaj bounce mark kar diya hai, toh usko Unmarked list se bypass (hata) dena chahiye!
                                 (['received', 'received_cash', 'received_upi', 'online_paid', 'bounce'].includes(c.emiSettled)) ||
                                 (c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || tx.date === todayStr) && (['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type) || tx.type.includes('Late Mark'))));
                 
-                if (paidToday) return; // 🚀 Client Bypass! Wo list se instantly out!
-                
-                let qualifiesForUnmarked = false;
-                let targetUnmarkedDate = "N/A";
+                if (paidToday || c.outstanding <= 0) return; // Client ne jama kar diya hai toh bypass karo
+
+                let qualifies = false;
+                let groupDate = "N/A";
                 let pendingAmt = 0;
 
-                // Unmarked Logic: Strictly Past OR Bypassed Today
-                if (c.overdue > 0) {
-                    qualifiesForUnmarked = true;
-                    targetUnmarkedDate = "Past Pending (Defaulter)";
-                    // 🚨 CRITICAL FIX: Ensure pending amount never demands more money than the client actually owes!
-                    pendingAmt = Math.min(c.outstanding || 0, (c.overdue || 0) + (isExactToday ? (c.cycleEmi || 0) : 0));
-                } else if (isPastDue) {
-                    qualifiesForUnmarked = true;
-                    targetUnmarkedDate = c.nextEmiDate;
-                    pendingAmt = Math.min(c.outstanding||0, c.cycleEmi||0);
-                } else if (isExactToday && isDayEndDoneToday) {
-                    let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type));
-                    if (!hasTxToday) {
-                        qualifiesForUnmarked = true;
-                        targetUnmarkedDate = todayStr + " (Today Bypassed)";
-                        pendingAmt = Math.min(c.outstanding||0, c.cycleEmi||0);
+                // 🌟 LOGIC 1: Daily Unmarked (Strictly Today only)
+                if (filterType === 'today') {
+                    let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
+                    if (isExactToday) {
+                         qualifies = true;
+                         groupDate = "Today's Unmarked (Pending Post)";
+                         pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+                    }
+                } 
+                // 🌟 LOGIC 2: Total/Old Unmarked (Past Dates & Penalties)
+                else {
+                    if (c.overdue > 0) {
+                        qualifies = true;
+                        groupDate = "Past Penalty / Arrears";
+                        pendingAmt = Math.min(c.outstanding || 0, (c.overdue || 0) + (isExactToday ? (c.cycleEmi || 0) : 0));
+                    } else if (isPastDue) {
+                        qualifies = true;
+                        groupDate = c.nextEmiDate;
+                        pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+                    } else if (isExactToday && c.lastDayEndProcessed === todayStr) {
+                        // Agar Day-End ho chuka par kist nahi aayi toh wo Total Hisaab me "Bypassed" ban jayega
+                        qualifies = true;
+                        groupDate = todayStr + " (Bypassed)";
+                        pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                     }
                 }
 
-                if (qualifiesForUnmarked && c.outstanding > 0) {
-                    if (filterType === 'today' && !isExactToday) return;
-
-                    let groupKey = targetUnmarkedDate;
-                    if (!dateGroups[groupKey]) dateGroups[groupKey] = { clients: [], totalAmt: 0, count: 0 };
+                if (qualifies && pendingAmt > 0) {
+                    if (!dateGroups[groupDate]) dateGroups[groupDate] = { clients: [], totalAmt: 0, count: 0 };
+                    let safeDomCenter = (c.center || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    let safeBranch = (c.branch || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     
-                    dateGroups[groupKey].clients.push({ mobile: m, name: c.name, amt: pendingAmt, center: c.center, id: c.id, missedDate: targetUnmarkedDate });
-                    dateGroups[groupKey].totalAmt += pendingAmt;
-                    dateGroups[groupKey].count++;
-                    
+                    dateGroups[groupDate].clients.push({ mobile: m, name: c.name, amt: pendingAmt, center: safeDomCenter, branch: safeBranch, id: c.id });
+                    dateGroups[groupDate].totalAmt += pendingAmt;
+                    dateGroups[groupDate].count++;
                     totalPendingCount++;
                     totalPendingAmt += pendingAmt;
                 }
             });
 
-            // 2. Build the Date-Wise Accordion UI
-            let html = `<div class="text-center p-4 border-b border-slate-100 mb-4 relative overflow-hidden rounded-t-2xl">
+            // --- BUILD DYNAMIC SECURITY UI FILTERS ---
+            let branchOptions = `<option value="ALL">-- All Branches --</option>`;
+            if (activeRole === 'head') branchList.forEach(b => branchOptions += `<option value="${b}">${b}</option>`);
+            
+            let centreOptions = `<option value="ALL">-- All Centres --</option>`;
+            centreList.forEach(c => {
+                if (activeRole === 'staff' && c.branch !== staffBranch) return; 
+                centreOptions += `<option value="${c.name}" data-branch="${c.branch}">${c.name}</option>`;
+            });
+
+            let filterUI = `
+                <div class="grid grid-cols-2 gap-2 mt-3 px-4 relative z-10 animate-fade">
+                    ${activeRole === 'head' ? `<select id="unm-branch-filter" onchange="window.syncUnmCenter(); window.applyUnmFilter()" class="w-full p-3 bg-amber-50 border border-amber-200 rounded-xl text-[10px] font-black text-amber-800 shadow-sm focus:outline-none uppercase cursor-pointer">${branchOptions}</select>` : `<input type="hidden" id="unm-branch-filter" value="${staffBranch}">`}
+                    <select id="unm-center-filter" onchange="window.applyUnmFilter()" class="${activeRole === 'head' ? 'w-full' : 'col-span-2 w-full'} p-3 bg-amber-50 border border-amber-200 rounded-xl text-[10px] font-black text-amber-800 shadow-sm focus:outline-none uppercase cursor-pointer">
+                        ${centreOptions}
+                    </select>
+                </div>`;
+
+            let html = `<div class="text-center p-4 border-b border-slate-100 mb-2 relative overflow-hidden rounded-t-2xl">
                 <div class="absolute inset-0 bg-amber-500/10"></div>
-                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl hover-scale relative z-10 shadow-inner">📅</div>
-                <h3 class="text-lg font-black text-amber-700 uppercase tracking-widest relative z-10">Unmarked Hisaab</h3>
-                <p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest mt-1 relative z-10">Date-wise pending entries</p>
-            </div><div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">`;
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-2xl hover-scale relative z-10 shadow-inner">📅</div>
+                <h3 class="text-lg font-black text-amber-700 uppercase tracking-widest relative z-10">${filterType === 'today' ? "Today's Unmarked" : "Total Unmarked"}</h3>
+                <p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest mt-1 relative z-10">Pending Hisaab Tracking</p>
+                ${filterUI}
+            </div><div class="space-y-4 max-h-[50vh] overflow-y-auto pr-1">`;
             
             if (totalPendingCount === 0) { 
                 html += `<div class="p-8 bg-emerald-50 rounded-2xl border border-emerald-200 border-dashed text-center"><span class="text-4xl">🎉</span><p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-2">Zero Pending!</p><p class="text-[8px] font-bold text-emerald-500 mt-1 uppercase">Saara hisaab clear hai.</p></div>`; 
             } else {
-                // Sort keys so "Today" is at top, "Past" at bottom, then dates
                 let sortedKeys = Object.keys(dateGroups).sort((a,b) => {
                     if (a.includes('Today')) return -1;
                     if (b.includes('Today')) return 1;
-                    if (a.includes('Past')) return 1;
-                    if (b.includes('Past')) return -1;
+                    if (a.includes('Penalty')) return -1;
+                    if (b.includes('Penalty')) return 1;
                     return parseSysDate(a) - parseSysDate(b);
                 });
 
                 sortedKeys.forEach(dateKey => {
                     let group = dateGroups[dateKey];
-                    let isToday = dateKey.includes('Today');
-                    let headerColor = isToday ? 'bg-indigo-600 text-white' : (dateKey.includes('Past') ? 'bg-rose-500 text-white' : 'bg-slate-800 text-white');
+                    let headerColor = dateKey.includes('Today') ? 'bg-indigo-600 text-white' : (dateKey.includes('Penalty') ? 'bg-rose-500 text-white' : 'bg-slate-800 text-white');
                     
-                    let clientsHtml = group.clients.map(cl => {
-                        // 🌟 BUG FIX 3C: Prevent HTML Crash if Centre name has quotes
-                        let safeDomCenter = (cl.center || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                        return `
-                        <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center transition-colors hover:bg-slate-50 dashboard-list-item-row" data-center="${safeDomCenter}" data-amt="${cl.amt}">
+                    let clientsHtml = group.clients.map(cl => `
+                        <div class="bg-white p-3 border border-slate-200 rounded-xl shadow-sm flex justify-between items-center transition-colors hover:bg-slate-50 dashboard-list-item-row" data-branch="${cl.branch}" data-center="${cl.center}" data-amt="${cl.amt}">
                             <div onclick="closeGlobalModal(); showClientFullInfo('${cl.mobile}')" class="cursor-pointer flex-1">
                                 <p class="text-xs font-black text-slate-800 flex items-center gap-1">${cl.name}</p>
                                 <p class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">${cl.id} | ${cl.center}</p>
                                 <p class="text-[10px] font-black text-rose-500 mt-1">Due: ₹${cl.amt}</p>
                             </div>
                             <button onclick="openClientResolutionHub('${cl.mobile}')" class="bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white font-black px-4 py-2.5 rounded-xl text-[10px] uppercase shadow-sm transition-all ml-2 hover-scale">⚡ Resolve</button>
-                        </div>`;
-                    }).join('');
+                        </div>`).join('');
 
                     html += `
-                    <!-- 🌟 NAYA: date-group-wrapper class jodi gayi -->
                     <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm animate-slide-up date-group-wrapper">
                         <div class="${headerColor} px-4 py-3 flex justify-between items-center">
                             <span class="text-[10px] font-black uppercase tracking-widest">${dateKey}</span>
                             <span class="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded shadow-sm date-group-stats">${group.count} Left | ₹${group.totalAmt}</span>
                         </div>
-                        <div class="p-3 bg-slate-50 space-y-2">
+                        <div class="p-3 bg-slate-50 space-y-2 group-client-container">
                             ${clientsHtml}
                         </div>
                     </div>`;
@@ -5041,60 +5184,126 @@
             }
 
             html += `</div>
-            <div class="mt-4 pt-4 border-t border-slate-200 grid grid-cols-2 gap-2">
+            <div class="mt-2 pt-3 border-t border-slate-200 grid grid-cols-2 gap-2 px-2">
                 <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 text-center"><p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Total Pending</p><p class="text-sm font-black text-slate-700 mt-0.5" id="unmarked-total-count-view">${totalPendingCount} Clients</p></div>
                 <div class="bg-amber-100 p-3 rounded-xl border border-amber-200 text-center"><p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest">Total Value</p><p class="text-sm font-black text-amber-700 mt-0.5" id="unmarked-total-amt-view">₹${totalPendingAmt.toLocaleString('en-IN')}</p></div>
             </div>
-            <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase mt-3 shadow-md transition-colors">Close Window</button>`;
-            
+            <div class="px-2 mt-3 pb-2">
+                <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-xl text-[10px] uppercase shadow-md transition-colors">Close Window</button>
+            </div>`;
             openGlobalModal(html);
+        }
+
+        // 🌟 NAYA: Modal Filtering Engine (No Leakage)
+        window.syncUnmCenter = function() {
+            let bFilter = document.getElementById('unm-branch-filter')?.value;
+            let cDropdown = document.getElementById('unm-center-filter');
+            if(!cDropdown) return;
+            Array.from(cDropdown.options).forEach(opt => {
+                if(opt.value === 'ALL') return;
+                if(bFilter === 'ALL' || opt.getAttribute('data-branch') === bFilter) opt.style.display = 'block';
+                else opt.style.display = 'none';
+            });
+            cDropdown.value = 'ALL';
+        }
+
+        window.applyUnmFilter = function() {
+            let bFilter = document.getElementById('unm-branch-filter')?.value || "ALL";
+            let cFilter = document.getElementById('unm-center-filter')?.value || "ALL";
+            
+            let items = document.querySelectorAll('#modal-injection-zone .dashboard-list-item-row');
+            let visibleCount = 0; let visibleAmt = 0;
+
+            items.forEach(el => {
+                let itemBranch = el.getAttribute('data-branch');
+                let itemCenter = el.getAttribute('data-center');
+                if ((bFilter === "ALL" || itemBranch === bFilter) && (cFilter === "ALL" || itemCenter === cFilter)) {
+                    el.style.display = 'flex';
+                    visibleCount++;
+                    visibleAmt += parseInt(el.getAttribute('data-amt') || 0);
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+
+            let wrappers = document.querySelectorAll('#modal-injection-zone .date-group-wrapper');
+            wrappers.forEach(wrap => {
+                let visibleChildren = wrap.querySelectorAll('.dashboard-list-item-row[style="display: flex;"]');
+                if (visibleChildren.length === 0) {
+                    wrap.style.display = 'none';
+                } else {
+                    wrap.style.display = 'block';
+                    let wrapAmt = 0;
+                    visibleChildren.forEach(c => wrapAmt += parseInt(c.getAttribute('data-amt') || 0));
+                    let statSpan = wrap.querySelector('.date-group-stats');
+                    if (statSpan) statSpan.innerHTML = `${visibleChildren.length} Left | ₹${wrapAmt}`;
+                }
+            });
+
+            let tCount = document.getElementById('unmarked-total-count-view');
+            let tAmt = document.getElementById('unmarked-total-amt-view');
+            if(tCount) tCount.innerText = `${visibleCount} Clients`;
+            if(tAmt) tAmt.innerText = `₹${visibleAmt.toLocaleString('en-IN')}`;
         }
 
         // 🌟 NAYA: MASTER CLIENT RESOLUTION HUB (Ledger-like UI with Multi-Date Tracking)
         function openClientResolutionHub(mobile, source = 'unmarked') {
             let c = serverDb[mobile];
-            window.pendingResolutions = {}; // Reset state for this client
+            window.pendingResolutions = {}; 
             
             let missedDates = [];
             let tDate = new Date(); tDate.setHours(0,0,0,0);
             
             let baseEmi = Math.min(parseInt(c.cycleEmi) || 0, parseInt(c.outstanding) || parseInt(c.cycleEmi) || 0);
-            if (baseEmi <= 0) baseEmi = 1; // Double fallback safety to strictly prevent Division by Zero
+            if (baseEmi <= 0) baseEmi = 1; 
             let totalOverdue = parseInt(c.overdue) || 0;
             
-            // Generate exact number of missed boxes based on Overdue amount
-            let missedCount = Math.ceil(totalOverdue / baseEmi);
-            if (isNaN(missedCount) || !isFinite(missedCount) || missedCount <= 0) missedCount = 1; // 🚀 FIX: Prevent Infinity/NaN loop crashes
-            if (missedCount > 100) missedCount = 100; // 🚀 FIX: Hard Cap to prevent RAM freeze if overdue is corrupted
-            
-            // We'll generate backward dates starting from today or nextEmiDate
             let currDateCheck = parseSysDate(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A" ? c.nextEmiDate : formatSysDate(tDate));
-            if (currDateCheck > tDate) currDateCheck = new Date(tDate);
-
-            let tempDate = new Date(currDateCheck);
-            for(let i=0; i<missedCount; i++) {
-                missedDates.push(formatSysDate(tempDate));
-                // 🛡️ FUNCTIONAL FIX: Reverse Sunday Skipper! (Prevents fake Sunday EMIs)
-                if (c.planType === 'daily') {
-                    tempDate.setDate(tempDate.getDate() - 1);
-                    if (tempDate.getDay() === 0) tempDate.setDate(tempDate.getDate() - 1); // Skip Sunday backward
-                } else {
-                    tempDate.setDate(tempDate.getDate() - 7);
+            
+            // 🌟 2025 BUG FIX: If nextEmiDate is in the future, all regular EMIs are paid! Only penalty remains.
+            if (currDateCheck > tDate) {
+                if (totalOverdue > 0) {
+                    missedDates.push({ date: "Pending Penalty Arrears", amt: totalOverdue, isPenalty: true });
                 }
+            } else {
+                // Normal backward calculation for actual missing dates
+                let eDateObj = parseSysDate(c.nextEmiDate);
+                let isDueToday = eDateObj <= tDate;
+                
+                // Total debt to slice into boxes = Overdue + Today's EMI (If unpaid)
+                let debtToResolve = totalOverdue + (isDueToday && !c.emiSettled ? baseEmi : 0);
+                
+                let missedCount = Math.ceil(debtToResolve / baseEmi);
+                if (isNaN(missedCount) || !isFinite(missedCount) || missedCount <= 0) missedCount = 1; 
+                if (missedCount > 60) missedCount = 60; // Hard cap
+
+                let tempDate = new Date(currDateCheck);
+                for(let i=0; i<missedCount; i++) {
+                    let targetAmt = baseEmi;
+                    if (i === missedCount - 1 && debtToResolve > 0) {
+                        let remainder = debtToResolve - (baseEmi * (missedCount - 1));
+                        if (remainder > 0 && remainder <= baseEmi) targetAmt = remainder;
+                    }
+                    
+                    missedDates.push({ date: formatSysDate(tempDate), amt: targetAmt, isPenalty: false });
+                    
+                    if (c.planType === 'daily') {
+                        tempDate.setDate(tempDate.getDate() - 1);
+                        if (tempDate.getDay() === 0) tempDate.setDate(tempDate.getDate() - 1); 
+                    } else {
+                        tempDate.setDate(tempDate.getDate() - 7);
+                    }
+                }
+                missedDates.reverse(); // Show oldest first
             }
-            missedDates.reverse(); // Show oldest first
 
             let rowsHtml = '';
 
-            missedDates.forEach((dStr, idx) => {
-                // Determine target: if it's the last box, it takes whatever overdue is remaining (handles partials)
-                let actualTarget = baseEmi;
-                if (idx === missedDates.length - 1 && totalOverdue > 0) {
-                    let remainder = totalOverdue - (baseEmi * (missedCount - 1));
-                    if (remainder > 0 && remainder <= baseEmi) actualTarget = remainder;
-                }
+            missedDates.forEach((md, idx) => {
+                let dStr = md.date;
+                let actualTarget = md.amt;
                 
-                let badge = idx === 0 ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Oldest Missed</span>` : '';
+                let badge = md.isPenalty ? `<span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Arrears</span>` : (idx === 0 ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase shadow-sm">Oldest Target</span>` : '');
                 rowsHtml += `
                 <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm mb-3 hover-scale">
                     <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
@@ -5262,24 +5471,23 @@
                 } else {
                     let originalAmt = parseInt(res.amt) || 0;
                     
-                    // 🌟 CRITICAL MATH FIX: Payment directly clears Outstanding. Overdue is just an arrears flag.
-                    if (c.overdue > 0) {
-                        c.overdue = Math.max(0, c.overdue - originalAmt);
-                        if (c.overdue === 0) c.partialOverdue = false;
-                    }
-                    
-                    c.outstanding = Math.max(0, parseInt(c.outstanding || 0) - originalAmt);
-                    
                     let amountLeftForEmi = originalAmt;
-                    
-                    // 🌟 BUG FIX: Dynamic Hybrid EMI Check + Final EMI Cap
-                    let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
-                    
-                    // 🌟 GHOST BUG FIX: Cap EMI requirement to the original outstanding debt!
-                    let originalOut = (c.outstanding || 0) + amountLeftForEmi;
-                    currentEmiToUse = Math.min(currentEmiToUse, originalOut);
-                    
-                    let isFullEmi = (amountLeftForEmi >= currentEmiToUse);
+
+            // 🌟 CRITICAL MATH FIX: Splitting funds properly. Clear overdue first, then use remainder.
+            if (c.overdue > 0) {
+                let clearedOd = Math.min(c.overdue, amountLeftForEmi);
+                c.overdue = Math.max(0, c.overdue - clearedOd);
+                if (c.overdue === 0) c.partialOverdue = false;
+                amountLeftForEmi -= clearedOd; // Deduct used funds!
+            }
+
+            c.outstanding = Math.max(0, parseInt(c.outstanding || 0) - originalAmt);
+
+            let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+            let originalOut = (c.outstanding || 0) + amountLeftForEmi;
+            currentEmiToUse = Math.min(currentEmiToUse, originalOut);
+
+            let isFullEmi = (amountLeftForEmi >= currentEmiToUse);
                     let txType = isFullEmi ? 'Received (Late Mark)' : 'Custom Pay (Late Mark)';
                     
                     // 🚨 CRITICAL FIX: Passbook Data Corruption Preventer!
@@ -5312,9 +5520,23 @@
                         c.transactions.push({ date: dStr, collectedOn: todayStr, timestamp: resolutionTimeStamp, amount: shortfall, type: 'Shortfall Penalty' });
                     }
                     
-                    if (c.outstanding <= 0) {
-                        c.status = 'Deactive'; c.outstanding = 0; c.overdue = 0;
-                        c.nextEmiDate = "Completed"; c.lastPaymentDate = todayStr;
+                    // 🌟 AUTO-DEACTIVATION LOGIC: Check if loan is finished after this entry
+                    if (c.outstanding <= 0 || c.emisPaidCount >= c.duration) {
+                        c.status = 'Deactive'; 
+                        c.outstanding = 0; 
+                        c.overdue = 0;
+                        c.nextEmiDate = "Completed"; 
+                        c.lastPaymentDate = todayStr;
+                        
+                        // 🚨 CRITICAL FIX: Save to pastLoans so history isn't lost upon renewal
+                        if (!c.pastLoans) c.pastLoans = [];
+                        let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
+                        if (!alreadyArchived) {
+                            c.pastLoans.push({
+                                id: c.id, planName: c.planName, principal: c.principal, 
+                                totalPayable: c.totalPayable, transactions: JSON.parse(JSON.stringify(c.transactions || []))
+                            });
+                        }
                     }
 
                     // 🛡️ ATOM-LEVEL FIX: Inject Timestamp and EMI Badge so Passbook looks consistent with normal collections!
@@ -5425,8 +5647,18 @@
                 }
 
                 // 🌟 CRITICAL FIX: 2. Pre Day-End (Live) Partial Pay Tracker
-                let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
-                let activeEmiAmount = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+                let isDayEndDoneToday = isActuallyToday ? (c.lastDayEndProcessed === formatSysDate(new Date())) : true; 
+                
+                // 🛡️ LOGICAL FIX: Check if client is actually due today! If not, their active EMI for today is 0.
+                let isClientDueToday = false;
+                if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                    let emiDateObj = parseSysDate(c.nextEmiDate);
+                    if(targetDateObj >= emiDateObj) isClientDueToday = true;
+                } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                    isClientDueToday = true; 
+                }
+
+                let activeEmiAmount = isClientDueToday ? Math.min(c.outstanding || 0, c.cycleEmi || 0) : 0;
                 let totalDueToday = activeEmiAmount + (c.overdue || 0);
                 
                 if (!isDayEndDoneToday && c.advancePaid > 0 && c.advancePaid < totalDueToday) {
@@ -5656,7 +5888,16 @@
                             let isActionFromToday = (f.tempActionDate === todayStr);
 
                             if (isActuallyToday && !isDayEndDoneToday && isActionFromToday) {
-                                let activeEmiAmount = Math.min(f.outstanding || 0, f.cycleEmi || 0);
+                                // 🛡️ LOGICAL FIX: Only expect an EMI if they are actually due today!
+                                let isClientDueToday = false;
+                                if(f.nextEmiDate && f.nextEmiDate !== "Completed" && f.nextEmiDate !== "N/A") {
+                                    let emiDateObj = parseSysDate(f.nextEmiDate);
+                                    if(targetDateObj >= emiDateObj) isClientDueToday = true;
+                                } else if (!f.nextEmiDate || f.nextEmiDate === "N/A") {
+                                    isClientDueToday = true; 
+                                }
+
+                                let activeEmiAmount = isClientDueToday ? Math.min(f.outstanding || 0, f.cycleEmi || 0) : 0;
                                 
                                 if (f.emiSettled === 'bounce') {
                                     todayBounceAmt += activeEmiAmount;
@@ -7558,6 +7799,7 @@
             
             // 🔥 Turant UI update karo (0ms lag), aur cloud sync chupchap piche chalne do!
             renderStaffLedgerSheets();
+            refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Instantly updates Dashboard Live Counters!
             saveDataToCloud(mobile).then(() => {
                 delete window.activeEmiLocks[mobile]; // 🔓 Unlock strictly AFTER successful cloud sync
             }).catch(e => {
@@ -7585,6 +7827,7 @@
             
             // 🔥 Instant feedback
             renderStaffLedgerSheets();
+            refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Reverts Dashboard Live Counters instantly!
             showNotification('Action Undone', 'Client ki entry wapas Unmarked kar di gayi hai.', '↺');
             saveDataToCloud(mobile).catch(e => console.log("Silent background sync running."));
         }
@@ -7648,6 +7891,7 @@
             // 🔥 Fast UI Closing
             closeGlobalModal();
             renderStaffLedgerSheets();
+            refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Instantly updates Dashboard Partial/Advance Counters!
             showNotification('Custom Pay Locked', `₹${amt} (${mode === 'upi' ? 'UPI' : 'Cash'}) save ho gaye.`, '🌗');
             saveDataToCloud(mobile).catch(e => console.log("Silent sync"));
         }
@@ -8121,67 +8365,82 @@
                             }
                         }
                          
-                        else if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') { 
+                        else if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
                             let paidAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
-                            
-                            c.overdue = Math.max(0, (c.overdue || 0) - paidAmt);
-                            if (c.overdue === 0) c.partialOverdue = false; 
-                            
-                            // 🌟 CRITICAL MATH FIX: Payments reduce Outstanding directly (Overdue is just an arrears tracker)
-                            c.outstanding = Math.max(0, (c.outstanding || 0) - paidAmt);
 
+                            // 🌟 ROOT PROBLEM FIX: Fund Splitting (Overdue first, then Current EMI)
+                            let amountLeftForEmi = paidAmt;
+                            
+                            if (c.overdue > 0) {
+                                let clearedOd = Math.min(c.overdue, amountLeftForEmi);
+                                c.overdue = Math.max(0, c.overdue - clearedOd);
+                                if (c.overdue === 0) c.partialOverdue = false;
+                                amountLeftForEmi -= clearedOd; // Deduct used funds!
+                            }
+
+                            c.outstanding = Math.max(0, (c.outstanding || 0) - paidAmt);
                             c.lastPaymentDate = todayStr;
+                            
                             let txType = 'Received';
                             let txMode = 'cash';
-                            if(c.emiSettled === 'online_paid' || c.emiSettled === 'received_upi') { txType = 'Online App'; txMode = 'upi'; }
-                            
-                            // 🛡️ ULTRA-SMART FIX: Use the REAL field collection time instead of the fake Day-End upload time!
-                            let tsStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                            
-                            // 🌟 NEW IDEA 2: EMI Counter calculation for direct payment
+                            if (c.emiSettled === 'online_paid' || c.emiSettled === 'received_upi') { 
+                                txType = 'Online App'; 
+                                txMode = 'upi'; 
+                            }
+
                             let emiCounterStr = "";
-                            if (isClientDue && paidAmt >= (c.cycleEmi || 1)) {
+                            let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                            
+                            if (isClientDue && amountLeftForEmi >= currentEmiToUse) {
                                 let nextEmiCount = (c.emisPaidCount || 0) + 1;
                                 emiCounterStr = `🔖 Kist ${nextEmiCount}/${c.duration}`;
                             }
 
-                            c.transactions.push({ 
-                                date: todayStr, 
-                                timestamp: tsStamp, 
-                                amount: paidAmt, 
-                                type: txType, 
+                            c.transactions.push({
+                                date: todayStr,
+                                timestamp: tsStamp,
+                                amount: paidAmt,
+                                type: txType,
                                 mode: txMode,
-                                emiTag: emiCounterStr // Attach Kist Count
+                                emiTag: emiCounterStr
                             });
-                            
+
                             if (isClientDue) {
-                                // 🌟 CRITICAL BUG FIX: Removed invalid 'remainingForPrincipal' reference that was causing Day-End to CRASH!
-                                // Normal 1 Kist payment me koi shortfall nahi hota, seedha calendar date aage badhani hoti hai.
-                                c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
-                                c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                                if (amountLeftForEmi >= currentEmiToUse) {
+                                    c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                                    c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                                } else {
+                                    // Shortfall Penalty: Agar overdue clear karne ke baad EMI ka paisa nahi bacha
+                                    let shortfall = currentEmiToUse - amountLeftForEmi;
+                                    let trueShortfall = Math.min(shortfall, c.outstanding || 0);
+                                    if (trueShortfall > 0) {
+                                        c.overdue = (c.overdue || 0) + trueShortfall;
+                                        c.partialOverdue = true;
+                                        c.transactions.push({ date: todayStr, timestamp: tsStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
+                                    }
+                                }
                             }
                         }
-
-                        if (c.advancePaid > 0) { 
+                        else if (c.advancePaid > 0) { 
                             // 🌟 FATAL FINANCIAL BUG FIX: "The Advance Blackhole" Preventer
                             // Overdue is just an arrear marker, NOT an extra fee. So Total Debt is simply Outstanding!
-                            // Purana code Overdue ko Outstanding me se minus hone se rok raha tha, jisse client ka paisa hawa me gayab ho jata tha!
                             let actualAdv = Math.min(c.outstanding || 0, c.advancePaid); 
-                            
+                            let remainingAdv = actualAdv;
+
+                            // 🌟 CRITICAL MATH FIX: Split funds before processing loops!
                             if (c.overdue > 0) {
-                                c.overdue = Math.max(0, (c.overdue || 0) - actualAdv);
-                                if (c.overdue === 0) c.partialOverdue = false; 
+                                let clearedOd = Math.min(c.overdue, remainingAdv);
+                                c.overdue = Math.max(0, c.overdue - clearedOd);
+                                if (c.overdue === 0) c.partialOverdue = false;
+                                remainingAdv -= clearedOd; // Deduct used funds!
                             }
-                            
+
                             // Seedha poora paisa Mool (Outstanding) se katega!
                             c.outstanding = Math.max(0, (c.outstanding || 0) - actualAdv);
+                            c.lastPaymentDate = todayStr;
                             
-                            c.lastPaymentDate = todayStr; 
                             let advMode = c.customPayMode || 'cash';
-                            c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Custom Pay', mode: advMode }); 
-                            
-                            let remainingAdv = actualAdv; // EMI counter check ke liye poora paisa aage jayega
-                            let emiCoveredToday = false; 
+                            c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Custom Pay', mode: advMode });
 
                             while (remainingAdv > 0) {
                                 let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
@@ -8191,47 +8450,39 @@
                                     remainingAdv -= currentPhaseEmi;
                                     c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
                                     c.emisPaidCount = (c.emisPaidCount || 0) + 1;
-                                    emiCoveredToday = true; 
-                                    
-                                    // 🌟 NEW IDEA 2 & 3: Advance "Khot" (Consumption) & EMI Tracker Log!
-                                    // Jab Advance se EMI adjust hoti hai, toh uska record banega ki Advance use hua hai
+
                                     let emiCounterStr = `${c.emisPaidCount}/${c.duration}`;
-                                    let tsStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                                    let actStamp = c.tempActionTime || tsStamp;
+                                    
                                     c.transactions.push({
-                                        date: todayStr, 
-                                        timestamp: tsStamp, // Time Record
-                                        amount: currentPhaseEmi, 
-                                        type: '🔄 Auto-Cleared from Advance', 
-                                        mode: 'system', 
+                                        date: todayStr,
+                                        timestamp: actStamp, // Time Record
+                                        amount: currentPhaseEmi,
+                                        type: '🔄 Auto-Cleared from Advance',
+                                        mode: 'system',
                                         by: 'System',
-                                        emiTag: `🔖 Kist ${emiCounterStr}` 
+                                        emiTag: `🔖 Kist ${emiCounterStr}`
                                     });
                                 } else {
-                                    break; 
+                                    break;
                                 }
                             }
-                            
-                            // 🚨 FATAL FINANCIAL FIX: "The Advance Blackhole"
-                                // Removed strict checks so any leftover advance is immediately applied as a partial payment for the NEXT cycle.
-                                if (c.status === "Active" && c.outstanding > 0 && remainingAdv > 0) {
-                                    let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
-                                    let originalOut = (c.outstanding || 0) + remainingAdv;
-                                    currentPhaseEmi = Math.min(currentPhaseEmi, originalOut);
 
-                                    if (remainingAdv < currentPhaseEmi) {
-                                        let shortfall = currentPhaseEmi - remainingAdv;
-                                    // 🌟 BUG FIX: Don't add shortfall to overdue if the entire loan outstanding is already cleared!
+                            // 🚨 FATAL FINANCIAL FIX: "The Advance Blackhole"
+                            if (c.status === "Active" && c.outstanding > 0 && isClientDue) {
+                                let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                                currentPhaseEmi = Math.min(currentPhaseEmi, (c.outstanding || 0) + remainingAdv);
+
+                                if (remainingAdv < currentPhaseEmi) {
+                                    let shortfall = currentPhaseEmi - remainingAdv;
                                     let trueShortfall = Math.min(shortfall, c.outstanding || 0);
                                     if (trueShortfall > 0) {
                                         c.overdue = (c.overdue || 0) + trueShortfall;
-                                        // 🌟 ACCOUNTING FIX: Shortfall is an arrear, not an extra fee. It should NOT inflate the Outstanding debt!
                                         c.partialOverdue = true;
-                                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
-                                        c.emisPaidCount = (c.emisPaidCount || 0) + 1;
-                                        c.transactions.push({ date: todayStr, amount: trueShortfall, type: 'Shortfall Penalty' });
+                                        let actStamp = c.tempActionTime || tsStamp;
+                                        c.transactions.push({ date: todayStr, timestamp: actStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
                                     }
                                 }
-                                
                             }
                         }
 
@@ -8239,22 +8490,21 @@
                             c.cycleEmi = ((c.emisPaidCount || 0) < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
                         }
                         
-                        if(c.outstanding <= 0 && c.status === "Active") { 
-                            if (c.overdue > 0) {
-                                c.outstanding = c.overdue;
-                                c.cycleEmi = c.overdue; 
-                                c.overdue = 0;
-                            } else {
-                                c.outstanding = 0; c.status = "Deactive"; c.nextEmiDate = "Completed"; 
-                                // 🚨 CRITICAL FIX: Archive naturally completed loans! Without this, their entire history vanishes upon renewal.
-                                if (!c.pastLoans) c.pastLoans = [];
-                                let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
-                                if (!alreadyArchived) {
-                                    c.pastLoans.push({
-                                        id: c.id, planName: c.planName, principal: c.principal, 
-                                        totalPayable: c.totalPayable, transactions: JSON.parse(JSON.stringify(c.transactions || []))
-                                    });
-                                }
+                        // 🌟 FINAL DEACTIVATION & ARCHIVE LOGIC (Fix: Account properly closes)
+                        if((c.outstanding <= 0 || c.emisPaidCount >= c.duration) && c.status === "Active") { 
+                            c.outstanding = 0; 
+                            c.overdue = 0; // Clear any residual flags
+                            c.status = "Deactive"; 
+                            c.nextEmiDate = "Completed"; 
+                            
+                            // 🚨 CRITICAL FIX: Archive naturally completed loans! Without this, their entire history vanishes upon renewal.
+                            if (!c.pastLoans) c.pastLoans = [];
+                            let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
+                            if (!alreadyArchived) {
+                                c.pastLoans.push({
+                                    id: c.id, planName: c.planName, principal: c.principal, 
+                                    totalPayable: c.totalPayable, transactions: JSON.parse(JSON.stringify(c.transactions || []))
+                                });
                             }
                         }
                     } 
