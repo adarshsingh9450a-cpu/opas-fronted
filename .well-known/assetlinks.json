@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.opas_fronted.twa",
-        "sha256_cert_fingerprints": ["AB:3C:D5:DD:9F:A5:DF:90:B6:88:97:59:A5:10:61:2F:82:3F:93:10:96:31:B3:ED:60:12:3B:F5:28:E3:DF:4E"]
+        "sha256_cert_fingerprints": ["AB:B0:E9:F5:C6:F2:A4:32:83:82:C9:CB:EE:E4:97:E8:ED:C1:86:2B:0C:52:D1:21:E6:48:80:D1:0A:DD:24:8F"]
       }
     }]
