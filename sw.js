@@ -1,5 +1,5 @@
 // OPAS Offline Service Worker
-const CACHE_NAME = 'opas-app-cache-v2'; // Naya version
+const CACHE_NAME = 'opas-app-cache-v1';
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -8,8 +8,7 @@ self.addEventListener('install', (event) => {
                 '/',
                 '/index.html',
                 '/manifest.json',
-                '/icon-192.png',
-                '/icon-512.png'
+                '/logo.png.png'
             ]);
         })
     );
