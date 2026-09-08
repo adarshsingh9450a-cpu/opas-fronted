@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "app.vercel.opas_fronted.twa",
-        "sha256_cert_fingerprints": ["84:6D:57:CB:51:5D:C7:35:84:8F:88:AD:C7:A2:85:CE:F4:D4:42:F3:D8:73:3E:C5:92:A5:F6:0E:19:F2:73:6C"]
+        "package_name": "io.github.adarshsingh9450a_cpu.twa",
+        "sha256_cert_fingerprints": ["F1:E9:2E:34:78:96:63:6F:08:35:EA:8B:16:FE:CB:73:77:67:B6:FB:2C:41:11:6C:46:95:85:C4:6D:7E:A8:16"]
       }
     }]
