@@ -1067,11 +1067,11 @@
                         <!-- 🌟 NAYA: Head-Only Loan Plan Changer -->
                         <div id="head-only-plan-edit-box" class="bg-fuchsia-50 border border-fuchsia-200 p-3 rounded-xl mb-3 shadow-inner hidden">
                             <label class="block text-[9px] font-black text-fuchsia-700 uppercase mb-1.5 ml-1 tracking-widest">🔄 Change Master Plan (Admin Only)</label>
-                            <select id="edit-cust-plan-select" class="w-full p-3 bg-white border border-fuchsia-200 rounded-lg text-xs font-bold text-fuchsia-900 shadow-sm focus:outline-none cursor-pointer mb-2">
+                            <select id="edit-cust-plan-select" onchange="autoCalcEditPassbook()" class="w-full p-3 bg-white border border-fuchsia-200 rounded-lg text-xs font-bold text-fuchsia-900 shadow-sm focus:outline-none cursor-pointer mb-2">
                                 <option value="">-- Keep Current Plan --</option>
                             </select>
                             <div class="flex items-center gap-2 mt-2 px-1">
-                                <input type="checkbox" id="edit-reset-emi-chk" class="w-4 h-4 accent-fuchsia-600 cursor-pointer shadow-sm">
+                                <input type="checkbox" id="edit-reset-emi-chk" onchange="autoCalcEditPassbook()" class="w-4 h-4 accent-fuchsia-600 cursor-pointer shadow-sm">
                                 <label for="edit-reset-emi-chk" class="text-[10px] font-bold text-fuchsia-800 cursor-pointer">Reset Paid EMIs to Zero (0)</label>
                             </div>
                         </div>
@@ -4621,54 +4621,94 @@
             const m = getSafeValue('admin-edit-active-mobile'); if(!m) return;
             let c = serverDb[m]; if(!c) return;
 
-            // 🌟 NAYA: Purane dropdown ki jagah naye Quick Fixer box se value uthayega
             let typedPaidEmis = parseInt(getSafeValue('quick-edit-paid-emis')) || 0;
-            // Overdue directly ab manual wale form box se liya jayega (jisse conflict nahi hoga)
             let typedOverdue = parseInt(getSafeValue('edit-cust-od')) || 0;
+
+            // 🌟 NAYA: Admin Master Plan Sync Logic
+            let newPlanId = getSafeValue('edit-cust-plan-select');
+            let shouldResetEmi = document.getElementById('edit-reset-emi-chk')?.checked;
             
-            let activeOutstanding = c.totalPayable;
-            
-            // 🌟 THE ROOT BUG FIX: Only apply genuine waivers. Ignore "System Reduction (Edit)" because that was causing the double-deduction crash!
-            if (c.transactions) {
+            let pObj = c; // Fallback to current client data
+            let activePlanType = c.planType;
+            if (newPlanId) {
+                let newPlan = loanPlans.find(p => p.id === newPlanId);
+                if (newPlan) {
+                    // 🌟 FINAL BUG FIX: Naye plan ke hisaab se Insurance Fee bhi automatically recalculate karni hogi
+                    let insRate = newPlan.insPct !== undefined ? newPlan.insPct : (newPlan.type.includes('daily') ? 3 : 5);
+                    let newInsAmt = Math.round((newPlan.principal * insRate) / 100);
+
+                    pObj = { ...c, ...newPlan, totalPayable: newPlan.totalPayable, duration: newPlan.duration, isHybrid: newPlan.isHybrid, phase1Days: newPlan.phase1Days, phase1Emi: newPlan.phase1Emi, phase2Days: newPlan.phase2Days, phase2Emi: newPlan.phase2Emi, baseEmi: newPlan.baseEmi };
+                    activePlanType = newPlan.type.includes('daily') ? 'daily' : 'weekly';
+
+                    // Update Insurance Input UI so Admin can see the exact new fee
+                    let elIns = document.getElementById('edit-cust-insurance');
+                    if (elIns) elIns.value = newInsAmt;
+                }
+            } else {
+                // Agar Plan wapas "Keep Current Plan" par set kiya, toh original insurance wapas load karo
+                let elIns = document.getElementById('edit-cust-insurance');
+                if (elIns) elIns.value = c.insuranceAmt || 0;
+            }
+
+            if (shouldResetEmi) {
+                typedPaidEmis = 0;
+                let qEmi = document.getElementById('quick-edit-paid-emis');
+                if (qEmi) qEmi.value = 0;
+            }
+
+            // 🌟 100% NEW PLAN LOGIC: Agar EMI 0 hai, toh Overdue (Penalty) bhi 0 kardo
+            if (typedPaidEmis === 0) {
+                typedOverdue = 0;
+                let odInput = document.getElementById('edit-cust-od');
+                if (odInput) odInput.value = 0;
+            }
+
+            let activeOutstanding = pObj.totalPayable;
+
+            // 🌟 THE ROOT BUG FIX: Only apply genuine waivers (Agar plan fresh nahi hai tabhi waiver minus hoga)
+            if (c.transactions && !newPlanId && typedPaidEmis > 0) {
                 c.transactions.forEach(t => {
-                    // Sirf genuine discount/waiver ko minus karein. Staff ke pichle edit (System Reduction) ko ignore karein!
                     if (t.type.includes('Waived') && !t.type.includes('Reduction')) activeOutstanding -= t.amount;
                 });
             }
 
-            // FIX: Prevent Infinity crash if old data has 0 duration
-            let safeDuration = parseInt(c.duration) || 1; // 🚀 FIX: Properly parse duration to prevent string/0 division
-            
-            // 🌟 SMART LIMITER: Staff cannot exceed the plan duration
+            let safeDuration = parseInt(pObj.duration) || 1;
+
             if (typedPaidEmis > safeDuration) {
                 typedPaidEmis = safeDuration;
                 document.getElementById('quick-edit-paid-emis').value = safeDuration;
                 showNotification('Limit Reached', `Is plan me maximum ${safeDuration} EMIs hi hain.`, '⚠️');
             }
 
-            let activeCycleEmi = c.isHybrid ? c.phase1Emi : Math.round(c.totalPayable / safeDuration);
+            let isHyb = pObj.isHybrid;
+            let p1Days = pObj.phase1Days || 0;
+            let p1Emi = pObj.phase1Emi || 0;
+            let p2Emi = pObj.phase2Emi || 0;
+            let baseEmi = pObj.baseEmi || Math.round(pObj.totalPayable / safeDuration);
+
+            let activeCycleEmi = isHyb ? p1Emi : baseEmi;
             if (!activeCycleEmi || activeCycleEmi <= 0 || !isFinite(activeCycleEmi)) activeCycleEmi = parseInt(c.cycleEmi) || 0;
 
             if (typedPaidEmis > 0) {
                 for(let i = 0; i < typedPaidEmis; i++) {
-                    let currentPhaseEmi = c.isHybrid ? ((i < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : activeCycleEmi;
+                    let currentPhaseEmi = isHyb ? ((i < p1Days) ? p1Emi : p2Emi) : activeCycleEmi;
+                    if (!currentPhaseEmi || currentPhaseEmi <= 0) break;
                     if (activeOutstanding >= currentPhaseEmi) {
                         activeOutstanding -= currentPhaseEmi;
                     } else { break; }
                 }
-                activeCycleEmi = c.isHybrid ? ((typedPaidEmis < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : activeCycleEmi;
+                activeCycleEmi = isHyb ? ((typedPaidEmis < p1Days) ? p1Emi : p2Emi) : activeCycleEmi;
             }
-            
-            // 🌟 BUG FIX 1: Read date from UI input box, not DB memory! Warna date change kaam nahi karega.
+
             let uiAppDate = getSafeValue('edit-cust-disbursal-date');
             let actualAppDate = (uiAppDate && uiAppDate !== "N/A" && uiAppDate !== "") ? uiAppDate : ((c.customAppDate && c.customAppDate !== "N/A") ? c.customAppDate : c.approvalDate);
-            
+
             if (actualAppDate && actualAppDate !== "N/A" && actualAppDate !== "Pending Approval") {
                 let bd = parseSysDate(actualAppDate.replace(/\//g, '-').replace(/\./g, '-'));
                 let nextEmiObj = new Date(bd);
-                
-                // 🛡️ FUNCTIONAL FIX: Sunday Shift Bug in Bulk Calculator!
-                if (c.planType === 'daily') {
+
+                // Apply plan-specific shifts
+                if (activePlanType === 'daily') {
                     for(let i = 0; i <= typedPaidEmis; i++) {
                         nextEmiObj.setDate(nextEmiObj.getDate() + 1);
                         if (nextEmiObj.getDay() === 0) nextEmiObj.setDate(nextEmiObj.getDate() + 1); // Skip Sunday
@@ -4676,22 +4716,24 @@
                 } else {
                     nextEmiObj.setDate(nextEmiObj.getDate() + ((typedPaidEmis + 1) * 7));
                 }
-                
+
                 document.getElementById('edit-cust-due-date').value = formatSysDate(nextEmiObj);
             }
 
-            // 🌟 ACCOUNTING FIX: Auto-calculator should only reflect remaining principal based on paid EMIs.
-            if (typedPaidEmis !== (c.emisPaidCount || 0)) {
-                let elOuts = document.getElementById('edit-cust-outstanding');
-                if (elOuts) elOuts.value = Math.round(activeOutstanding);
-            }
-            
-            // 🛡️ ULTRA-SMART FIX: Missing DOM Element Check (Prevents whole function from aborting)
+            let elOuts = document.getElementById('edit-cust-outstanding');
+            if (elOuts) elOuts.value = Math.round(activeOutstanding);
+
             let elOd = document.getElementById('edit-cust-od');
             if (elOd) elOd.value = typedOverdue;
-            
+
             let elEmi = document.getElementById('edit-cust-emi');
             if (elEmi) elEmi.value = Math.round(activeCycleEmi);
+            
+            // 🌟 UI POLISH FIX: Update Plan Info Badge dynamically when Admin changes dropdown
+            let planBadge = document.getElementById('edit-active-plan-badge');
+            if (planBadge) {
+                planBadge.innerText = `📋 Plan: ${pObj.name || pObj.planName || 'N/A'} | Total EMIs: ${pObj.duration || 0}`;
+            }
         }
 
         async function saveClientEdits() {
@@ -4814,9 +4856,34 @@
                      let newPlanId = getSafeValue('edit-cust-plan-select');
                      let shouldResetEmi = document.getElementById('edit-reset-emi-chk')?.checked;
                      
+                     // 🚨 CRITICAL BUG FIX: The "Passbook Desync" Preventer
+                     // Agar plan naya hai ya EMI 0 ho rahi hai, toh purani transactions history ko wipe/archive karna zaruri hai.
+                     // Warna passbook purani payments ko naye balance se minus karke math corrupt kar degi.
+                     let isChangingPlan = newPlanId && newPlanId !== "";
+                     if (isChangingPlan || shouldResetEmi) {
+                         if (!serverDb[m].pastLoans) serverDb[m].pastLoans = [];
+                         // 1. Archive current state safely
+                         serverDb[m].pastLoans.push({
+                             id: serverDb[m].id + "-EDIT_ARCHIVE",
+                             planName: serverDb[m].planName,
+                             principal: serverDb[m].principal,
+                             totalPayable: serverDb[m].totalPayable,
+                             transactions: JSON.parse(JSON.stringify(serverDb[m].transactions || []))
+                         });
+                         
+                         // 2. Wipe old transactions to give a 100% clean fresh passbook
+                         serverDb[m].transactions = [];
+                         serverDb[m].transactions.push({
+                             date: formatSysDate(new Date()),
+                             amount: 0,
+                             type: isChangingPlan ? `Plan Upgraded & Reset` : `EMI Reset to Zero`,
+                             by: 'Admin'
+                         });
+                     }
+
                      if (newPlanId) {
                          let newPlan = loanPlans.find(p => p.id === newPlanId);
-                         if (newPlan) {
+                         if (newPlan && newPlan.name !== serverDb[m].planName) {
                              serverDb[m].planName = newPlan.name;
                              serverDb[m].planType = newPlan.type.includes('daily') ? "daily" : "weekly";
                              serverDb[m].duration = newPlan.duration;
@@ -4835,6 +4902,7 @@
                              
                              if (shouldResetEmi) {
                                  serverDb[m].emisPaidCount = 0;
+                                 serverDb[m].overdue = 0;
                              }
 
                              // Naye plan aur current EMI count ke hisaab se Active EMI nikalna
@@ -4842,8 +4910,8 @@
                              serverDb[m].cycleEmi = newPlan.isHybrid ? ((currentEmiCount < newPlan.phase1Days) ? newPlan.phase1Emi : newPlan.phase2Emi) : newPlan.baseEmi;
                          }
                      } else if (shouldResetEmi) {
-                         // Agar plan change nahi kiya par checkbox tick kar diya, tab bhi EMI 0 ho jayegi
                          serverDb[m].emisPaidCount = 0;
+                         serverDb[m].overdue = 0;
                      }
                  }
 
@@ -6098,8 +6166,8 @@
                                 c.transactions.forEach(t => {
                                     // 🌟 SECURITY FIX: Net Cashflow Drawer Match (Includes Late Marks physically collected today)
                                     let isPhysicallyCollectedToday = (t.collectedOn === todayStr) || (!t.collectedOn && t.date === todayStr);
-                                    // 🚨 CRITICAL FIX: Added 'Shortfall Penalty' so collected partial cash is correctly added to Head's Cash Drawer
-                                    let isValidCashflow = ['Received', 'Online App', 'Custom Pay', 'Advance', 'Advance (Pre-Settle)', 'Direct Settle', 'Insurance Fee Deducted (Upfront)', 'Shortfall Penalty'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
+                                    // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty'. Penalty unpaid paisa hai, isey cash drawer mein jodna galla kharab kar dega!
+                                    let isValidCashflow = ['Received', 'Online App', 'Custom Pay', 'Advance', 'Advance (Pre-Settle)', 'Direct Settle', 'Insurance Fee Deducted (Upfront)'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
                                     
                                     if (isPhysicallyCollectedToday && isValidCashflow) {
                                         headCollectedToday += t.amount;
@@ -8555,8 +8623,8 @@
                             // 🌟 CRITICAL FIX: Day-End Target Matcher
                             // Agar kisi ne aaj late kist jama ki hai, toh uska galla (cash) aaj hi branch target me judna chahiye!
                             let isPhysicallyCollectedToday = (t.collectedOn === todayStr) || (!t.collectedOn && t.date === todayStr);
-                            // 🚨 CRITICAL FIX: Added 'Shortfall Penalty' so Branch Manager's Daily Cash matches physical cash!
-                            let isValidCashflow = ['Received', 'Online App', 'Advance', 'Custom Pay', 'Advance (Pre-Settle)', 'Direct Settle', 'Shortfall Penalty'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
+                            // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty' from Branch Collections so targets are based purely on physical cash/UPI.
+                            let isValidCashflow = ['Received', 'Online App', 'Advance', 'Custom Pay', 'Advance (Pre-Settle)', 'Direct Settle'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
                             
                             if(isPhysicallyCollectedToday && isValidCashflow) branchCollected += t.amount;
                         });
@@ -9620,10 +9688,10 @@
                             
                             if(isPhysicallyCollectedToday && t.type === 'Shortfall Penalty') hasShortfall = true;
                             
-                            // 🚨 CRITICAL FIX: Added 'Shortfall Penalty' so it actually appears in the "Today's Collections" List!
-                            let isValidType = ['Received', 'Online App', 'Advance', 'Advance (Pre-Settle)', 'Custom Pay', 'Direct Settle', 'Shortfall Penalty'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
+                            // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty' from isValidType. Unpaid amount ko total collection math mein nahi jodna hai!
+                            let isValidType = ['Received', 'Online App', 'Advance', 'Advance (Pre-Settle)', 'Custom Pay', 'Direct Settle'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
 
-                            if(isValidType && isPhysicallyCollectedToday) { 
+                            if(isValidType && isPhysicallyCollectedToday) {
                                 match = true; amount += t.amount; trackMode(t); 
                                 if (t.type === 'Direct Settle') collectionCategory = 'settle';
                                 else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) collectionCategory = 'partial';
@@ -9655,9 +9723,10 @@
                             
                             if(activeMY === selectedMonthVal && t.type === 'Shortfall Penalty') hasShortfall = true;
                             
+                            // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty'. Month ke total collection list mein bhi fake numbers nahi aayenge ab.
                             let isValidType = ['Received', 'Online App', 'Advance', 'Advance (Pre-Settle)', 'Custom Pay', 'Direct Settle'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
 
-                            if(isValidType && activeMY === selectedMonthVal) { 
+                            if(isValidType && activeMY === selectedMonthVal) {
                                 match = true; amount += t.amount; trackMode(t); 
                                 if (t.type === 'Direct Settle') collectionCategory = 'settle';
                                 else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) collectionCategory = 'partial';
