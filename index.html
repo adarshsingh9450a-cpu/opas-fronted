@@ -4,7 +4,7 @@
     <script>
         // Start Native Background Engine & Auto-Updater
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Error:', err));
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error:', err));
 
             // NAYA: Jaise hi naya SW aayega, App apne aap refresh ho jayega
             let refreshing = false;
@@ -20,7 +20,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
     <!-- 🌟 PWA MANIFEST LINK (For PWABuilder APK) -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     <title>OPAS MICRO FINANCE - Core Banking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
