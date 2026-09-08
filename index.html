@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
     <script>
-        // Start Native Background Engine for Notifications
+        // Start Native Background Engine & Auto-Updater
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Error:', err));
+
+            // NAYA: Jaise hi naya SW aayega, App apne aap refresh ho jayega
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    window.location.reload();
+                    refreshing = true;
+                }
+            });
         }
     </script>
     <meta charset="UTF-8">
