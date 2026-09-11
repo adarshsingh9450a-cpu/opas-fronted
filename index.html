@@ -1150,10 +1150,11 @@
                                 <option value="daily">Daily (Normal)</option>
                                 <option value="daily-hybrid">Daily (Hybrid EMI)</option>
                                 <option value="weekly">Weekly (Normal)</option>
+                                <option value="weekly-hybrid">Weekly (Hybrid EMI)</option> <!-- NAYA: Weekly Hybrid -->
                             </select>
                         </div>
                         <div id="hybrid-setup-box" class="hidden grid-cols-2 gap-2 bg-indigo-100 p-3 rounded-xl mt-2 animate-fade">
-                            <input type="number" id="plan-p1-days" placeholder="Phase 1 Days" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-[10px] font-bold focus:outline-none">
+                            <input type="number" id="plan-p1-days" placeholder="Phase 1 Cycles (Days/Wk)" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-[10px] font-bold focus:outline-none">
                             <input type="number" id="plan-p1-emi" placeholder="Phase 1 EMI ₹" class="w-full p-3 bg-white border border-indigo-200 rounded-lg text-[10px] font-bold focus:outline-none">
                             <p class="col-span-2 text-[8px] font-bold text-indigo-500 text-center">Phase 2 remaining EMI will auto-calculate.</p>
                         </div>
@@ -2247,6 +2248,8 @@
                         if (cloudData["SYSTEM_SETTINGS"].bonusConfig) serverDb["SYSTEM_SETTINGS"].bonusConfig = cloudData["SYSTEM_SETTINGS"].bonusConfig;
                         if (cloudData["SYSTEM_SETTINGS"].leaves) serverDb["SYSTEM_SETTINGS"].leaves = cloudData["SYSTEM_SETTINGS"].leaves;
                         if (cloudData["SYSTEM_SETTINGS"].allowStaffBinding !== undefined) serverDb["SYSTEM_SETTINGS"].allowStaffBinding = cloudData["SYSTEM_SETTINGS"].allowStaffBinding;
+                        if (cloudData["SYSTEM_SETTINGS"].allowStaffEdit !== undefined) serverDb["SYSTEM_SETTINGS"].allowStaffEdit = cloudData["SYSTEM_SETTINGS"].allowStaffEdit; // NAYA
+                        if (cloudData["SYSTEM_SETTINGS"].allowStaffEdit !== undefined) serverDb["SYSTEM_SETTINGS"].allowStaffEdit = cloudData["SYSTEM_SETTINGS"].allowStaffEdit;
                     }
                 }
             } catch(e) { 
@@ -2264,11 +2267,12 @@
             let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
             let leaves = serverDb["SYSTEM_SETTINGS"].leaves || [];
             let allowBind = serverDb["SYSTEM_SETTINGS"].allowStaffBinding || false;
+            let allowEdit = serverDb["SYSTEM_SETTINGS"].allowStaffEdit || false; // NAYA
 
             serverDb["SYSTEM_SETTINGS"] = { 
                 branches: branchList, centres: centreList, staff: staffDb, loanPlans: loanPlans, 
                 branchCoords: serverDb["SYSTEM_SETTINGS"].branchCoords, companyUpi: currentUpi,
-                bonusConfig: bConfig, branchStats: bStats, leaves: leaves, allowStaffBinding: allowBind
+                bonusConfig: bConfig, branchStats: bStats, leaves: leaves, allowStaffBinding: allowBind, allowStaffEdit: allowEdit
             };
             await saveDataToCloud("SYSTEM_SETTINGS");
         }
@@ -3436,7 +3440,7 @@
         function toggleHybridSetup() {
             const pt = getSafeValue('plan-type');
             const hx = document.getElementById('hybrid-setup-box');
-            if(pt === 'daily-hybrid') { hx.classList.remove('hidden'); hx.classList.add('grid'); }
+            if(pt.includes('hybrid')) { hx.classList.remove('hidden'); hx.classList.add('grid'); }
             else { hx.classList.add('hidden'); hx.classList.remove('grid'); }
         }
 
@@ -3464,7 +3468,7 @@
             let total = principal + interest;
             let p1Days = 0, p1Emi = 0, p2Days = 0, p2Emi = 0, baseEmi = 0;
 
-            if (type === 'daily-hybrid') {
+            if (type.includes('hybrid')) {
                 p1Days = parseInt(getSafeValue('plan-p1-days'));
                 p1Emi = parseInt(getSafeValue('plan-p1-emi'));
                 if(!p1Days || !p1Emi || p1Days >= duration) { alert("Invalid Phase 1 setup for Hybrid Plan."); return; }
@@ -3486,7 +3490,7 @@
             loanPlans.push({
                 id: 'PLN' + Date.now(), name, principal, roi, duration, type, totalPayable: total, interestAmt: interest,
                 insPct: insPct, branches: [...branchList], // 🌟 NAYA: Naya plan by default sabhi branches me ON hoga
-                isHybrid: type === 'daily-hybrid', phase1Days: p1Days, phase1Emi: p1Emi, phase2Days: p2Days, phase2Emi: p2Emi, baseEmi
+                isHybrid: type.includes('hybrid'), phase1Days: p1Days, phase1Emi: p1Emi, phase2Days: p2Days, phase2Emi: p2Emi, baseEmi
             });
 
             // 🚀 UX FIX: Instant Render. List turant update hogi, double-tap ka chakkar khatam!
@@ -3655,7 +3659,8 @@
                 let pHtml = '';
                 loanPlans.forEach(p => { 
                     let insDisplay = p.insPct ? ` | Ins: ${p.insPct}%` : ``; 
-                    let desc = p.isHybrid ? `<span class="text-amber-500 block text-[8px] font-bold mt-1">Hybrid: ${p.phase1Days}d @ ₹${p.phase1Emi}, ${p.phase2Days}d @ ₹${p.phase2Emi}</span>` : `<span class="text-slate-400 block text-[8px] font-bold mt-1">Normal: ${p.duration} Cycles @ ₹${p.baseEmi}</span>`;
+                    let typeStr = p.type.includes('weekly') ? 'Wk' : 'd';
+                    let desc = p.isHybrid ? `<span class="text-amber-500 block text-[8px] font-bold mt-1">Hybrid: ${p.phase1Days}${typeStr} @ ₹${p.phase1Emi}, ${p.phase2Days}${typeStr} @ ₹${p.phase2Emi}</span>` : `<span class="text-slate-400 block text-[8px] font-bold mt-1">Normal: ${p.duration} Cycles @ ₹${p.baseEmi}</span>`;
                     
                     // 🌟 NAYA: Branch Assign Button
                     let bCount = p.branches ? p.branches.length : branchList.length;
@@ -4573,7 +4578,7 @@
                         let pOpts = `<option value="">-- Keep Current Plan --</option>`;
                         loanPlans.forEach(p => {
                             let emiText = p.isHybrid ? `₹${p.phase1Emi}` : `₹${p.baseEmi}`;
-                            let typeTag = p.isHybrid ? 'Hybrid' : (p.type === 'weekly' ? 'Weekly' : 'Daily');
+                            let typeTag = p.type === 'daily-hybrid' ? 'Daily Hybrid' : (p.type === 'weekly-hybrid' ? 'Weekly Hybrid' : (p.type === 'weekly' ? 'Weekly' : 'Daily'));
                             pOpts += `<option value="${p.id}">₹${p.principal.toLocaleString('en-IN')} - ${p.name} [${typeTag}] (EMI: ${emiText})</option>`;
                         });
                         planSelectDropdown.innerHTML = pOpts;
