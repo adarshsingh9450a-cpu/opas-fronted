@@ -2792,7 +2792,8 @@
                             showDashboard('head');
                             // Radar On (Check every 60 seconds)
                             if(headPendingRadar) clearInterval(headPendingRadar);
-                            headPendingRadar = setInterval(silentHeadRadar, 60000);
+                            // 🚨 FIX 2: HEAD RADAR BAND KIYA GAYA HAI (5GB Bandwidth Leak Fix)
+                            // headPendingRadar = setInterval(silentHeadRadar, 60000);
                             silentHeadRadar(); // Pehli baar turant check kare
                             
                         } else if (role === 'staff') {
@@ -9101,7 +9102,8 @@
                         showNotification('Login Success', 'Welcome Admin! System is ready.', '👑');
                         showDashboard('head'); 
                         if(headPendingRadar) clearInterval(headPendingRadar);
-                        headPendingRadar = setInterval(silentHeadRadar, 60000);
+                        // 🚨 FIX 2: HEAD RADAR BAND KIYA GAYA HAI (5GB Bandwidth Leak Fix)
+                            // headPendingRadar = setInterval(silentHeadRadar, 60000);
                         silentHeadRadar();
                     } 
                     // 🚨 CRITICAL BUG FIX: Ye block missing tha! Jisse Staff login hone ke baad bhi fasa rehta tha.
@@ -9429,6 +9431,7 @@
                 if (autoSyncRadar) clearInterval(autoSyncRadar);
                 if (role === 'head' || role === 'staff') {
                     autoSyncRadar = setInterval(async () => {
+                                return; // 🚨 FIX 1: AUTO-SYNC BAND KIYA GAYA HAI (5GB Bandwidth Leak Fix)
                         // 🛡️ ULTRA-SMART FIX: "Zombie Staff" Access Blocker! Agar Admin ne background me delete kiya to turant auto-logout.
                         if (currentLoggedInRole === 'staff' && currentlyLoggedInMobile) {
                             let verifyStaff = staffDb[currentlyLoggedInMobile] || staffDb[Object.keys(staffDb).find(k => k.toLowerCase() === currentlyLoggedInMobile.toLowerCase())];
