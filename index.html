@@ -2081,7 +2081,7 @@
 
                             let isTimeNewer = (cloudData[k] !== null && loc && loc.lastUpdated && (!cloudData[k].lastUpdated || loc.lastUpdated > cloudData[k].lastUpdated));
 
-                            if(cloudData[k] === undefined || isStuckAction || isTimeNewer) {
+                            if(cloudData[k] === undefined || isTimeNewer) { // 🚨 FIX 1: isStuckAction Hata Diya (API Flood Stopped)
                                 pendingSyncPayload.push({ mobile: k, data: srv });
                             }
                         }
@@ -2116,14 +2116,18 @@
         }
 
         // 🌟 ULTRA-SMART OFFLINE/ONLINE ENGINE
+        let lastOnlineSyncTime = 0; // 🚨 ₹0 COST FIX: Network Fluctuation Bandwidth Saver
         window.addEventListener('online', async () => {
+            // Agar pichle 15 minute mein ek baar auto-sync ho chuka hai, toh dobara 35MB download mat karo (Saves 1000s of Rupees!)
+            if (Date.now() - lastOnlineSyncTime < 15 * 60 * 1000) return; 
+
             showNotification('Internet Restored 🟢', 'Aap wapas online hain. Pending data cloud par upload ho raha hai...', '📡');
             document.getElementById('cloud-status').innerText = "☁️ Auto-Syncing...";
             
-            // Jaise hi net aaye, turant background mein poora local data cloud par push kar do
             if (currentLoggedInRole === 'head' || currentLoggedInRole === 'staff') {
                 try {
                     await forceCloudSync({ currentTarget: document.createElement('div') });
+                    lastOnlineSyncTime = Date.now(); // Time Lock set kar diya
                     document.getElementById('cloud-status').innerText = "☁️ Data Synced!";
                 } catch(e) { console.error("Auto-sync failed on reconnect", e); }
             }
@@ -2698,9 +2702,9 @@
 
             setInterval(() => {
                 idleTime++;
-                // 3 minutes (180 seconds) of inactivity
-                if (idleTime >= 180 && (currentLoggedInRole === 'staff' || currentLoggedInRole === 'head')) {
-                    alert("🔒 Security Alert: Screen 3 minute se inactive thi. Aapko automatically logout kiya ja raha hai.");
+                // 🚨 BANDWIDTH SAVER FIX: Increased to 45 mins to stop constant 35MB re-downloads
+                if (idleTime >= 2700 && (currentLoggedInRole === 'staff' || currentLoggedInRole === 'head')) {
+                    alert("🔒 Security Alert: Screen 45 minute se inactive thi. Aapko automatically logout kiya ja raha hai.");
                     logout();
                 }
             }, 1000);
@@ -2825,10 +2829,13 @@
         }
 
         async function forceCloudSync(event) {
-            if (isSystemBusy) { alert("Background sync chal raha hai, kripya thodi der rukein."); return; } 
-            isSystemBusy = true; // 🚀 FIX: Actually set the lock so background auto-sync doesn't clash
-            let btn = event.currentTarget.querySelector('span');
-            btn.classList.add('spin-fast');
+            if (isSystemBusy) { 
+                if(event && event.currentTarget && event.currentTarget.tagName === 'BUTTON') alert("Background sync chal raha hai, kripya thodi der rukein."); 
+                return; 
+            } 
+            isSystemBusy = true; 
+            let btn = event && event.currentTarget ? event.currentTarget.querySelector('span') : null;
+            if(btn) btn.classList.add('spin-fast'); // 🚨 APP FREEZE FIX: Crashing here locked the app forever
             try {
                 await loadDataFromCloud();
                 if(currentLoggedInRole !== 'customer') { 
@@ -2839,9 +2846,9 @@
                 }
             } catch (e) {
                 console.error("Sync failed:", e);
-                alert("Sync failed! Please check your internet connection.");
+                if(event && event.currentTarget && event.currentTarget.tagName === 'BUTTON') alert("Sync failed! Please check your internet connection.");
             } finally {
-                setTimeout(() => { btn.classList.remove('spin-fast'); isSystemBusy = false; }, 500); // 🚀 FIX: ALWAYS release the lock safely, even on error
+                setTimeout(() => { if(btn) btn.classList.remove('spin-fast'); isSystemBusy = false; }, 500); 
             }
         }
 
@@ -5180,7 +5187,7 @@
                     } else if (isPastDue) {
                         qualifies = true;
                         pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
-                    } else if (isExactToday && c.lastDayEndProcessed === todayStr) {
+                    } else if (isExactToday && c.lastDayEndProcessed !== todayStr) { // 🚨 FIX: Warn BEFORE Day-End, not after!
                         qualifies = true;
                         pendingAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
                     }
@@ -6030,7 +6037,7 @@
                                 } else if (isPastDue) {
                                     qualifiesForUnmarked = true;
                                     pendingAmt = Math.min(f.outstanding||0, f.cycleEmi||0);
-                                } else if (isExactToday && isDayEndDoneToday) {
+                                } else if (isExactToday && !isDayEndDoneToday) { // 🚨 FIX: Warn BEFORE Day-End, not after!
                                     let hasTxToday = f.transactions && f.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type));
                                     if (!hasTxToday && !f.emiSettled && !(f.advancePaid > 0)) {
                                         qualifiesForUnmarked = true;
@@ -7881,12 +7888,12 @@
             // 🔥 Turant UI update karo (0ms lag), aur cloud sync chupchap piche chalne do!
             renderStaffLedgerSheets();
             refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Instantly updates Dashboard Live Counters!
-            saveDataToCloud(mobile).then(() => {
-                delete window.activeEmiLocks[mobile]; // 🔓 Unlock strictly AFTER successful cloud sync
-            }).catch(e => {
-                console.log("Silent background sync running.");
-                delete window.activeEmiLocks[mobile]; // 🔓 Unlock even on fail so they can retry later
-            });
+            
+            // 🚨 BILL SAVER FIX: Instant sync removed. DB engine will sleep all day.
+            // ⚠️ DATA LOSS PREVENTER: Phone ki hard drive (Local DB) me save karna zaroori hai!
+            await localforage.setItem('opas_local_db', serverDb);
+            
+            delete window.activeEmiLocks[mobile];
         }
 
         async function undoEmiAction(mobile) {
@@ -7910,7 +7917,10 @@
             renderStaffLedgerSheets();
             refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Reverts Dashboard Live Counters instantly!
             showNotification('Action Undone', 'Client ki entry wapas Unmarked kar di gayi hai.', '↺');
-            saveDataToCloud(mobile).catch(e => console.log("Silent background sync running."));
+            
+            // 🚨 BILL SAVER FIX: Silent sync removed to save DB cost.
+            // ⚠️ DATA LOSS PREVENTER: Save the undone state locally!
+            await localforage.setItem('opas_local_db', serverDb);
         }
 
         // 🌟 NAYA: Partial Pay Modal Logic
@@ -7974,7 +7984,10 @@
             renderStaffLedgerSheets();
             refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Instantly updates Dashboard Partial/Advance Counters!
             showNotification('Custom Pay Locked', `₹${amt} (${mode === 'upi' ? 'UPI' : 'Cash'}) save ho gaye.`, '🌗');
-            saveDataToCloud(mobile).catch(e => console.log("Silent sync"));
+            
+            // 🚨 BILL SAVER FIX: Silent sync removed. DB sleeps.
+            // ⚠️ DATA LOSS PREVENTER: Lock offline data safely.
+            await localforage.setItem('opas_local_db', serverDb);
         }
 
         // Smart Receive Popup (Cash vs UPI)
@@ -8415,7 +8428,7 @@
                     let c = serverDb[m]; 
                     
                     // Ek hi button se saare active due loans process ho jayenge
-                    if(!c || c.branch !== staffBranch) return; 
+                    if(!c || c.branch !== staffBranch || c.status !== 'Active') return; // 🚨 FIX 2A: Zombie Day-End Blocked
                     
                     if(!c.transactions) c.transactions = [];
                     
@@ -8685,7 +8698,7 @@
                     target: todayTarget, colPct: colPct, bonusAchieved: bonusAchieved
                 };
 
-                let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch);
+                let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch && serverDb[k].status === 'Active'); // 🚨 FIX 2B: Upload Only Active Accounts
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
                 
                 if (btn) btn.innerText = `Syncing Bulk Data... ☁️`;
