@@ -1092,8 +1092,8 @@
 
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Outstanding (Manual)</label><input type="number" id="edit-cust-outstanding" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
-                            <!-- Wired Overdue to auto calculator -->
-                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue (Penalty)</label><input type="number" id="edit-cust-od" oninput="autoCalcEditPassbook()" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
+                            <!-- 🌟 BUG FIX 2: Unwired Overdue from auto calculator so it doesn't corrupt Outstanding balance -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Overdue (Penalty)</label><input type="number" id="edit-cust-od" class="w-full p-4 bg-white border border-rose-200 rounded-xl text-xs font-black text-rose-600"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Current Active EMI</label><input type="number" id="edit-cust-emi" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold"></div>
@@ -1994,68 +1994,57 @@
                         if (cloudData[k] === null) {
                             delete serverDb[k]; 
                         } else if (cloudData[k]) {
-                            let isCloudNewer = !serverDb[k] || !serverDb[k].lastUpdated || (cloudData[k].lastUpdated > serverDb[k].lastUpdated);
-                            let isCloudApproved = (cloudData[k].status === "Active" && serverDb[k] && serverDb[k].status === "Pending Approval");
+                            let loc = serverDb[k];
+                            let cld = cloudData[k];
                             
-                            // 🛡️ BUG FIX: Force sync pending files (Renewals/New/Requested) even if Staff's phone clock is behind Admin's phone clock
-                            let isCloudPending = ((cloudData[k].status === "Pending Approval" || cloudData[k].status === "Requested") && serverDb[k] && serverDb[k].status !== cloudData[k].status);
+                            if (!loc) {
+                                serverDb[k] = cld;
+                                return;
+                            }
+
+                            // 🌟 SMART SYNC FIX: Master Mismatch & 2-Phone Fix
+                            let isCloudNewer = !loc.lastUpdated || (cld.lastUpdated > loc.lastUpdated);
+                            let statusChanged = cld.status !== loc.status;
                             
-                            if (isCloudNewer || isCloudApproved || isCloudPending) {
-                                // 🛡️ CRITICAL FIX: Protect offline Staff Attendance from being wiped by Admin Updates
-                                if (k === "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].staff) {
-                                    let cStaff = cloudData[k].staff || {};
-                                    let lStaff = serverDb[k].staff || {};
-                                    Object.keys(lStaff).forEach(emp => {
-                                        if(cStaff[emp]) {
-                                            cStaff[emp].attendance = { ...(cStaff[emp].attendance || {}), ...(lStaff[emp].attendance || {}) };
+                            if (isCloudNewer || statusChanged) {
+                                // Protect Staff's un-synced offline collections
+                                let hasOfflineWork = loc.emiSettled || loc.advancePaid > 0;
+                                
+                                if (hasOfflineWork && cld.emiSettled !== 'online_paid') {
+                                    cld.emiSettled = loc.emiSettled;
+                                    cld.advancePaid = loc.advancePaid;
+                                    cld.customPayMode = loc.customPayMode;
+                                    cld.lockedBy = loc.lockedBy;
+                                    cld.tempActionDate = loc.tempActionDate;
+                                    cld.tempActionTime = loc.tempActionTime;
+                                    
+                                    // Protect offline transactions array safely
+                                    let localPast = loc.pastLoans ? loc.pastLoans.length : 0;
+                                    let cloudPast = cld.pastLoans ? cld.pastLoans.length : 0;
+                                    
+                                    if (loc.transactions && cld.transactions && loc.transactions.length > cld.transactions.length && cloudPast <= localPast) {
+                                        cld.transactions = loc.transactions;
+                                        cld.outstanding = loc.outstanding;
+                                        cld.overdue = loc.overdue;
+                                        cld.emisPaidCount = loc.emisPaidCount;
+                                        cld.nextEmiDate = loc.nextEmiDate;
+                                        cld.lastPaymentDate = loc.lastPaymentDate;
+                                    }
+                                }
+                                
+                                // Protect Offline Day-End Locks
+                                if (loc.lastDayEndProcessed) cld.lastDayEndProcessed = loc.lastDayEndProcessed;
+                                
+                                // Protect System Settings Local Overrides (Attendance)
+                                if (k === "SYSTEM_SETTINGS" && loc.staff && cld.staff) {
+                                    Object.keys(loc.staff).forEach(emp => {
+                                        if(cld.staff[emp]) {
+                                            cld.staff[emp].attendance = { ...(cld.staff[emp].attendance || {}), ...(loc.staff[emp].attendance || {}) };
                                         }
                                     });
                                 }
-
-                                // 🚀 FIX: Prevent Cloud from wiping out unsynced offline collections & Retry State
-                                if (serverDb[k]) {
-                                    if (serverDb[k].emiSettled || serverDb[k].advancePaid > 0) {
-                                        // 🛡️ ULTRA-SMART FIX: Protect Customer Online Payments from being overwritten by Staff's offline cache
-                                        if (cloudData[k].emiSettled !== 'online_paid') {
-                                            cloudData[k].emiSettled = serverDb[k].emiSettled;
-                                            cloudData[k].advancePaid = serverDb[k].advancePaid;
-                                            cloudData[k].tempAdv = serverDb[k].tempAdv;
-                                            cloudData[k].tempActionTime = serverDb[k].tempActionTime;
-                                        }
-                                    }
-                                    // 🛡️ CRITICAL FIX: Protect offline day-end locks from being wiped
-                                    if (serverDb[k].lastDayEndProcessed) {
-                                        cloudData[k].lastDayEndProcessed = serverDb[k].lastDayEndProcessed;
-                                    }
-                                    
-                                    // 🛡️ CRITICAL FIX 1: Protect offline Renewals, Online Requests & Direct Settlements from being wiped out
-                                    if ((serverDb[k].status === "Pending Approval" && (cloudData[k].status === "Deactive" || cloudData[k].status === "Requested")) || 
-                                        (serverDb[k].status === "Deactive" && cloudData[k].status === "Active") || 
-                                        (serverDb[k].status === "Deleted" && cloudData[k].status !== "Deleted")) {
-                                        cloudData[k] = serverDb[k]; 
-                                    }
-                                    // ✅ NAYA BYPASS: Agar Cloud ne naya Renewal (Pending Approval) bheja hai aur Local pehle se Deactive tha, toh usko block mat hone do!
-                                    else if (serverDb[k].status === "Deactive" && (cloudData[k].status === "Pending Approval" || cloudData[k].status === "Requested")) {
-                                        serverDb[k] = cloudData[k]; // Force update local to Pending Approval
-                                    }
-                                    // 🛡️ CRITICAL FIX 2: Protect unsynced transactions and shifted EMI dates from getting rolled back
-                                    else if (serverDb[k].transactions && cloudData[k].transactions) {
-                                        let localPast = serverDb[k].pastLoans ? serverDb[k].pastLoans.length : 0;
-                                        let cloudPast = cloudData[k].pastLoans ? cloudData[k].pastLoans.length : 0;
-
-                                        // 🚀 FIX: Agar cloud par "pastLoans" badh gaye hain matlab client Renew hua hai. Tab transaction array reset hona normal hai, usko rollback mat karo!
-                                        if (serverDb[k].transactions.length > cloudData[k].transactions.length && cloudPast <= localPast) {
-                                            cloudData[k].transactions = serverDb[k].transactions;
-                                            cloudData[k].outstanding = serverDb[k].outstanding;
-                                            cloudData[k].overdue = serverDb[k].overdue;
-                                            cloudData[k].emisPaidCount = serverDb[k].emisPaidCount;
-                                            cloudData[k].nextEmiDate = serverDb[k].nextEmiDate;
-                                            cloudData[k].lastPaymentDate = serverDb[k].lastPaymentDate;
-                                            cloudData[k].status = serverDb[k].status;
-                                        }
-                                    }
-                                }
-                                serverDb[k] = cloudData[k]; 
+                                
+                                serverDb[k] = cld;
                             }
                         }
                     });
@@ -5483,17 +5472,172 @@
 
         window.executeBatchResolution = async function(mobile, btnEvent) {
             let c = serverDb[mobile];
-            if (!c) return; // 🚀 FIX: Added strict null check to prevent app crash if client data is missing
+            if (!c) return; 
             
-            // 🚨 FATAL FINANCIAL FIX: "Double-Tap Exploit" Preventer!
-            // Blocks rapid concurrent clicks from executing the function 3-4 times and overcharging the client!
             if (window.isBatchResLock) return;
             window.isBatchResLock = true;
             
-            // 🛡️ ATOM-LEVEL FIX: Try-Catch wrapper to prevent Infinite Button Lock (UI Deadlock) if server fails
             try {
+                if (currentLoggedInRole === 'staff' && currentlyLoggedInMobile) {
+                    let myStaff = staffDb[currentlyLoggedInMobile] || staffDb[Object.keys(staffDb).find(k => k.toLowerCase() === currentlyLoggedInMobile.toLowerCase())];
+                    if (myStaff && c.branch !== myStaff.branch) {
+                        alert("⛔ SECURITY BLOCK: Aap doosri branch ka payment verify nahi kar sakte!");
+                        return;
+                    }
+                }
 
-                // 🌟 ULTIMATE DATA FIREWALL: Prevent Cross-Branch Financial Tampering
+                let keys = Object.keys(window.pendingResolutions || {});
+                if(keys.length === 0) { alert("⚠️ Kripya pehle kisi entry par action lock karein!"); return; }
+                
+                let actionBtn = (btnEvent && (btnEvent.currentTarget || btnEvent.target)) ? (btnEvent.currentTarget || btnEvent.target) : null;
+                if (actionBtn) {
+                    actionBtn.disabled = true;
+                    actionBtn.innerHTML = "⏳ Syncing... Please Wait";
+                    actionBtn.classList.replace('bg-slate-900', 'bg-slate-400');
+                    actionBtn.classList.remove('pulse-glow', 'hover-scale');
+                }
+                
+                let actionByStr = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
+                let todayStr = formatSysDate(new Date());
+                
+                keys.sort((a,b) => parseSysDate(a || todayStr) - parseSysDate(b || todayStr));
+
+                let selectedMode = 'cash';
+                let modeRadios = document.getElementsByName('tt-pay-mode');
+                if(modeRadios) {
+                    for(let r of modeRadios) { if(r.checked) selectedMode = r.value; }
+                }
+
+                keys.forEach(dStr => {
+                    if (c.status === 'Deactive' || c.nextEmiDate === 'Completed') return; 
+
+                    let res = window.pendingResolutions[dStr];
+                    
+                    if (res.action === 'bounce') {
+                        let penalty = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? (parseInt(c.phase1Emi)||0) : (parseInt(c.phase2Emi)||0)) : (parseInt(c.cycleEmi) || 0);
+                        penalty = Math.min(penalty, parseInt(c.outstanding) || 0); 
+                        
+                        c.overdue = parseInt(c.overdue || 0) + penalty;
+                        c.outstanding = parseInt(c.outstanding || 0) + penalty; 
+                        
+                        if (c.nextEmiDate === dStr || !c.nextEmiDate || c.nextEmiDate === "N/A" || c.nextEmiDate === "Completed") {
+                            c.nextEmiDate = calculateNextEmiDate(c.planType, dStr);
+                        }
+                        
+                        if(!c.transactions) c.transactions = [];
+                        c.transactions.push({ date: dStr, collectedOn: todayStr, amount: penalty, type: 'Bounced', mode: 'none', by: actionByStr });
+                        
+                    } else {
+                        let originalAmt = parseInt(res.amt) || 0;
+                        let amountLeftForEmi = originalAmt;
+
+                        if (c.overdue > 0) {
+                            let clearedOd = Math.min(c.overdue, amountLeftForEmi);
+                            c.overdue = Math.max(0, c.overdue - clearedOd);
+                            if (c.overdue === 0) c.partialOverdue = false;
+                            amountLeftForEmi -= clearedOd; 
+                        }
+
+                        c.outstanding = Math.max(0, parseInt(c.outstanding || 0) - originalAmt);
+
+                        let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                        let originalOut = (c.outstanding || 0) + amountLeftForEmi;
+                        currentEmiToUse = Math.min(currentEmiToUse, originalOut);
+
+                        let isFullEmiForTag = (originalAmt >= currentEmiToUse);
+                        let txType = isFullEmiForTag ? 'Received (Late Mark)' : 'Custom Pay (Late Mark)';
+                        
+                        if (isFullEmiForTag) {
+                            c.emisPaidCount = parseInt(c.emisPaidCount || 0) + 1;
+                            
+                            let isResolvingCurrentDue = (dStr === c.nextEmiDate) || (!c.nextEmiDate) || (c.nextEmiDate === "N/A") || (c.nextEmiDate === "Completed");
+                            if (isResolvingCurrentDue) {
+                                c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                            }
+                        }
+                        
+                        let resolutionTimeStamp = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+                        if (amountLeftForEmi < currentEmiToUse) {
+                            let shortfall = parseInt(currentEmiToUse) - amountLeftForEmi;
+                            let trueShortfall = Math.min(shortfall, c.outstanding || 0);
+                            if (trueShortfall > 0) {
+                                c.overdue = (c.overdue || 0) + trueShortfall;
+                                c.partialOverdue = true; 
+                                
+                                if(!c.transactions) c.transactions = [];
+                                c.transactions.push({ date: dStr, collectedOn: todayStr, timestamp: resolutionTimeStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
+                            }
+                        }
+                        
+                        if (c.outstanding <= 0 || c.emisPaidCount >= c.duration) {
+                            c.status = 'Deactive'; 
+                            c.outstanding = 0; 
+                            c.overdue = 0;
+                            c.nextEmiDate = "Completed"; 
+                            c.lastPaymentDate = todayStr;
+                            
+                            if (!c.pastLoans) c.pastLoans = [];
+                            let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
+                            if (!alreadyArchived) {
+                                c.pastLoans.push({
+                                    id: c.id, planName: c.planName, principal: c.principal, 
+                                    totalPayable: c.totalPayable, transactions: JSON.parse(JSON.stringify(c.transactions || []))
+                                });
+                            }
+                        }
+
+                        let resolutionEmiBadge = "";
+                        if (isFullEmiForTag && ['Received', 'Online App', 'Custom Pay'].includes(txType.replace(' (Late Mark)', ''))) {
+                            resolutionEmiBadge = `🔖 Kist ${c.emisPaidCount}/${c.duration}`;
+                        }
+
+                        if(!c.transactions) c.transactions = [];
+                        c.transactions.push({ date: dStr, collectedOn: todayStr, timestamp: resolutionTimeStamp, amount: originalAmt, type: txType, mode: selectedMode, by: actionByStr, emiTag: resolutionEmiBadge });
+                    }
+                });
+
+                if(c.transactions) {
+                    c.transactions.sort((a,b) => {
+                        let dateA = a.date || todayStr;
+                        let dateB = b.date || todayStr;
+                        return parseSysDate(dateA) - parseSysDate(dateB);
+                    });
+                }
+
+                c.lastUpdated = Date.now();
+
+                await saveDataToCloud(mobile);
+                
+                refreshHeadDashboardStats(); 
+                if(typeof loadStaffDashboard === 'function') loadStaffDashboard(); 
+                if(typeof updateLedgerUnmarkedSummary === 'function') updateLedgerUnmarkedSummary(); 
+
+                showNotification('Hisaab Cleared ✅', `Data synced and passbook updated sequentially!`, '🏦');
+                openUnmarkedHisaabManager(); 
+                
+            } catch (err) {
+                console.error("Resolution Sync Error:", err);
+                alert("⚠️ Network ya Sync Error! Kripya dobara koshish karein.");
+                let actionBtn = (btnEvent && (btnEvent.currentTarget || btnEvent.target)) ? (btnEvent.currentTarget || btnEvent.target) : null;
+                if (actionBtn) {
+                    actionBtn.disabled = false;
+                    actionBtn.innerHTML = "💾 Save & Sync All to Cloud";
+                    actionBtn.classList.replace('bg-slate-400', 'bg-slate-900');
+                }
+            } finally {
+                window.isBatchResLock = false; 
+            }
+        };
+        
+        window.executeBatchResolution = async function(mobile, btnEvent) {
+            let c = serverDb[mobile];
+            if (!c) return; 
+            
+            if (window.isBatchResLock) return;
+            window.isBatchResLock = true;
+            
+            try {
                 if (currentLoggedInRole === 'staff' && currentlyLoggedInMobile) {
                 let myStaff = staffDb[currentlyLoggedInMobile] || staffDb[Object.keys(staffDb).find(k => k.toLowerCase() === currentlyLoggedInMobile.toLowerCase())];
                 if (myStaff && c.branch !== myStaff.branch) {
@@ -5505,7 +5649,6 @@
             let keys = Object.keys(window.pendingResolutions || {});
             if(keys.length === 0) { alert("⚠️ Kripya pehle kisi entry par action lock karein!"); return; }
             
-            // 🌟 SECURITY FIX: Double-Click Blocker (Capture DOM Element Before Await)
             let actionBtn = (btnEvent && (btnEvent.currentTarget || btnEvent.target)) ? (btnEvent.currentTarget || btnEvent.target) : null;
             if (actionBtn) {
                 actionBtn.disabled = true;
@@ -5517,7 +5660,6 @@
             let actionByStr = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
             let todayStr = formatSysDate(new Date());
             
-            // Safe key sort
             keys.sort((a,b) => parseSysDate(a || todayStr) - parseSysDate(b || todayStr));
 
             let selectedMode = 'cash';
@@ -5527,61 +5669,46 @@
             }
 
             keys.forEach(dStr => {
-                // 🌟 SECURITY FIX: "End-of-Loan Crash" Guard!
-                // Agar pichli kisi row ki entry ne loan close kar diya (Completed) hai, toh aage ki entries process mat karo varna Date Parser crash ho jayega!
                 if (c.status === 'Deactive' || c.nextEmiDate === 'Completed') return; 
 
                 let res = window.pendingResolutions[dStr];
                 
                 if (res.action === 'bounce') {
-                    // 🌟 BUG FIX 1: The "Double Bounce" Penalty Exploit Preventer!
-                    // Agar past date ki kist hai, toh Day-End ne pehle hi Overdue badha diya tha, wapas mat badhao!
                     let penalty = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? (parseInt(c.phase1Emi)||0) : (parseInt(c.phase2Emi)||0)) : (parseInt(c.cycleEmi) || 0);
-                    penalty = Math.min(penalty, parseInt(c.outstanding) || 0); // 🚀 FIX: Protect against NaN cascading corruption
+                    penalty = Math.min(penalty, parseInt(c.outstanding) || 0); 
                     
-                    // 🌟 BUG FIX 2: The Unmarked Penalty Evasion Fix!
-                    // Unmarked past dates were never penalized by Day-End. So we MUST penalize them now!
                     c.overdue = parseInt(c.overdue || 0) + penalty;
-                    
-                    // 🚨 FATAL FINANCIAL FIX: Synchronize Outstanding with Overdue!
                     c.outstanding = parseInt(c.outstanding || 0) + penalty; 
                     
-                    // Calendar should only shift if the Due Date is the one we are bouncing right now (prevents double-shifting)
                     if (c.nextEmiDate === dStr || !c.nextEmiDate || c.nextEmiDate === "N/A" || c.nextEmiDate === "Completed") {
                         c.nextEmiDate = calculateNextEmiDate(c.planType, dStr);
                     }
-                    // Agar purani date hai toh overdue same rahega, bas transaction log history ke liye jamegi
                     
                     if(!c.transactions) c.transactions = [];
-                    // 🚨 CRITICAL FIX: Name MUST be strictly 'Bounced' otherwise the Passbook Math Engine will deduct it instead of adding penalty!
                     c.transactions.push({ date: dStr, collectedOn: todayStr, amount: penalty, type: 'Bounced', mode: 'none', by: actionByStr });
                     
                 } else {
                     let originalAmt = parseInt(res.amt) || 0;
-                    
                     let amountLeftForEmi = originalAmt;
 
-            // 🌟 CRITICAL MATH FIX: Splitting funds properly. Clear overdue first, then use remainder.
-            if (c.overdue > 0) {
-                let clearedOd = Math.min(c.overdue, amountLeftForEmi);
-                c.overdue = Math.max(0, c.overdue - clearedOd);
-                if (c.overdue === 0) c.partialOverdue = false;
-                amountLeftForEmi -= clearedOd; // Deduct used funds!
-            }
+                    if (c.overdue > 0) {
+                        let clearedOd = Math.min(c.overdue, amountLeftForEmi);
+                        c.overdue = Math.max(0, c.overdue - clearedOd);
+                        if (c.overdue === 0) c.partialOverdue = false;
+                        amountLeftForEmi -= clearedOd; 
+                    }
 
-            c.outstanding = Math.max(0, parseInt(c.outstanding || 0) - originalAmt);
+                    c.outstanding = Math.max(0, parseInt(c.outstanding || 0) - originalAmt);
 
-            let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
-            let originalOut = (c.outstanding || 0) + amountLeftForEmi;
-            currentEmiToUse = Math.min(currentEmiToUse, originalOut);
+                    let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                    let originalOut = (c.outstanding || 0) + amountLeftForEmi;
+                    currentEmiToUse = Math.min(currentEmiToUse, originalOut);
 
-            let isFullEmi = (amountLeftForEmi >= currentEmiToUse);
-                    let txType = isFullEmi ? 'Received (Late Mark)' : 'Custom Pay (Late Mark)';
+                    // 🌟 CRITICAL EMI FIX
+                    let isFullEmiForTag = (originalAmt >= currentEmiToUse);
+                    let txType = isFullEmiForTag ? 'Received (Late Mark)' : 'Custom Pay (Late Mark)';
                     
-                    // 🚨 CRITICAL FIX: Passbook Data Corruption Preventer!
-                    // Calendar aur EMI Count sirf tab aage badhega jab client poori (Full) EMI de raha ho.
-                    // Adhuri kist (Partial Pay) par count aage badhana data corrupt kar dega!
-                    if (isFullEmi) {
+                    if (isFullEmiForTag) {
                         c.emisPaidCount = parseInt(c.emisPaidCount || 0) + 1;
                         
                         let isResolvingCurrentDue = (dStr === c.nextEmiDate) || (!c.nextEmiDate) || (c.nextEmiDate === "N/A") || (c.nextEmiDate === "Completed");
@@ -5592,14 +5719,10 @@
                     
                     let resolutionTimeStamp = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-                    if (!isFullEmi) {
+                    if (amountLeftForEmi < currentEmiToUse) {
                         let shortfall = parseInt(currentEmiToUse) - amountLeftForEmi;
-                        // 🛡️ FUNCTIONAL FIX: "Double Shortfall" Preventer!
-                        // Bounced hone par Day-End ne already poora EMI overdue mein daal diya tha.
-                        // Isliye partial pay hone par shortfall ko dubara 'add' nahi karna, balki overdue utna hi rehne dena hai jitna bacha hai!
                         c.partialOverdue = true; 
                         
-                        // 🌟 ACCOUNTING FIX: Track shortfall in Overdue only. Do not inflate Outstanding debt!
                         if (dStr === todayStr && c.lastDayEndProcessed !== todayStr) {
                             c.overdue = (c.overdue || 0) + shortfall;
                         }
@@ -5608,7 +5731,6 @@
                         c.transactions.push({ date: dStr, collectedOn: todayStr, timestamp: resolutionTimeStamp, amount: shortfall, type: 'Shortfall Penalty' });
                     }
                     
-                    // 🌟 AUTO-DEACTIVATION LOGIC: Check if loan is finished after this entry
                     if (c.outstanding <= 0 || c.emisPaidCount >= c.duration) {
                         c.status = 'Deactive'; 
                         c.outstanding = 0; 
@@ -5616,7 +5738,6 @@
                         c.nextEmiDate = "Completed"; 
                         c.lastPaymentDate = todayStr;
                         
-                        // 🚨 CRITICAL FIX: Save to pastLoans so history isn't lost upon renewal
                         if (!c.pastLoans) c.pastLoans = [];
                         let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
                         if (!alreadyArchived) {
@@ -5627,9 +5748,8 @@
                         }
                     }
 
-                    // 🛡️ ATOM-LEVEL FIX: Inject Timestamp and EMI Badge so Passbook looks consistent with normal collections!
                     let resolutionEmiBadge = "";
-                    if (isFullEmi && ['Received', 'Online App', 'Custom Pay'].includes(txType.replace(' (Late Mark)', ''))) {
+                    if (isFullEmiForTag && ['Received', 'Online App', 'Custom Pay'].includes(txType.replace(' (Late Mark)', ''))) {
                         resolutionEmiBadge = `🔖 Kist ${c.emisPaidCount}/${c.duration}`;
                     }
 
@@ -5638,7 +5758,6 @@
                 }
             });
 
-            // 🌟 ULTRA-SAFE MAGIC SORTING (Crash-Proof)
             if(c.transactions) {
                 c.transactions.sort((a,b) => {
                     let dateA = a.date || todayStr;
@@ -5647,16 +5766,13 @@
                 });
             }
 
-            // 🛡️ ULTRA-SMART FIX: Removed the destructive code that was wiping out Staff's LIVE un-synced collections!
-            // Admin resolving past dates should NEVER overwrite today's live collections or forcefully lock the Day-End.
             c.lastUpdated = Date.now();
 
             await saveDataToCloud(mobile);
             
-            // 🌟 FIX 2: Auto-Sync ALL Background Tiles and Counters Instantly!
-            refreshHeadDashboardStats(); // For Head
-            if(typeof loadStaffDashboard === 'function') loadStaffDashboard(); // For Staff Home
-            if(typeof updateLedgerUnmarkedSummary === 'function') updateLedgerUnmarkedSummary(); // For Ledger Counter
+            refreshHeadDashboardStats(); 
+            if(typeof loadStaffDashboard === 'function') loadStaffDashboard(); 
+            if(typeof updateLedgerUnmarkedSummary === 'function') updateLedgerUnmarkedSummary(); 
 
             showNotification('Hisaab Cleared ✅', `Data synced and passbook updated sequentially!`, '🏦');
             openUnmarkedHisaabManager(); 
@@ -5664,13 +5780,14 @@
             } catch (err) {
                 console.error("Resolution Sync Error:", err);
                 alert("⚠️ Network ya Sync Error! Kripya dobara koshish karein.");
+                let actionBtn = (btnEvent && (btnEvent.currentTarget || btnEvent.target)) ? (btnEvent.currentTarget || btnEvent.target) : null;
                 if (actionBtn) {
                     actionBtn.disabled = false;
                     actionBtn.innerHTML = "💾 Save & Sync All to Cloud";
                     actionBtn.classList.replace('bg-slate-400', 'bg-slate-900');
                 }
             } finally {
-                window.isBatchResLock = false; // 🔓 Safely release the lock in all cases
+                window.isBatchResLock = false; 
             }
         };
 
@@ -7882,16 +7999,15 @@
             serverDb[mobile].emiSettled = status;
             serverDb[mobile].advancePaid = 0; 
             serverDb[mobile].lockedBy = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
-            serverDb[mobile].tempActionDate = formatSysDate(new Date()); // 🌟 NAYA: Midnight Reset ke liye date stamp lagaya
-            serverDb[mobile].tempActionTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); // 🛡️ FAST FIX: Store real tap time
+            serverDb[mobile].tempActionDate = formatSysDate(new Date()); 
+            serverDb[mobile].tempActionTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); 
+            serverDb[mobile].lastUpdated = Date.now(); 
             
-            // 🔥 Turant UI update karo (0ms lag), aur cloud sync chupchap piche chalne do!
             renderStaffLedgerSheets();
-            refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Instantly updates Dashboard Live Counters!
+            refreshHeadDashboardStats(); 
             
-            // 🚨 BILL SAVER FIX: Instant sync removed. DB engine will sleep all day.
-            // ⚠️ DATA LOSS PREVENTER: Phone ki hard drive (Local DB) me save karna zaroori hai!
             await localforage.setItem('opas_local_db', serverDb);
+            // 🚨 BILL SAVER: Cloud sync yahan se hata diya hai. Ab sirf Day-End par bill banega!
             
             delete window.activeEmiLocks[mobile];
         }
@@ -7912,14 +8028,12 @@
             serverDb[mobile].advancePaid = 0;
             serverDb[mobile].customPayMode = null;
             serverDb[mobile].lockedBy = null;
+            serverDb[mobile].lastUpdated = Date.now(); 
             
-            // 🔥 Instant feedback
             renderStaffLedgerSheets();
-            refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Reverts Dashboard Live Counters instantly!
+            refreshHeadDashboardStats(); 
             showNotification('Action Undone', 'Client ki entry wapas Unmarked kar di gayi hai.', '↺');
             
-            // 🚨 BILL SAVER FIX: Silent sync removed to save DB cost.
-            // ⚠️ DATA LOSS PREVENTER: Save the undone state locally!
             await localforage.setItem('opas_local_db', serverDb);
         }
 
@@ -7976,17 +8090,15 @@
             serverDb[mobile].customPayMode = mode;
             serverDb[mobile].emiSettled = null; 
             serverDb[mobile].lockedBy = currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'Staff');
-            serverDb[mobile].tempActionDate = formatSysDate(new Date()); // 🌟 NAYA: Midnight Reset stamp
-            serverDb[mobile].tempActionTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); // 🛡️ FAST FIX: Store real tap time
+            serverDb[mobile].tempActionDate = formatSysDate(new Date()); 
+            serverDb[mobile].tempActionTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); 
+            serverDb[mobile].lastUpdated = Date.now(); 
             
-            // 🔥 Fast UI Closing
             closeGlobalModal();
             renderStaffLedgerSheets();
-            refreshHeadDashboardStats(); // 🌟 CRITICAL FIX: Instantly updates Dashboard Partial/Advance Counters!
+            refreshHeadDashboardStats(); 
             showNotification('Custom Pay Locked', `₹${amt} (${mode === 'upi' ? 'UPI' : 'Cash'}) save ho gaye.`, '🌗');
             
-            // 🚨 BILL SAVER FIX: Silent sync removed. DB sleeps.
-            // ⚠️ DATA LOSS PREVENTER: Lock offline data safely.
             await localforage.setItem('opas_local_db', serverDb);
         }
 
@@ -8085,9 +8197,10 @@
         }
 
         // 🌟 MASTER LEDGER RENDER FUNCTION (Bug Fixed)
+        // 🌟 MASTER LEDGER RENDER FUNCTION (Bug Fixed)
+        // 🌟 MASTER LEDGER RENDER FUNCTION (Bug Fixed)
         function renderStaffLedgerSheets() {
             try {
-                // 🌟 DASHBOARD SYNC FIX: Ab Ledger hamesha Dashboard ke Date Filter se sync rahega
                 let selectedDateVal = getSafeValue('dashboard-date-filter'); 
                 let todayDateObj = new Date();
                 if(selectedDateVal && selectedDateVal.includes('-')) {
@@ -8099,8 +8212,6 @@
                 todayDateObj.setHours(0,0,0,0);
                 let currentTodayStr = formatSysDate(todayDateObj);
 
-                // 🌟 BUG FIX 1: "Midnight Auto-Wiper" (Fake Data Cleaner)
-                // Agar staff ne kal entry select ki par upload nahi kiya, toh 12 baje ke baad ye usko automatically reset kar dega.
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
                     let c = serverDb[m];
@@ -8118,7 +8229,6 @@
                 const con = document.getElementById('staff-cycle-list-zone'); 
                 let bf = getSafeValue('ledger-active-branch-select'); 
                 
-                // 🌟 STRICT STAFF SECURITY LOCK
                 if (currentLoggedInRole === 'staff' && currentlyLoggedInMobile) {
                     let staff = staffDb[currentlyLoggedInMobile];
                     if (!staff) {
@@ -8133,10 +8243,9 @@
                 
                 const searchQ = getSafeValue('ledger-search').toLowerCase();
 
-                // 🌟 BUG FIX 1: Cross-Tab Validator
                 let hasUnmarkedActiveTab = false; 
                 let hasUnmarkedOtherTab = false;
-                let readyToUploadCount = 0; // Ensures Day-End only clicks when there is data
+                let readyToUploadCount = 0;
 
                 Object.keys(serverDb).forEach(m => {
                     if (m === "SYSTEM_SETTINGS") return;
@@ -8157,7 +8266,6 @@
                         isClientDue = true; 
                     }
 
-                    // 🌟 BUG FIX 2: Allow rendering non-due clients IF they are Searched (For Advance Collection)
                     let matchesSearch = false;
                     if (searchQ) {
                         let safeName = (a.name || "").toString().toLowerCase();
@@ -8167,25 +8275,21 @@
                         }
                     }
 
-                    // 🚀 CRITICAL FIX: Day-End warning must check the WHOLE BRANCH, not just the selected Centre!
                     let isUniversallyDue = a.isApproved && (bf === "ALL" || a.branch === bf) && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0);
                     if (isUniversallyDue && !a.emiSettled && !(a.advancePaid > 0)) {
                         if (a.planType === currentActiveStaffTab) hasUnmarkedActiveTab = true;
                         else hasUnmarkedOtherTab = true;
                     }
 
-                    // 🚀 UX FIX: Agar Search kiya hai, toh Centre filter bypass kar do taaki client easily mil jaye!
-                            let matchCentre = matchesSearch ? true : (cf === "ALL" || !cf || a.center === cf);
-                            let isDueAndActive = a.isApproved && (bf === "ALL" || a.branch === bf) && matchCentre && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0);
+                    let matchCentre = matchesSearch ? true : (cf === "ALL" || !cf || a.center === cf);
+                    let isDueAndActive = a.isApproved && (bf === "ALL" || a.branch === bf) && matchCentre && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0);
 
-                            // Client tabhi dikhega jab wo Due ho, ya Search kiya ho, ya uski aaj ki entry mark ho chuki ho
-                            let shouldRenderClient = isDueAndActive || matchesSearch || a.emiSettled || (a.advancePaid > 0);
+                    let hasTransactionToday = a.transactions && a.transactions.some(tx => (tx.date === currentTodayStr || tx.collectedOn === currentTodayStr) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+                    let shouldRenderClient = isDueAndActive || matchesSearch || a.emiSettled || (a.advancePaid > 0) || hasTransactionToday;
 
-                            if (shouldRenderClient && a.status === "Active" && (bf === "ALL" || a.branch === bf) && matchCentre) {
-                        
-                        // 🚀 UX FIX: Agar Search kiya hai, toh Daily/Weekly Tab filter bhi bypass kar do!
+                    if (shouldRenderClient && (a.status === "Active" || hasTransactionToday) && (bf === "ALL" || a.branch === bf) && matchCentre) {
                         if (a.planType === currentActiveStaffTab || matchesSearch) {
-                            if (searchQ && !matchesSearch) return; // Skip if search doesn't match
+                            if (searchQ && !matchesSearch) return; 
                             
                             let bc = 'bg-slate-200 text-slate-600'; let bt = 'Pending';
                             if(a.emiSettled==='received' || a.emiSettled==='received_cash' || a.emiSettled==='received_upi') { bc = 'bg-emerald-100 text-emerald-800'; bt = a.emiSettled==='received_upi' ? 'UPI Received' : 'Cash Received'; }
@@ -8197,7 +8301,6 @@
                             
                             let activeEmiAmount = Math.min(a.outstanding || 0, a.cycleEmi || 0);
                             let activeOverdueAmount = a.overdue || 0;
-                            // 🌟 BUG FIX: Agar Mool (Principal) khatam ho gaya hai par Penalty bachi hai, toh usko collect karne do!
                             if (activeEmiAmount <= 0 && activeOverdueAmount > 0) {
                                 activeEmiAmount = activeOverdueAmount; 
                             }
@@ -8234,11 +8337,7 @@
                             let hybridBadge = a.isHybrid ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mt-1 inline-block">Hybrid Mode</span>` : '';
                             let crossTabBadge = (matchesSearch && a.planType !== currentActiveStaffTab) ? `<span class="bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded text-[8px] font-black uppercase mt-1 inline-block ml-1 border border-fuchsia-200">${a.planType}</span>` : '';
 
-                            // 🌟 SMART UI: Unmarked Pendency Banner Generation
                             let unmarkedBannerHtml = '';
-                            // 🌟 BUG FIX: Check if staff physically acted TODAY (collectedOn), even if clearing a past missed date!
-                            let hasTransactionToday = a.transactions && a.transactions.some(tx => (tx.date === currentTodayStr || tx.collectedOn === currentTodayStr) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
-                            
                             if (shouldRenderClient && a.outstanding > 0 && !a.emiSettled && !a.advancePaid && !hasTransactionToday && a.lastDayEndProcessed !== currentTodayStr) {
                                 let missedCount = 0;
                                 let tDateCheck = new Date(); tDateCheck.setHours(0,0,0,0);
@@ -8253,10 +8352,10 @@
                                 
                                 let pendencyAmt = Math.min(a.outstanding || 0, a.cycleEmi || 0) + (a.overdue || 0);
                                 unmarkedBannerHtml = `
-                                <div class="col-span-3 bg-amber-50 border border-amber-200 p-2.5 rounded-lg flex justify-between items-center shadow-inner mt-1 mb-1">
+                                <div class="col-span-full bg-amber-50 border border-amber-200 p-2.5 rounded-lg flex justify-between items-center shadow-inner mt-1 mb-1">
                                     <div class="flex items-center gap-2">
                                         <span class="text-amber-500 text-lg animate-pulse">⚠️</span>
-                                        <div>
+                                        <div class="text-left">
                                             <p class="text-[9px] font-black text-amber-800 uppercase tracking-widest leading-none">Unmarked Pendency</p>
                                             <p class="text-[8px] font-bold text-amber-600 uppercase mt-1 tracking-wider">${missedCount} Dates Missed | ₹${pendencyAmt}</p>
                                         </div>
@@ -8280,11 +8379,12 @@
                                         <p class="text-[8px] font-bold text-rose-500 uppercase bg-rose-50 px-1.5 py-0.5 rounded">Due: <span class="font-black">${a.nextEmiDate}</span></p>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2 py-2 border-y border-slate-100 text-center">
-                                    <div class="bg-slate-50 rounded-lg p-1.5"><span class="text-slate-400 font-bold text-[8px] uppercase tracking-widest block">Rem Bal</span><span class="font-black text-slate-800 text-xs">₹${(a.outstanding||0).toLocaleString()}</span></div>
-                                    ${a.overdue > 0 ? `<div class="bg-rose-50 rounded-lg p-1.5"><span class="text-rose-500 font-bold text-[8px] uppercase tracking-widest block">${a.partialOverdue ? 'Partial Due' : 'Overdue'}</span><span class="font-black text-rose-600 text-xs">₹${a.overdue.toLocaleString()}</span></div>` : `<div></div>`}
-                                    <div class="bg-blue-50 rounded-lg p-1.5"><span class="text-blue-500 font-bold text-[8px] uppercase tracking-widest block">EMI</span><span class="font-black text-blue-600 text-xs">₹${Math.min(a.outstanding || 0, a.cycleEmi || 0)}</span></div>
-                                    ${unmarkedBannerHtml}
+                                <div class="grid ${a.overdue > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 py-2 border-y border-slate-100 text-center">
+                                    <div class="bg-slate-50 rounded-lg p-1.5"><span class="text-slate-400 font-bold text-[7px] uppercase tracking-widest block">Bal</span><span class="font-black text-slate-800 text-xs">₹${(a.outstanding||0).toLocaleString()}</span></div>
+                                    <div class="bg-indigo-50 rounded-lg p-1.5"><span class="text-indigo-500 font-bold text-[7px] uppercase tracking-widest block">Paid EMI</span><span class="font-black text-indigo-700 text-xs">${a.emisPaidCount || 0}/${a.duration || 0}</span></div>
+                                    ${a.overdue > 0 ? `<div class="bg-rose-50 rounded-lg p-1.5"><span class="text-rose-500 font-bold text-[7px] uppercase tracking-widest block">${a.partialOverdue ? 'Partial' : 'Overdue'}</span><span class="font-black text-rose-600 text-xs">₹${a.overdue.toLocaleString()}</span></div>` : ``}
+                                    <div class="bg-blue-50 rounded-lg p-1.5"><span class="text-blue-500 font-bold text-[7px] uppercase tracking-widest block">EMI Amt</span><span class="font-black text-blue-600 text-xs">₹${Math.min(a.outstanding || 0, a.cycleEmi || 0)}</span></div>
+                                    ${unmarkedBannerHtml ? `<div class="col-span-full">${unmarkedBannerHtml}</div>` : ''}
                                 </div>
                                 <div class="flex">${aB}</div>
                             </div>`;
@@ -8299,10 +8399,8 @@
                     con.innerHTML = h;
                 }
 
-                // 🌟 BUG FIX 3: Fully Independent Button Logic with Bypass Clickability
                 if(btn) { 
-                    btn.disabled = false; // 🌟 Hamesha enable rahega taaki warning popup aa sake
-                    
+                    btn.disabled = false; 
                     if (hasUnmarkedActiveTab) {
                         btn.className = "btn-fluid w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-amber-500/30 transition-all cursor-pointer hover-scale pulse-glow"; 
                         btn.innerHTML = "⚠️ Mark All To Upload";
@@ -8325,9 +8423,407 @@
             } catch(e) { console.error("Render Ledger Error:", e); }
         }
 
+        
+        // 🌟 NAYA: Bypass Warning Modal System (For BOTH Daily & Weekly)
+async function runPendingUploadBypass(bypassWarnings) {
+    if (!bypassWarnings) {
+        let unmarkedCurrentTab = 0;
+        let unmarkedOtherTab = 0;
+        
+        Object.keys(serverDb).forEach(m => {
+            if (m === "SYSTEM_SETTINGS") return;
+            let c = serverDb[m];
+            if (!c || c.status === "Deleted" || c.branch !== staffBranch) return;
+            if (c.lastDayEndProcessed === todayStr) return;
+            
+            let isClientDue = false;
+            if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                let emiDateObj = parseSysDate(c.nextEmiDate);
+                if(todayDateObj >= emiDateObj) isClientDue = true;
+            } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                isClientDue = true; 
+            }
+
+            let isDueAndActive = c.isApproved && c.outstanding > 0 && c.status === "Active" && (isClientDue || c.overdue > 0);
+
+            if (isDueAndActive && !c.emiSettled && !(c.advancePaid > 0)) {
+                if (c.planType === currentActiveStaffTab) unmarkedCurrentTab++;
+                else unmarkedOtherTab++;
+            }
+        });
+
+        if (unmarkedCurrentTab > 0 || unmarkedOtherTab > 0) {
+            let msg = "";
+            if (unmarkedCurrentTab > 0) msg += `<p class="text-rose-600 font-black mb-2">⚠️️ Isi tab mein <span class="text-lg">${unmarkedCurrentTab} clients</span> unmarked hain.</p>`;
+            if (unmarkedOtherTab > 0) {
+                let other = currentActiveStaffTab === 'daily' ? 'Weekly' : 'Daily';
+                msg += `<p class="text-amber-600 font-black">⚠️ Dhyan dein: ${other} tab mein bhi <span class="text-lg">${unmarkedOtherTab} clients</span> chhut gaye hain!</p>`;
+            }
+            
+            let html = `
+                <div class="text-center p-6 relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl"></div>
+                    <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner animate-pulse">⚠️</div>
+                    <h3 class="text-lg font-black text-slate-900 uppercase tracking-widest mb-2">Unmarked Clients Found</h3>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-5 text-[10px] uppercase tracking-widest text-left shadow-inner">
+                        ${msg}
+                    </div>
+                    
+                    <p class="text-[10px] font-bold text-slate-500 mb-5 leading-relaxed bg-slate-100 p-2 rounded border border-slate-200">System strongly recommends completing all collection entries before Day-End to maintain 100% accuracy.</p>
+                    
+                    <div class="space-y-3 relative z-10">
+                        <button onclick="closeGlobalModal()" class="btn-fluid w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl text-[11px] uppercase shadow-md transition-colors hover-scale">🔙 Go Back & Fill Entries</button>
+                        <button onclick="closeGlobalModal(); runPendingUploadBypass(true)" class="btn-fluid w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black py-3.5 rounded-xl text-[10px] uppercase transition-colors">⚡ Bypass & Upload Anyway</button>
+                    </div>
+                </div>
+            `;
+            openGlobalModal(html);
+            return; 
+        }
+    }
+
+    // --- JAB BYPASS TRUE HOGA TOH YAHAN SE NORMAL UPLOAD SHURU HOGA ---
+    isSystemBusy = true; 
+    let btn = document.getElementById('upload-day-btn');
+    
+    try { // 👈 OUTER TRY START
+        if(btn) { 
+            btn.innerText = "Syncing Latest Cloud Data... ☁️";
+            btn.disabled = true; 
+            btn.classList.add('cursor-not-allowed', 'opacity-80');
+            btn.classList.remove('hover-scale', 'pulse-glow');
+        }
+        
+        await loadDataFromCloud(); 
+        if(btn) btn.innerText = "Processing Day-End... ⏳";
+
+        Object.keys(serverDb).forEach(m => {
+            if (m === "SYSTEM_SETTINGS") return;
+            let c = serverDb[m]; 
+            
+            if(!c || c.branch !== staffBranch || c.status !== 'Active') return; 
+            if(!c.transactions) c.transactions = [];
+            
+            let initialTxLength = c.transactions.length;
+            
+            let isClientDue = false;
+            if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                let emiDateObj = parseSysDate(c.nextEmiDate);
+                if(todayDateObj >= emiDateObj) isClientDue = true;
+            } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                isClientDue = true; 
+            }
+
+            let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+            if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
+
+            if (c.lastDayEndProcessed !== todayStr) {
+                if (c.emiSettled === 'bounce') {
+                    if (isClientDue) {
+                        let penaltyEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? (parseInt(c.phase1Emi)||0) : (parseInt(c.phase2Emi)||0)) : (parseInt(c.cycleEmi) || 1);
+                        penaltyEmi = Math.min(penaltyEmi, parseInt(c.outstanding) || 0); 
+                        c.overdue = (c.overdue || 0) + penaltyEmi;
+                        c.outstanding = (c.outstanding || 0) + penaltyEmi;
+                        c.transactions.push({ date: todayStr, amount: penaltyEmi, type: 'Bounced' });
+                        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
+                    } else {
+                        c.transactions.push({ date: todayStr, amount: 0, type: 'Missed Arrears' });
+                    }
+                }
+                else if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
+                    let paidAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+                    let amountLeftForEmi = paidAmt;
+                    
+                    if (c.overdue > 0) {
+                        let clearedOd = Math.min(c.overdue, amountLeftForEmi);
+                        c.overdue = Math.max(0, c.overdue - clearedOd);
+                        if (c.overdue === 0) c.partialOverdue = false;
+                        amountLeftForEmi -= clearedOd; 
+                    }
+
+                    c.outstanding = Math.max(0, (c.outstanding || 0) - paidAmt);
+                    c.lastPaymentDate = todayStr;
+                    
+                    let txType = 'Received';
+                    let txMode = 'cash';
+                    if (c.emiSettled === 'online_paid' || c.emiSettled === 'received_upi') { 
+                        txType = 'Online App'; 
+                        txMode = 'upi'; 
+                    }
+
+                    let emiCounterStr = "";
+                    let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                    
+                    if (isClientDue && paidAmt >= currentEmiToUse) {
+                        let nextEmiCount = (c.emisPaidCount || 0) + 1;
+                        emiCounterStr = `🔖 Kist ${nextEmiCount}/${c.duration}`;
+                    }
+
+                    c.transactions.push({
+                        date: todayStr,
+                        timestamp: c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                        amount: paidAmt,
+                        type: txType,
+                        mode: txMode,
+                        emiTag: emiCounterStr
+                    });
+
+                    if (isClientDue) {
+                        if (paidAmt >= currentEmiToUse) {
+                            c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                            c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+                        }
+                        if (amountLeftForEmi < currentEmiToUse) {
+                            let shortfall = currentEmiToUse - amountLeftForEmi;
+                            let trueShortfall = Math.min(shortfall, c.outstanding || 0);
+                            if (trueShortfall > 0) {
+                                c.overdue = (c.overdue || 0) + trueShortfall;
+                                c.partialOverdue = true;
+                                let tsStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                                c.transactions.push({ date: todayStr, timestamp: tsStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
+                            }
+                        }
+                    }
+                }
+                else if (c.advancePaid > 0) { 
+                    let actualAdv = Math.min(c.outstanding || 0, c.advancePaid); 
+                    let remainingAdv = actualAdv;
+
+                    if (c.overdue > 0) {
+                        let clearedOd = Math.min(c.overdue, remainingAdv);
+                        c.overdue = Math.max(0, c.overdue - clearedOd);
+                        if (c.overdue === 0) c.partialOverdue = false;
+                        remainingAdv -= clearedOd; 
+                    }
+
+                    c.outstanding = Math.max(0, (c.outstanding || 0) - actualAdv);
+                    c.lastPaymentDate = todayStr;
+                    
+                    let advMode = c.customPayMode || 'cash';
+                    c.transactions.push({ date: todayStr, amount: actualAdv, type: 'Custom Pay', mode: advMode });
+
+                    while (remainingAdv > 0) {
+                        let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                        if (!currentPhaseEmi || currentPhaseEmi <= 0) break;
+
+                        if (remainingAdv >= currentPhaseEmi) {
+                            remainingAdv -= currentPhaseEmi;
+                            c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+                            c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+
+                            let emiCounterStr = `${c.emisPaidCount}/${c.duration}`;
+                            let actStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                            
+                            c.transactions.push({
+                                date: todayStr, timestamp: actStamp, amount: currentPhaseEmi, type: '🔄 Auto-Cleared from Advance', mode: 'system', by: 'System', emiTag: `🔖 Kist ${emiCounterStr}`
+                            });
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if (c.status === "Active" && c.outstanding > 0 && isClientDue) {
+                        let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
+                        currentPhaseEmi = Math.min(currentPhaseEmi, (c.outstanding || 0) + remainingAdv);
+
+                        if (remainingAdv < currentPhaseEmi) {
+                            let shortfall = currentPhaseEmi - remainingAdv;
+                            let trueShortfall = Math.min(shortfall, c.outstanding || 0);
+                            if (trueShortfall > 0) {
+                                c.overdue = (c.overdue || 0) + trueShortfall;
+                                c.partialOverdue = true;
+                                let actStamp = c.tempActionTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                                c.transactions.push({ date: todayStr, timestamp: actStamp, amount: trueShortfall, type: 'Shortfall Penalty' });
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(c.isHybrid) {
+                c.cycleEmi = ((c.emisPaidCount || 0) < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
+            }
+            
+            if((c.outstanding <= 0 || c.emisPaidCount >= c.duration) && c.status === "Active") { 
+                c.outstanding = 0; 
+                c.overdue = 0; 
+                c.status = "Deactive"; 
+                c.nextEmiDate = "Completed"; 
+                
+                if (!c.pastLoans) c.pastLoans = [];
+                let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
+                if (!alreadyArchived) {
+                    c.pastLoans.push({
+                        id: c.id, planName: c.planName, principal: c.principal, 
+                        totalPayable: c.totalPayable, transactions: JSON.parse(JSON.stringify(c.transactions || []))
+                    });
+                }
+            }
+
+            for (let i = initialTxLength; i < c.transactions.length; i++) {
+                if (!c.transactions[i].by) {
+                    c.transactions[i].by = c.lockedBy || (currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'System'));
+                }
+            }
+
+            c.lastDayEndProcessed = todayStr;
+            c.lastUpdated = Date.now(); 
+        });
+
+        let safeDatabaseBackup = JSON.parse(JSON.stringify(serverDb));
+        await localforage.setItem('opas_local_db', serverDb);
+
+        let bConfig = serverDb["SYSTEM_SETTINGS"].bonusConfig || { enabled: true, minCollectionPct: 85, bonusAmount: 80, targetMultiplier: 1.0 };
+        let branchCollected = 0; let branchExpected = 0; let branchDisbursed = 0;
+        
+        Object.keys(serverDb).forEach(m => {
+            if(m==="SYSTEM_SETTINGS") return;
+            let c = serverDb[m];
+            if(!c || c.branch !== staffBranch) return;
+
+            if(c.isApproved && c.approvalDate === todayStr) branchDisbursed += (c.principal||0);
+            if(c.transactions) {
+                c.transactions.forEach(t => {
+                    let isPhysicallyCollectedToday = (t.collectedOn === todayStr) || (!t.collectedOn && t.date === todayStr);
+                    let isValidCashflow = ['Received', 'Online App', 'Advance', 'Custom Pay', 'Advance (Pre-Settle)', 'Direct Settle'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
+                    if(isPhysicallyCollectedToday && isValidCashflow) branchCollected += t.amount;
+                });
+            }
+            if(c.status === "Active") {
+                let isDue = false;
+                if(c.nextEmiDate && c.nextEmiDate !== "Completed" && c.nextEmiDate !== "N/A") {
+                    let emiDateObj = parseSysDate(c.nextEmiDate);
+                    if(todayDateObj >= emiDateObj) isDue = true;
+                } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
+                    isDue = true; 
+                }
+                if(isDue || c.overdue > 0) { branchExpected += Math.min(c.outstanding || 0, (c.cycleEmi || 0) + (c.overdue || 0)); }
+            }
+        });
+
+        let bStats = serverDb["SYSTEM_SETTINGS"].branchStats || {};
+        
+        let yCollected = 0;
+        for (let back = 1; back <= 3; back++) {
+            let yDate = new Date(); yDate.setDate(yDate.getDate() - back);
+            let yStr = formatSysDate(yDate);
+            if (bStats[staffBranch] && bStats[staffBranch][yStr] && bStats[staffBranch][yStr].collected > 0) {
+                yCollected = bStats[staffBranch][yStr].collected;
+                break;
+            }
+        }
+        
+        let rawMul = bConfig.targetMultiplier !== undefined ? bConfig.targetMultiplier.toString().trim() : "1.0";
+        let validMultiplier = (rawMul === "" || isNaN(rawMul)) ? 1.0 : parseFloat(rawMul);
+        
+        let todayTarget = Math.round((yCollected * validMultiplier) / 500) * 500;
+        if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
+        if (todayTarget === 0 && bConfig.enabled) todayTarget = 10000;
+        
+        if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
+        if (todayTarget === 0 && bConfig.enabled) todayTarget = 500;
+
+        let colPct = branchExpected > 0 ? (branchCollected / branchExpected) * 100 : (branchCollected > 0 ? 100 : 0);
+        let bonusAchieved = bConfig.enabled && (colPct >= bConfig.minCollectionPct) && (branchDisbursed >= todayTarget);
+
+        if(!serverDb["SYSTEM_SETTINGS"].branchStats) serverDb["SYSTEM_SETTINGS"].branchStats = {};
+        if(!serverDb["SYSTEM_SETTINGS"].branchStats[staffBranch]) serverDb["SYSTEM_SETTINGS"].branchStats[staffBranch] = {};
+        
+        serverDb["SYSTEM_SETTINGS"].branchStats[staffBranch][todayStr] = {
+            expected: branchExpected, collected: branchCollected, disbursed: branchDisbursed, 
+            target: todayTarget, colPct: colPct, bonusAchieved: bonusAchieved
+        };
+
+        let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch && serverDb[k].status === 'Active');
+        if(btn) btn.innerText = `Syncing Bulk Data... ☁️`;
+        
+        Object.keys(serverDb).forEach(m => {
+            if (serverDb[m] && serverDb[m].lastDayEndProcessed === todayStr && serverDb[m].branch === staffBranch) {
+                serverDb[m].advancePaid = 0; 
+                serverDb[m].emiSettled = null;
+            }
+        });
+            
+        try { // 👈 INNER TRY START (API CALL)
+            const token = localStorage.getItem('opas_jwt_token');
+            if (!token || token === 'virtual_device_token_active' || token === 'offline_mode_token_active') {
+                throw new Error("Aapne subah Offline mode mein app shuru kiya tha. Kripya Logout karke ek baar Online Login karein.");
+            }
+
+            let bulkPayload = keys.map(k => ({ mobile: k, data: serverDb[k] }));
+            const CHUNK_SIZE = 50;
+            
+            for (let i = 0; i < bulkPayload.length; i += CHUNK_SIZE) {
+                let chunk = bulkPayload.slice(i, i + CHUNK_SIZE);
+                if (btn) btn.innerText = `Syncing Batch ${Math.ceil((i+1)/CHUNK_SIZE)} of ${Math.ceil(bulkPayload.length/CHUNK_SIZE)}... ☁️`;
+                
+                let res = await fetch(API_URL + '/bulk', {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ clients: chunk })
+                });
+                
+                if (!res.ok) {
+                    if (res.status === 413) throw new Error("Data pack too large. Contact Admin.");
+                    if (res.status === 502 || res.status === 504) throw new Error("Server is waking up. Please retry.");
+                    throw new Error(`Server returned error ${res.status}`);
+                }
+            }
+            
+            await localforage.setItem('opas_local_db', serverDb);
+            await saveSystemSettings(); 
+
+        } catch(e) { // 👈 INNER CATCH (ROLLBACK)
+            serverDb = safeDatabaseBackup;
+            await localforage.setItem('opas_local_db', serverDb);
+            
+            if (serverDb["SYSTEM_SETTINGS"]) {
+                branchList = serverDb["SYSTEM_SETTINGS"].branches || branchList;
+                centreList = serverDb["SYSTEM_SETTINGS"].centres || centreList;
+                staffDb = serverDb["SYSTEM_SETTINGS"].staff || staffDb;
+                loanPlans = serverDb["SYSTEM_SETTINGS"].loanPlans || loanPlans;
+            }
+            
+            isSystemBusy = false; 
+            console.error(e);
+            if(btn) { 
+                btn.disabled = false; 
+                btn.className = "btn-fluid w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-rose-600/30 transition-all pulse-glow cursor-pointer hover-scale";
+                btn.innerHTML = "Retry Upload ⚠️"; 
+            }
+            alert("Network Error! Day-End upload fail ho gaya. Aapka data safe hai, clients gayab nahi honge.");
+            renderStaffLedgerSheets(); 
+            return;
+        } // 👈 INNER CATCH END
+
+        showNotification('Day-End Synced ☁️', "Ledger uploaded & Synced to Cloud Successfully!", '✅');
+        refreshHeadDashboardStats(); 
+        renderStaffLedgerSheets();
+        
+        if(btn) { 
+            btn.className = "btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20 transition-all pulse-glow cursor-pointer hover-scale"; 
+            btn.innerHTML = "Upload Day-End 📤";
+            btn.disabled = false; 
+        }
+        isSystemBusy = false; 
+    } catch(e) { // 👈 OUTER CATCH (GLOBAL ERROR)
+        isSystemBusy = false; 
+        console.error(e);
+        if(btn) { 
+            btn.disabled = false; 
+            btn.className = "btn-fluid w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest mt-4 shadow-lg shadow-slate-900/20 transition-all pulse-glow cursor-pointer hover-scale";
+            btn.innerHTML = "Retry Upload ⚠️"; 
+        }
+        alert("Upload mein error aaya! Network check karke dobara try karein.");
+    } // 👈 OUTER CATCH END
+}
+
+        // =========================================================================
+        // VARIOUS OTHER FIXES
+        // =========================================================================
         async function uploadDayEndReport(bypassWarnings = false) {
             if (isSystemBusy) { 
-                // 🌟 UX FIX: Native Alert hata diya gaya hai. Ab khubsurat Toast aayega jo kaam nahi rokta!
                 showNotification('Sync Processing', 'Pichla data cloud par save ho raha hai. Bas 2-3 second rukiye...', '⏳'); 
                 return; 
             }
@@ -8344,13 +8840,13 @@
             }
 
             // 🛡️ CRITICAL ADMIN BUG FIX: Block Day-End for "ALL" Branches
-                    if (currentLoggedInRole === 'head' && (!staffBranch || staffBranch === 'ALL')) {
-                        showNotification('Action Blocked ⛔', "Admin Warning: Ek sath sabhi branches ka Day-End nahi kar sakte. Kripya Dropdown se koi ek specific Branch select karein.", '⚠️');
-                        return;
-                    }
+            if (currentLoggedInRole === 'head' && (!staffBranch || staffBranch === 'ALL')) {
+                showNotification('Action Blocked ⛔', "Admin Warning: Ek sath sabhi branches ka Day-End nahi kar sakte. Kripya Dropdown se koi ek specific Branch select karein.", '⚠️');
+                return;
+            }
 
-                    // 🌟 NAYA: Bypass Warning Modal System (For BOTH Daily & Weekly)
-                    if (!bypassWarnings) {
+            // 🌟 NAYA: Bypass Warning Modal System (For BOTH Daily & Weekly)
+            if (!bypassWarnings) {
                 let unmarkedCurrentTab = 0;
                 let unmarkedOtherTab = 0;
                 
@@ -8405,7 +8901,7 @@
                         </div>
                     `;
                     openGlobalModal(html);
-                    return; // 🛑 Yahan stop ho jayega aur popup ka wait karega
+                    return; 
                 }
             }
 
@@ -8428,7 +8924,7 @@
                     let c = serverDb[m]; 
                     
                     // Ek hi button se saare active due loans process ho jayenge
-                    if(!c || c.branch !== staffBranch || c.status !== 'Active') return; // 🚨 FIX 2A: Zombie Day-End Blocked
+                    if(!c || c.branch !== staffBranch || c.status !== 'Active') return; 
                     
                     if(!c.transactions) c.transactions = [];
                     
@@ -8443,7 +8939,7 @@
                     }
 
                     // 🛡️ CRITICAL FIX: Added tx.type existence check to prevent 'Cannot read properties of undefined' crash
-                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
                     if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
                     if (c.lastDayEndProcessed !== todayStr) {
@@ -8455,10 +8951,8 @@
                                 
                                 c.overdue = (c.overdue || 0) + penaltyEmi;
                                 // 🚨 FATAL FINANCIAL FIX: Agar Overdue badh raha hai, toh Total Debt (Outstanding) bhi badhna zaroori hai! 
-                                // Warna client next time penalty pay karega toh uska main Mool (Principal) kam ho jayega aur Company ko loss hoga!
                                 c.outstanding = (c.outstanding || 0) + penaltyEmi;
                                 
-                                // 🌟 YAHAN THEEK KIYA: Amount mein 'c.cycleEmi' ki jagah 'penaltyEmi' aayega
                                 c.transactions.push({ date: todayStr, amount: penaltyEmi, type: 'Bounced' });
                                 
                                 c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate); 
@@ -8469,15 +8963,13 @@
                          
                         else if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
                             let paidAmt = Math.min(c.outstanding || 0, c.cycleEmi || 0);
-
-                            // 🌟 ROOT PROBLEM FIX: Fund Splitting (Overdue first, then Current EMI)
                             let amountLeftForEmi = paidAmt;
                             
                             if (c.overdue > 0) {
                                 let clearedOd = Math.min(c.overdue, amountLeftForEmi);
                                 c.overdue = Math.max(0, c.overdue - clearedOd);
                                 if (c.overdue === 0) c.partialOverdue = false;
-                                amountLeftForEmi -= clearedOd; // Deduct used funds!
+                                amountLeftForEmi -= clearedOd; 
                             }
 
                             c.outstanding = Math.max(0, (c.outstanding || 0) - paidAmt);
@@ -8493,7 +8985,7 @@
                             let emiCounterStr = "";
                             let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
                             
-                            if (isClientDue && amountLeftForEmi >= currentEmiToUse) {
+                            if (isClientDue && paidAmt >= currentEmiToUse) {
                                 let nextEmiCount = (c.emisPaidCount || 0) + 1;
                                 emiCounterStr = `🔖 Kist ${nextEmiCount}/${c.duration}`;
                             }
@@ -8508,11 +9000,12 @@
                             });
 
                             if (isClientDue) {
-                                if (amountLeftForEmi >= currentEmiToUse) {
+                                if (paidAmt >= currentEmiToUse) {
                                     c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
                                     c.emisPaidCount = (c.emisPaidCount || 0) + 1;
-                                } else {
-                                    // Shortfall Penalty: Agar overdue clear karne ke baad EMI ka paisa nahi bacha
+                                }
+                                
+                                if (amountLeftForEmi < currentEmiToUse) {
                                     let shortfall = currentEmiToUse - amountLeftForEmi;
                                     let trueShortfall = Math.min(shortfall, c.outstanding || 0);
                                     if (trueShortfall > 0) {
@@ -8525,20 +9018,16 @@
                             }
                         }
                         else if (c.advancePaid > 0) { 
-                            // 🌟 FATAL FINANCIAL BUG FIX: "The Advance Blackhole" Preventer
-                            // Overdue is just an arrear marker, NOT an extra fee. So Total Debt is simply Outstanding!
                             let actualAdv = Math.min(c.outstanding || 0, c.advancePaid); 
                             let remainingAdv = actualAdv;
 
-                            // 🌟 CRITICAL MATH FIX: Split funds before processing loops!
                             if (c.overdue > 0) {
                                 let clearedOd = Math.min(c.overdue, remainingAdv);
                                 c.overdue = Math.max(0, c.overdue - clearedOd);
                                 if (c.overdue === 0) c.partialOverdue = false;
-                                remainingAdv -= clearedOd; // Deduct used funds!
+                                remainingAdv -= clearedOd; 
                             }
 
-                            // Seedha poora paisa Mool (Outstanding) se katega!
                             c.outstanding = Math.max(0, (c.outstanding || 0) - actualAdv);
                             c.lastPaymentDate = todayStr;
                             
@@ -8571,7 +9060,6 @@
                                 }
                             }
 
-                            // 🚨 FATAL FINANCIAL FIX: "The Advance Blackhole"
                             if (c.status === "Active" && c.outstanding > 0 && isClientDue) {
                                 let currentPhaseEmi = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
                                 currentPhaseEmi = Math.min(currentPhaseEmi, (c.outstanding || 0) + remainingAdv);
@@ -8587,20 +9075,18 @@
                                     }
                                 }
                             }
-                        }
+                        } // 👈 FIX 1: MISSING BRACKET (advancePaid wala close ho gaya)
 
                         if(c.isHybrid) {
                             c.cycleEmi = ((c.emisPaidCount || 0) < c.phase1Days) ? c.phase1Emi : c.phase2Emi;
                         }
                         
-                        // 🌟 FINAL DEACTIVATION & ARCHIVE LOGIC (Fix: Account properly closes)
                         if((c.outstanding <= 0 || c.emisPaidCount >= c.duration) && c.status === "Active") { 
                             c.outstanding = 0; 
-                            c.overdue = 0; // Clear any residual flags
+                            c.overdue = 0; 
                             c.status = "Deactive"; 
                             c.nextEmiDate = "Completed"; 
                             
-                            // 🚨 CRITICAL FIX: Archive naturally completed loans! Without this, their entire history vanishes upon renewal.
                             if (!c.pastLoans) c.pastLoans = [];
                             let alreadyArchived = c.pastLoans.some(old => old.id === c.id);
                             if (!alreadyArchived) {
@@ -8610,16 +9096,16 @@
                                 });
                             }
                         }
-                    } 
 
-                    for (let i = initialTxLength; i < c.transactions.length; i++) {
-                        if (!c.transactions[i].by) {
-                            c.transactions[i].by = c.lockedBy || (currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'System'));
+                        for (let i = initialTxLength; i < c.transactions.length; i++) {
+                            if (!c.transactions[i].by) {
+                                c.transactions[i].by = c.lockedBy || (currentLoggedInRole === 'head' ? 'Admin' : (staffDb[localStorage.getItem('opas_sess_id')]?.name || 'System'));
+                            }
                         }
-                    }
 
-                    c.lastDayEndProcessed = todayStr;
-                    c.lastUpdated = Date.now(); 
+                        c.lastDayEndProcessed = todayStr;
+                        c.lastUpdated = Date.now();
+                    } // 👈 FIX 2: MISSING BRACKET (lastDayEndProcessed wala close ho gaya)
                 });
 
                 // 🚨 THE CRITICAL BUG FIX: Create a 100% clone of the Database BEFORE making any changes. 
@@ -8678,7 +9164,7 @@
                 let rawMul = bConfig.targetMultiplier !== undefined ? bConfig.targetMultiplier.toString().trim() : "1.0";
                 let validMultiplier = (rawMul === "" || isNaN(rawMul)) ? 1.0 : parseFloat(rawMul);
                 
-                // 🛡️ ATOM-LEVEL FIX 2: Agar kal ki collection sirf ₹200 thi, toh rounding usko 0 bana dega, aur system fallback karke Staff ko 10,000 ka target de dega! (Gamification Flaw). Isko minimum 500 par lock kiya hai.
+                // 🛡 ATOM-LEVEL FIX 2: Agar kal ki collection sirf ₹200 thi, toh rounding usko 0 bana dega, aur system fallback karke Staff ko 10,000 ka target de dega! (Gamification Flaw). Isko minimum 500 par lock kiya hai.
                 let todayTarget = Math.round((yCollected * validMultiplier) / 500) * 500;
                 if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
                 if (todayTarget === 0 && bConfig.enabled) todayTarget = 10000;
@@ -8714,7 +9200,7 @@
                     try {
                         const token = localStorage.getItem('opas_jwt_token');
                         
-                        // 🛡️ OFFLINE TOKEN FIX: Agar staff ne subah offline login kiya tha, toh asali cloud token chahiye!
+                        // 🛡 OFFLINE TOKEN FIX: Agar staff ne subah offline login kiya tha, toh asali cloud token chahiye!
                         if (!token || token === 'virtual_device_token_active' || token === 'offline_mode_token_active') {
                             throw new Error("Aapne subah Offline mode mein app shuru kiya tha. Kripya Logout karke ek baar Online (Internet chalu karke) wapas Login karein, taaki asali security token mil sake.\n\n(Aapka aaj ka kaam Local Memory mein 100% SAFE hai, delete nahi hoga!)");
                         }
@@ -8795,15 +9281,12 @@
                     btn.innerHTML = "Retry Upload ⚠️"; 
                 }
                 alert("Upload mein error aaya! Network check karke dobara try karein.");
-            }
         }
+    }
 
-        // =========================================================================
-        // VARIOUS OTHER FIXES
-        // =========================================================================
-        async function executeLoanRenewalSubmission(event) {
-            let btn = event ? (event.currentTarget || event.target) : null;
-            let oldText = btn ? btn.innerText : "Inject Renewal Profile";
+    async function executeLoanRenewalSubmission(event) {
+        let btn = event ? (event.currentTarget || event.target) : null;
+        let oldText = btn ? btn.innerText : "Inject Renewal Profile";
             
             try {
                 const m = getSafeValue('renew-client-mobile-select'); const planId = getSafeValue('renew-loan-plan-select'); 
@@ -12630,6 +13113,7 @@
 
         // Prevent Memory Leak of QR Timer
 
+    
     </script>
 </body>
 </html>
