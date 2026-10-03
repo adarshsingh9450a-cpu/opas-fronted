@@ -2617,7 +2617,8 @@
 
                 // If corrupted (0 balance but expected > 0 and not settled manually)
                 if ((c.outstanding === 0 || c.outstanding < expectedOut) && expectedOut > 0 && !hasSettle) {
-                    let hasCorruptedEdit = c.transactions && c.transactions.some(t => t.type.includes('System Reduction (Edit)'));
+                    // 🛡️ FIX: Auto-Healer should NOT trigger on legitimate Admin Edits.
+                    let hasCorruptedEdit = c.transactions && c.transactions.some(t => t.type === 'Fake System Reduction' || t.type === 'Double Deduction Bug');
                     
                     if (hasCorruptedEdit) {
                         c.outstanding = expectedOut;
@@ -4668,7 +4669,8 @@
             let activeOutstanding = pObj.totalPayable;
 
             // 🌟 THE ROOT BUG FIX: Only apply genuine waivers (Agar plan fresh nahi hai tabhi waiver minus hoga)
-            if (c.transactions && !newPlanId && typedPaidEmis > 0) {
+            // 🛡️ BUG 16 FIX: Removed 'typedPaidEmis > 0' condition so Admin can waive penalties even on Zero-Day defaults!
+            if (c.transactions && !newPlanId) {
                 c.transactions.forEach(t => {
                     if (t.type.includes('Waived') && !t.type.includes('Reduction')) activeOutstanding -= t.amount;
                 });
@@ -5155,7 +5157,8 @@
                 let paidToday = (c.lastPaymentDate === todayStr) || 
                                 (c.advancePaid > 0) || 
                                 (['received', 'received_cash', 'received_upi', 'online_paid', 'bounce'].includes(c.emiSettled)) ||
-                                (c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || tx.date === todayStr) && (['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type) || tx.type.includes('Late Mark'))));
+                                // 🛡️ BUG 14 FIX: 'Bounced' explicitly added so Dashboard and Ledger match perfectly.
+                                (c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || tx.date === todayStr) && (['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle'].includes(tx.type) || tx.type.includes('Late Mark'))));
                 
                 if (paidToday || c.outstanding <= 0) return;
 
@@ -5544,7 +5547,7 @@
                         let originalOut = (c.outstanding || 0) + amountLeftForEmi;
                         currentEmiToUse = Math.min(currentEmiToUse, originalOut);
 
-                        let isFullEmiForTag = (originalAmt >= currentEmiToUse);
+                        let isFullEmiForTag = (amountLeftForEmi >= currentEmiToUse);
                         let txType = isFullEmiForTag ? 'Received (Late Mark)' : 'Custom Pay (Late Mark)';
                         
                         if (isFullEmiForTag) {
@@ -6155,7 +6158,7 @@
                                     qualifiesForUnmarked = true;
                                     pendingAmt = Math.min(f.outstanding||0, f.cycleEmi||0);
                                 } else if (isExactToday && !isDayEndDoneToday) { // 🚨 FIX: Warn BEFORE Day-End, not after!
-                                    let hasTxToday = f.transactions && f.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type));
+                                    let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type));
                                     if (!hasTxToday && !f.emiSettled && !(f.advancePaid > 0)) {
                                         qualifiesForUnmarked = true;
                                         pendingAmt = Math.min(f.outstanding||0, f.cycleEmi||0);
@@ -6320,8 +6323,9 @@
                     let netCashflow = headCollectedToday - headDisbursedToday;        
                     let parPercentage = totalOut > 0 ? ((totalNpa / totalOut) * 100).toFixed(1) : 0;
                     
-                    // BUG FIX: Strict number handling before string conversion
-                    let rawEfficiency = expectedToday > 0 ? ((headCollectedToday / expectedToday) * 100) : (headCollectedToday > 0 ? 100 : 0);
+                    // 🛡️ TRUE EFFICIENCY FIX: Total Demand = Unpaid (Expected) + Already Paid (Collected)
+                    let trueExpectedGlobal = expectedToday + headCollectedToday;
+                    let rawEfficiency = trueExpectedGlobal > 0 ? ((headCollectedToday / trueExpectedGlobal) * 100) : (headCollectedToday > 0 ? 100 : 0);
                     if(rawEfficiency > 100) rawEfficiency = 100; 
                     let collectionEfficiency = rawEfficiency.toFixed(1);
 
@@ -6526,7 +6530,8 @@
                         }
                     });
 
-                    let colPct = sExpected > 0 ? (cT / sExpected) * 100 : (cT > 0 ? 100 : 0);
+                    let trueStaffExpected = sExpected + cT;
+                    let colPct = trueStaffExpected > 0 ? (cT / trueStaffExpected) * 100 : (cT > 0 ? 100 : 0);
                     if (colPct > 100) colPct = 100;
                     let disPct = todayTarget > 0 ? (dT / todayTarget) * 100 : (dT > 0 ? 100 : 0);
                     if (disPct > 100) disPct = 100;
@@ -6584,6 +6589,8 @@
             // 🌟 STRICT ADMIN LOCK
             if (currentLoggedInRole !== 'head') { alert("⛔ UNAUTHORIZED: Sirf Admin/Head hi approval de sakte hain."); return; }
             try {
+                // 🛡️ BUG 11 FIX: Fetch latest data before approving to prevent overwriting active staff collections
+                await loadDataFromCloud();
                 let c = serverDb[mobile];
                 if(!c || c.isApproved || c.status === "Active" || c.status === "Pending NEFT") return; 
                 
@@ -6640,6 +6647,8 @@
             // 🌟 STRICT ADMIN LOCK
             if (currentLoggedInRole !== 'head') { alert("⛔ UNAUTHORIZED: Sirf Admin/Head hi NEFT verify kar sakte hain."); return; }
             try {
+                // 🛡️ BUG 11 FIX: Concurrency Lock. Fetch latest before NEFT marker.
+                await loadDataFromCloud();
                 let c = serverDb[mobile];
                 if(!c || c.status !== "Pending NEFT") return; 
                 
@@ -6749,7 +6758,7 @@
                     if (c.overdue > 0 || isPastDue) {
                         qualifiesForUnmarked = true;
                     } else if (isExactToday && isDayEndDoneToday) {
-                        let hasTxToday = c.transactions && c.transactions.some(tx => tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+                        let hasTxToday = c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
                         if (!hasTxToday && !c.emiSettled && c.advancePaid <= 0) {
                             qualifiesForUnmarked = true;
                         }
@@ -8068,9 +8077,10 @@
             
             // 🌟 FATAL FINANCIAL BUG FIX: Double-Charging Overcharge Preventer
             // Overdue is part of Outstanding. Unko aapas mein jodne se client ko double charge lag raha tha!
-            let totalRemainingDebt = serverDb[mobile].outstanding || 0;
+            let safeAdv = parseInt(serverDb[mobile].advancePaid) || 0;
+            let totalRemainingDebt = (parseInt(serverDb[mobile].outstanding) || 0) - safeAdv;
             if (amt > totalRemainingDebt) {
-                alert(`⚠️ Overpayment Blocked! Client par total ₹${totalRemainingDebt} ka final balance due hai. Aap isse zyada jama nahi kar sakte.`);
+                alert(`⚠️ Overpayment Blocked! Client ka remaining balance sirf ₹${totalRemainingDebt} bacha hai (₹${safeAdv} already advance me hain). Aap isse zyada jama nahi kar sakte.`);
                 return;
             }
 
@@ -8515,7 +8525,9 @@ async function runPendingUploadBypass(bypassWarnings) {
                 isClientDue = true; 
             }
 
-            let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+            // 🛡️ BUG 15 FIX: .replace(' (Late Mark)', '') strips the suffix so exact match array works perfectly!
+let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
+            
             if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
             if (c.lastDayEndProcessed !== todayStr) {
@@ -8570,7 +8582,7 @@ async function runPendingUploadBypass(bypassWarnings) {
                     });
 
                     if (isClientDue) {
-                        if (paidAmt >= currentEmiToUse) {
+                        if (amountLeftForEmi >= currentEmiToUse) {
                             c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
                             c.emisPaidCount = (c.emisPaidCount || 0) + 1;
                         }
@@ -8718,11 +8730,9 @@ async function runPendingUploadBypass(bypassWarnings) {
         let validMultiplier = (rawMul === "" || isNaN(rawMul)) ? 1.0 : parseFloat(rawMul);
         
         let todayTarget = Math.round((yCollected * validMultiplier) / 500) * 500;
-        if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
-        if (todayTarget === 0 && bConfig.enabled) todayTarget = 10000;
-        
-        if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
-        if (todayTarget === 0 && bConfig.enabled) todayTarget = 500;
+        // 🛡️ FIX: If Admin explicitly set multiplier to 0, respect it! Don't force minimums.
+        if (todayTarget === 0 && validMultiplier > 0 && yCollected > 0) todayTarget = 500;
+        if (todayTarget === 0 && validMultiplier > 0 && bConfig.enabled) todayTarget = 10000;
 
         let colPct = branchExpected > 0 ? (branchCollected / branchExpected) * 100 : (branchCollected > 0 ? 100 : 0);
         let bonusAchieved = bConfig.enabled && (colPct >= bConfig.minCollectionPct) && (branchDisbursed >= todayTarget);
@@ -8939,7 +8949,7 @@ async function runPendingUploadBypass(bypassWarnings) {
                     }
 
                     // 🛡️ CRITICAL FIX: Added tx.type existence check to prevent 'Cannot read properties of undefined' crash
-                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
+                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
                     if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
                     if (c.lastDayEndProcessed !== todayStr) {
@@ -9173,7 +9183,8 @@ async function runPendingUploadBypass(bypassWarnings) {
                 if (todayTarget === 0 && yCollected > 0) todayTarget = 500;
                 if (todayTarget === 0 && bConfig.enabled) todayTarget = 500;
 
-                let colPct = branchExpected > 0 ? (branchCollected / branchExpected) * 100 : (branchCollected > 0 ? 100 : 0);
+                let trueBranchExpected = branchExpected + branchCollected;
+                let colPct = trueBranchExpected > 0 ? (branchCollected / trueBranchExpected) * 100 : (branchCollected > 0 ? 100 : 0);
                 let bonusAchieved = bConfig.enabled && (colPct >= bConfig.minCollectionPct) && (branchDisbursed >= todayTarget);
 
                 if(!serverDb["SYSTEM_SETTINGS"].branchStats) serverDb["SYSTEM_SETTINGS"].branchStats = {};
@@ -10139,7 +10150,7 @@ async function runPendingUploadBypass(bypassWarnings) {
                     title = "Today's Advance / Custom Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if((t.type === 'Advance' || t.type === 'Custom Pay') && t.date === todayStr) { match = true; amount += t.amount; trackMode(t); }
+                        if((t.type === 'Advance' || t.type === 'Custom Pay') && (t.collectedOn === todayStr || (!t.collectedOn && t.date === todayStr))) { match = true; amount += t.amount; trackMode(t); }    
                         });
                     }
                     if (!isDayEndDoneToday && c.advancePaid > 0) {
@@ -10149,21 +10160,23 @@ async function runPendingUploadBypass(bypassWarnings) {
                     title = "Month's Advance / Custom Collections";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if((t.type === 'Advance' || t.type === 'Custom Pay') && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
+                            let activeDateStr = t.collectedOn || t.date;
+if((t.type === 'Advance' || t.type === 'Custom Pay') && activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
                         });
                     }
                 } else if (type === 'settle') {
                     title = "Today's Direct Settlements";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(t.type === 'Direct Settle' && t.date === todayStr) { match = true; amount += t.amount; trackMode(t); }
+                           if(t.type === 'Direct Settle' && (t.collectedOn === todayStr || (!t.collectedOn && t.date === todayStr))) { match = true; amount += t.amount; trackMode(t); } 
                         });
                     }
                 } else if (type === 'settle-month') { 
                     title = "Month's Direct Settlements";
                     if(c.transactions) {
                         c.transactions.forEach(t => {
-                            if(t.type === 'Direct Settle' && t.date.substring(6,10) + "-" + t.date.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
+                            let activeDateStr = t.collectedOn || t.date;
+if(t.type === 'Direct Settle' && activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
                         });
                     }
                 } else if (type === 'today-bounce') {
@@ -10197,21 +10210,22 @@ async function runPendingUploadBypass(bypassWarnings) {
 
                             if(isValidType && isPhysicallyCollectedToday) {
                                 match = true; amount += t.amount; trackMode(t); 
-                                if (t.type === 'Direct Settle') collectionCategory = 'settle';
-                                else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) collectionCategory = 'partial';
-                                else if (t.type.includes('Advance')) collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial';
+                                if (t.type === 'Direct Settle') { collectionCategory = 'settle'; if(type.includes('collect')) sumSettle += t.amount; }
+                                else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) { collectionCategory = 'partial'; if(type.includes('collect')) sumPartial += t.amount; }
+                                else if (t.type.includes('Advance')) { collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial'; if(type.includes('collect')) sumAdvance += t.amount; }
+                                else { if(type.includes('collect')) sumNormal += t.amount; }
                             }
                         });
                     }
                     if (!isDayEndDoneToday && c.status === "Active") {
-                        // 🌟 FIX: Added 'online_paid' support
                         if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
                             match = true; amount += activeEmiAmount; trackMode({mode: c.emiSettled.includes('upi') || c.emiSettled === 'online_paid' ? 'upi' : 'cash'});
+                            if (type.includes('collect')) sumNormal += activeEmiAmount;
                         } else if (c.advancePaid > 0) {
                             match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
                             let totalDue = activeEmiAmount + (c.overdue || 0);
-                            if (c.advancePaid < totalDue) collectionCategory = 'partial';
-                            else collectionCategory = 'advance';
+                            if (c.advancePaid < totalDue) { collectionCategory = 'partial'; if (type.includes('collect')) sumPartial += c.advancePaid; }
+                            else { collectionCategory = 'advance'; if (type.includes('collect')) sumAdvance += c.advancePaid; }
                         }
                     }
                     if (hasShortfall) collectionCategory = 'partial';
@@ -10232,9 +10246,10 @@ async function runPendingUploadBypass(bypassWarnings) {
 
                             if(isValidType && activeMY === selectedMonthVal) {
                                 match = true; amount += t.amount; trackMode(t); 
-                                if (t.type === 'Direct Settle') collectionCategory = 'settle';
-                                else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) collectionCategory = 'partial';
-                                else if (t.type.includes('Advance')) collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial';
+                                if (t.type === 'Direct Settle') { collectionCategory = 'settle'; if(type.includes('collect')) sumSettle += t.amount; }
+                                else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) { collectionCategory = 'partial'; if(type.includes('collect')) sumPartial += t.amount; }
+                                else if (t.type.includes('Advance')) { collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial'; if(type.includes('collect')) sumAdvance += t.amount; }
+                                else { if(type.includes('collect')) sumNormal += t.amount; }
                             }
                         });
                     }
@@ -10244,14 +10259,15 @@ async function runPendingUploadBypass(bypassWarnings) {
                         let isTodayInSelectedMonth = (todayStr.substring(6,10) + "-" + todayStr.substring(3,5) === selectedMonthVal);
                         
                         if (isTodayInSelectedMonth) {
-                            if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
+                        if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
                                 match = true; amount += activeEmiAmount; trackMode({mode: c.emiSettled.includes('upi') || c.emiSettled === 'online_paid' ? 'upi' : 'cash'});
+                                if (type.includes('collect')) sumNormal += activeEmiAmount;
                             } else if (c.advancePaid > 0) {
                                 match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
                                 let totalDue = activeEmiAmount + (c.overdue || 0);
-                                if (c.advancePaid < totalDue) collectionCategory = 'partial';
-                                else collectionCategory = 'advance';
-                            }
+                                if (c.advancePaid < totalDue) { collectionCategory = 'partial'; if (type.includes('collect')) sumPartial += c.advancePaid; }
+                                else { collectionCategory = 'advance'; if (type.includes('collect')) sumAdvance += c.advancePaid; }
+                            }    
                         }
                     }
                     
@@ -10299,14 +10315,8 @@ async function runPendingUploadBypass(bypassWarnings) {
                     if (c.status === "Pending Approval") { match = true; amount = c.principal; }
                 }
 
-                if(match) {
-                    // 🌟 MATH AGGREGATION FOR COLLECTION VIEWS
-                    if (type.includes('collect')) {
-                        if (collectionCategory === 'partial') sumPartial += amount;
-                        else if (collectionCategory === 'advance') sumAdvance += amount;
-                        else if (collectionCategory === 'settle') sumSettle += amount;
-                        else sumNormal += amount;
-                    }
+                if (match) {
+                        // 🌟 MATH AGGREGATION FOR COLLECTION VIEWS (Calculated inside loop now)
 
                     let modeBadges = '';
                     if(type.includes('collect') || type.includes('advance') || type.includes('settle')) {
@@ -11634,8 +11644,8 @@ async function runPendingUploadBypass(bypassWarnings) {
                     let storedDesc = new Float32Array(staff.faceDescriptor);
                     let distance = faceapi.euclideanDistance(storedDesc, detection.descriptor);
                     
-                    // ULTRA-FIX: Threshold 0.75 kar diya. Ab dhoop, chhanv, dadi, ya blur me bhi turant pass karega!
-                    if (distance <= 0.75) { 
+                    // 🛡️ BUG 13 FIX: Threshold wapas 0.55 kiya gaya for strict Military-grade Biometrics
+                    if (distance <= 0.55) {
                         // Agar success hua toh wapas green kar do
                         statusText.classList.replace('text-rose-600', 'text-emerald-600');
                         statusText.classList.replace('bg-rose-50', 'bg-emerald-50');
@@ -11817,7 +11827,8 @@ async function runPendingUploadBypass(bypassWarnings) {
             let safeMultiplier = config.targetMultiplier !== undefined ? parseFloat(config.targetMultiplier) : 1.0;
             if (isNaN(safeMultiplier)) safeMultiplier = 1.0; 
             let todayTarget = Math.round((yCollected * safeMultiplier) / 500) * 500;
-            if(todayTarget === 0 && config.enabled) todayTarget = 10000;
+            // 🛡️ FIX: Respect Admin's 0 multiplier
+            if(todayTarget === 0 && safeMultiplier > 0 && config.enabled) todayTarget = 10000;
 
             let collected = 0; let disbursed = 0; let expected = 0;
             Object.keys(serverDb).forEach(m => {
@@ -11844,7 +11855,9 @@ async function runPendingUploadBypass(bypassWarnings) {
                 }
             });
 
-            let colPct = expected > 0 ? (collected / expected) * 100 : (collected > 0 ? 100 : 0);
+            // 🛡️ BUG 11 FIX: Staff Profile True Expected Math
+            let trueExpectedProfile = expected + collected;
+            let colPct = trueExpectedProfile > 0 ? (collected / trueExpectedProfile) * 100 : (collected > 0 ? 100 : 0);
             if(colPct > 100) colPct = 100;
 
             setHtmlSafe('sp-col-pct', `${colPct.toFixed(1)}%`);
@@ -12002,6 +12015,10 @@ async function runPendingUploadBypass(bypassWarnings) {
                     } else if(dist <= 3000) {
                         openFaceScanner();
                     } else {
+                        // 🛡️ BUG 12 FIX: Endless Geofence Trap Bypass (Emergency Admin Override)
+                        let overridePin = prompt("⚠️ GEOFENCE VIOLATION! Aap branch se bahar hain.\nAgar aap field par hain, toh aage badhne ke liye Manager Override PIN (1122) dalein:");
+                        if (overridePin === "1122") { openFaceScanner(); return; }
+                        
                         let errHtml = `
                             <div class="text-center p-6">
                                 <div class="text-5xl mb-4 transform scale-110">⛔</div>
@@ -12831,27 +12848,14 @@ async function runPendingUploadBypass(bypassWarnings) {
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
                 btn.classList.remove('pulse-glow');
                 
-                // Real OCR API ke bajay abhi hum frontend delay (Simulation) lagayenge. 
-                // Yahan aap Tesseract.js ya AWS Textract ka API laga sakte hain!
-                setTimeout(() => {
-                    // Simulated extraction success
-                    document.getElementById('new-cust-name').value = "Raj Kumar";
-                    document.getElementById('new-cust-id-ref').value = "[Aadhaar Redacted]"; // Simulated OCR output
-                    document.getElementById('new-cust-address').value = "House No. 12, Main Street, Village";
+            setTimeout(() => {
+                    alert("⚠️ Smart OCR is currently in Offline Mode. Please fill details manually or connect the OCR API in Settings.");
                     
-                    showNotification('OCR Success', 'ID Card details successfully extracted and filled!', '🪪');
-                    
-                    // Reset Button
-                    btn.innerHTML = `<span>✅</span> Scanned Successfully`;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-indigo-600');
-                    btn.classList.add('bg-emerald-600');
-                    
-                    setTimeout(() => {
-                        btn.innerHTML = `<span>📸</span> Scan Another ID`;
-                        btn.classList.remove('bg-emerald-600');
-                        btn.classList.add('bg-indigo-600', 'pulse-glow');
-                    }, 3000);
-                }, 2500); // 2.5 second AI delay
+                    // Reset Button safely without injecting fake data
+                    btn.innerHTML = `<span>📸</span> Scan ID Card`;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btn.classList.add('pulse-glow');
+                }, 1500);    
             };
             input.click();
         }
@@ -12935,15 +12939,22 @@ async function runPendingUploadBypass(bypassWarnings) {
             let planPerformance = {};
             let firstEmiDefaults = [];
             
+            // Get Admin Selected Branch Filter
+            let activeFilter = document.getElementById('head-analytics-branch-selector')?.value || "ALL";
+
             // Loop through entire database to calculate Ultra-Metrics
             Object.keys(serverDb).forEach(k => {
                 if (k === "SYSTEM_SETTINGS") return;
                 let c = serverDb[k];
                 if (!c || c.status === "Deleted") return;
                 
+                // 🛡️ BUG FIX 5: Apply Branch Filter in Command Center
+                if (activeFilter !== "ALL" && c.branch !== activeFilter) return;
+                
                 let b = c.branch || "Unknown";
+                let safePlanType = c.planType || 'daily';
                 if(!branchPnL[b]) branchPnL[b] = { income: 0, opex: 0, npaLoss: 0 };
-                if(!planPerformance[c.planType]) planPerformance[c.planType] = { count: 0, badDebt: 0, successSum: 0 };
+                if(!planPerformance[safePlanType]) planPerformance[safePlanType] = { count: 0, badDebt: 0, successSum: 0 };
 
                 // 2. Liquidity & Demand
                 if (c.status === "Pending Approval" || c.status === "Pending NEFT" || c.status === "Requested") {
@@ -12965,9 +12976,9 @@ async function runPendingUploadBypass(bypassWarnings) {
                     if(c.overdue > 0) branchPnL[b].npaLoss += c.overdue;
                     
                     // 5. Plan Performance
-                    planPerformance[c.planType].count++;
-                    if(c.overdue > 0) planPerformance[c.planType].badDebt++;
-                    else planPerformance[c.planType].successSum++;
+                    planPerformance[safePlanType].count++;
+                    if(c.overdue > 0) planPerformance[safePlanType].badDebt++;
+                    else planPerformance[safePlanType].successSum++;
 
                     // 6. First EMI Default Watchlist (Zero-Day NPA)
                     if (c.status === "Active" && (c.emisPaidCount === 0 || !c.emisPaidCount) && c.overdue > 0) {
