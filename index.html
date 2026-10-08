@@ -2004,9 +2004,8 @@
 
                             // 🌟 SMART SYNC FIX: Master Mismatch & 2-Phone Fix
                             let isCloudNewer = !loc.lastUpdated || (cld.lastUpdated > loc.lastUpdated);
-                            let statusChanged = cld.status !== loc.status;
-                            
-                            if (isCloudNewer || statusChanged) {
+
+if (isCloudNewer) {
                                 // Protect Staff's un-synced offline collections
                                 let hasOfflineWork = loc.emiSettled || loc.advancePaid > 0;
                                 
@@ -8526,7 +8525,7 @@ async function runPendingUploadBypass(bypassWarnings) {
             }
 
             // 🛡️ BUG 15 FIX: .replace(' (Late Mark)', '') strips the suffix so exact match array works perfectly!
-let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
+let hasTxToday = c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
             
             if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
 
@@ -8567,8 +8566,8 @@ let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn ===
                     let emiCounterStr = "";
                     let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
                     
-                    if (isClientDue && paidAmt >= currentEmiToUse) {
-                        let nextEmiCount = (c.emisPaidCount || 0) + 1;
+                    if (isClientDue && amountLeftForEmi >= currentEmiToUse) {
+    let nextEmiCount = (c.emisPaidCount || 0) + 1;
                         emiCounterStr = `🔖 Kist ${nextEmiCount}/${c.duration}`;
                     }
 
@@ -8995,8 +8994,8 @@ let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn ===
                             let emiCounterStr = "";
                             let currentEmiToUse = c.isHybrid ? ((c.emisPaidCount < c.phase1Days) ? c.phase1Emi : c.phase2Emi) : (c.cycleEmi || 1);
                             
-                            if (isClientDue && paidAmt >= currentEmiToUse) {
-                                let nextEmiCount = (c.emisPaidCount || 0) + 1;
+                            if (isClientDue && amountLeftForEmi >= currentEmiToUse) {
+    let nextEmiCount = (c.emisPaidCount || 0) + 1;
                                 emiCounterStr = `🔖 Kist ${nextEmiCount}/${c.duration}`;
                             }
 
@@ -9010,10 +9009,10 @@ let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn ===
                             });
 
                             if (isClientDue) {
-                                if (paidAmt >= currentEmiToUse) {
-                                    c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
-                                    c.emisPaidCount = (c.emisPaidCount || 0) + 1;
-                                }
+    if (amountLeftForEmi >= currentEmiToUse) {
+        c.nextEmiDate = calculateNextEmiDate(c.planType, c.nextEmiDate);
+        c.emisPaidCount = (c.emisPaidCount || 0) + 1;
+    }
                                 
                                 if (amountLeftForEmi < currentEmiToUse) {
                                     let shortfall = currentEmiToUse - amountLeftForEmi;
@@ -9195,7 +9194,7 @@ let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn ===
                     target: todayTarget, colPct: colPct, bonusAchieved: bonusAchieved
                 };
 
-                let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch && serverDb[k].status === 'Active'); // 🚨 FIX 2B: Upload Only Active Accounts
+                let keys = Object.keys(serverDb).filter(k => k !== "SYSTEM_SETTINGS" && serverDb[k] && serverDb[k].branch === staffBranch);
                 if(btn) btn.innerText = `Syncing ${keys.length} Accounts ☁️`;
                 
                 if (btn) btn.innerText = `Syncing Bulk Data... ☁️`;
