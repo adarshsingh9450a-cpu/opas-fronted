@@ -5634,6 +5634,7 @@ if (isCloudNewer) {
                 await saveDataToCloud(mobile);
                 
                 refreshHeadDashboardStats(); 
+                if(typeof renderStaffLedgerSheets === 'function') renderStaffLedgerSheets();
                 if(typeof updateLedgerUnmarkedSummary === 'function') updateLedgerUnmarkedSummary(); 
 
                 showNotification('Hisaab Cleared ✅', `Data synced and passbook updated sequentially!`, '🏦');
@@ -5783,6 +5784,33 @@ if (isCloudNewer) {
             openGlobalModal(html);
         }
 
+        // 🌟 UNIFIED COLLECTION HELPER (Active + Past Loans, Zero Double-Count)
+        function getAllClientTransactions(c) {
+            let allTx = [];
+            if (!c) return allTx;
+            let seenIds = new Set();
+            if (c.id) seenIds.add(c.id);
+            if (Array.isArray(c.pastLoans)) {
+                c.pastLoans.forEach(old => {
+                    if (old && old.id && !seenIds.has(old.id) && Array.isArray(old.transactions)) {
+                        seenIds.add(old.id);
+                        allTx.push(...old.transactions);
+                    }
+                });
+            }
+            if (Array.isArray(c.transactions)) {
+                allTx.push(...c.transactions);
+            }
+            return allTx;
+        }
+
+        function isCollectionTxType(typeStr) {
+            if (!typeStr) return false;
+            return ['Received', 'Online App', 'Custom Pay', 'Advance', 'Advance (Pre-Settle)', 'Direct Settle'].includes(typeStr) ||
+                   typeStr.includes('Received (Late Mark)') ||
+                   typeStr.includes('Custom Pay (Late Mark)');
+        }
+
         function refreshHeadDashboardStats() {
             try {
                 // 🌟 STRICT STAFF SECURITY LOCK (DB Based, Bypass UI)
@@ -5803,6 +5831,7 @@ if (isCloudNewer) {
                         targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
                     }
                 }
+                targetDateObj.setHours(0,0,0,0);
                 let todayStr = formatSysDate(targetDateObj); // Ye ab selected date ban gaya
                 let selectedMonthVal = `${targetDateObj.getFullYear()}-${(targetDateObj.getMonth()+1).toString().padStart(2,'0')}`;
                 let isCurrentMonth = true; // By-pass to allow daily stats for ANY selected day!
@@ -5887,86 +5916,66 @@ if (isCloudNewer) {
                             if (appDateMonth === selectedMonthVal) monthAppr++;
 
                             cac++; 
-                            if(appDateMonth === selectedMonthVal) { cp += (f.interestAmt||0); }
-                            if (isCurrentMonth && f.approvalDate === todayStr) insT += (f.insuranceAmt || 0);
-                            if (appDateMonth === selectedMonthVal) insM += (f.insuranceAmt || 0);
+                            if(appDateMonth === selectedMonthVal) { cp += (Number(f.interestAmt) || 0); }
+                            if (isCurrentMonth && f.approvalDate === todayStr) insT += (Number(f.insuranceAmt) || 0);
+                            if (appDateMonth === selectedMonthVal) insM += (Number(f.insuranceAmt) || 0);
                             
-                            // 🌟 BUG FIX: History Leak Stopped. Today's metric only shows if current month is active.
-                            if (isCurrentMonth && f.approvalDate === todayStr) dT += (f.principal||0); 
-                            if (appDateMonth === selectedMonthVal) dM += (f.principal||0);
-
-                            if(f.transactions) {
-                                f.transactions.forEach(tx => {
-                                    let txMY = tx.date.substring(6,10) + "-" + tx.date.substring(3,5);
-                                    let matchMY = (txMY === selectedMonthVal);
-                                    let matchToday = (tx.date === todayStr);
-
-                                    // 💰 FIX: Include Custom Pay and Direct Settle in total collections to balance cash in hand
-                                    if(['Received', 'Online App', 'Custom Pay', 'Advance', 'Advance (Pre-Settle)', 'Direct Settle'].includes(tx.type) || tx.type.includes('Received (Late Mark)') || tx.type.includes('Custom Pay (Late Mark)')) {
-                                        
-                                        // 🌟 SECURITY FIX: Check physically collected date for Cash Drawer accuracy!
-                                        let isPhysicallyCollectedToday = (tx.collectedOn === todayStr) || (!tx.collectedOn && matchToday);
-                                        let isPhysicallyCollectedThisMonth = tx.collectedOn ? (tx.collectedOn.substring(3) === todayStr.substring(3)) : matchMY;
-
-                                        if (isPhysicallyCollectedToday) {
-                                            cT += tx.amount;
-                                            // 🌟 NAYA: Cash/UPI Split Math
-                                            let mType = tx.mode || (tx.type === 'Online App' || tx.type === 'received_upi' ? 'upi' : 'cash');
-                                            if(mType === 'upi') todayColUpi += tx.amount;
-                                            else todayColCash += tx.amount;
-                                        }
-                                        if (isPhysicallyCollectedThisMonth) {
-                                            cM += tx.amount;
-                                        }
-                                    }
-                                    // 🌟 FIX: Ab Custom Pay ko bhi Advance me count karega taaki 0 na dikhe
-                                    if(tx.type === 'Advance' || tx.type === 'Custom Pay') {
-                                        if (isCurrentMonth && matchToday) todayAdv += tx.amount;
-                                        if (matchMY) monthAdv += tx.amount;
-                                    }
-                                    if(tx.type === 'Direct Settle') {
-                                        if (isCurrentMonth && matchToday) todaySettle += tx.amount;
-                                        if (matchMY) monthSettle += tx.amount;
-                                    }
-                                    if(tx.type === 'Bounced') {
-                                        // Bounced entries ka koi physical cash nahi hota, isliye inki actual target date se hi logic chalega
-                                        if (isCurrentMonth && matchToday) todayBounceAmt += tx.amount;
-                                    }
-                                    if(tx.type === 'Shortfall Penalty') { // 🌟 NAYA: Catch Partial Physically
-                                        let isPhysicallyCollectedToday = (tx.collectedOn === todayStr) || (!tx.collectedOn && matchToday);
-                                        let isPhysicallyCollectedThisMonth = tx.collectedOn ? (tx.collectedOn.substring(3) === todayStr.substring(3)) : matchMY;
-                                        
-                                        if (isPhysicallyCollectedToday) todayPartialCount++;
-                                        if (isPhysicallyCollectedThisMonth) monthPartialCount++;
-                                    }
-                                });
-                            }
+                            if (isCurrentMonth && f.approvalDate === todayStr) dT += (Number(f.principal) || 0); 
+                            if (appDateMonth === selectedMonthVal) dM += (Number(f.principal) || 0);
                         }
 
+                        // 🌟 HISAAB FIX: Active + PastLoans sabke transactions count honge (chahe client settle hokar renew hua ho)
+                        let allClientTxs = getAllClientTransactions(f);
+                        allClientTxs.forEach(tx => {
+                            if (!tx || !tx.type) return;
+                            let txAmt = Number(tx.amount) || 0;
+                            let activeDateStr = tx.collectedOn || tx.date || "";
+                            let activeMY = activeDateStr.length >= 10 ? (activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5)) : "";
+                            let isPhysicallyCollectedToday = (activeDateStr === todayStr);
+                            let isPhysicallyCollectedThisMonth = (activeMY === selectedMonthVal);
+                            let matchToday = (tx.date === todayStr);
+
+                            if (isCollectionTxType(tx.type)) {
+                                if (isPhysicallyCollectedToday) {
+                                    cT += txAmt;
+                                    let mType = tx.mode || (tx.type === 'Online App' || tx.type === 'received_upi' ? 'upi' : 'cash');
+                                    if(mType === 'upi') todayColUpi += txAmt;
+                                    else todayColCash += txAmt;
+                                }
+                                if (isPhysicallyCollectedThisMonth) {
+                                    cM += txAmt;
+                                }
+                            }
+                            if(tx.type === 'Advance' || tx.type === 'Custom Pay' || tx.type === 'Advance (Pre-Settle)' || tx.type.includes('Custom Pay (Late Mark)')) {
+                                if (isPhysicallyCollectedToday) todayAdv += txAmt;
+                                if (isPhysicallyCollectedThisMonth) monthAdv += txAmt;
+                            }
+                            if(tx.type === 'Direct Settle') {
+                                if (isPhysicallyCollectedToday) todaySettle += txAmt;
+                                if (isPhysicallyCollectedThisMonth) monthSettle += txAmt;
+                            }
+                            if(tx.type === 'Bounced') {
+                                if (isCurrentMonth && matchToday) todayBounceAmt += txAmt;
+                            }
+                            if(tx.type === 'Shortfall Penalty') {
+                                if (isPhysicallyCollectedToday) todayPartialCount++;
+                                if (isPhysicallyCollectedThisMonth) monthPartialCount++;
+                            }
+                        });
+
                         if (f.status === "Active") { 
-                            aC++; oT += (f.overdue||0); 
+                            aC++; oT += (Number(f.overdue) || 0); 
                             
                             // 🌟 NAYA: LIVE STATE TRACKING (Real-time updates before Day-End)
                             let isDayEndDoneToday = (f.lastDayEndProcessed === todayStr);
-                            
-                            // BUG FIX: Live data sirf tabhi dikhe jab filter "Aaj (Today)" par set ho. Warna purani reports corrupt ho jayengi.
                             let realToday = new Date(); realToday.setHours(0,0,0,0);
                             let isActuallyToday = (targetDateObj.getTime() === realToday.getTime());
-                            
-                            // 🛡️ ATOM-LEVEL FIX: Phantom Cash Blocker. Check karo ki yeh live entry actually aaj hui thi ya kal raat ki chhuti hui entry hai.
                             let isActionFromToday = (f.tempActionDate === todayStr);
 
                             if (isActuallyToday && !isDayEndDoneToday && isActionFromToday) {
-                                // 🛡️ LOGICAL FIX: Only expect an EMI if they are actually due today!
-                                let isClientDueToday = false;
-                                if(f.nextEmiDate && f.nextEmiDate !== "Completed" && f.nextEmiDate !== "N/A") {
-                                    let emiDateObj = parseSysDate(f.nextEmiDate);
-                                    if(targetDateObj >= emiDateObj) isClientDueToday = true;
-                                } else if (!f.nextEmiDate || f.nextEmiDate === "N/A") {
-                                    isClientDueToday = true; 
-                                }
-
-                                let activeEmiAmount = isClientDueToday ? Math.min(f.outstanding || 0, f.cycleEmi || 0) : 0;
+                                // 🌟 HISAAB FIX: Actual collected EMI count hogi (overdue ya early pay par ₹0 nahi hoga)
+                                let activeEmiAmount = Math.min(Number(f.outstanding) || 0, Number(f.cycleEmi) || 0);
+                                let liveAdv = Math.min(Number(f.outstanding) || 0, Number(f.advancePaid) || 0);
                                 
                                 if (f.emiSettled === 'bounce') {
                                     todayBounceAmt += activeEmiAmount;
@@ -5974,66 +5983,59 @@ if (isCloudNewer) {
                                 else if (f.emiSettled === 'received_cash' || f.emiSettled === 'received_upi' || f.emiSettled === 'received' || f.emiSettled === 'online_paid') {
                                     cT += activeEmiAmount;
                                     cM += activeEmiAmount;
-                                    // 🌟 NAYA: Live Cash/UPI Split
                                     let mType = (f.emiSettled === 'received_upi' || f.emiSettled === 'online_paid') ? 'upi' : 'cash';
                                     if(mType === 'upi') todayColUpi += activeEmiAmount;
                                     else todayColCash += activeEmiAmount;
                                 }
-                                else if (f.advancePaid > 0) {
-                                    cT += f.advancePaid;
-                                    cM += f.advancePaid;
-                                    // 🌟 NAYA: Live Advance Cash/UPI Split
+                                else if (liveAdv > 0) {
+                                    cT += liveAdv;
+                                    cM += liveAdv;
                                     let mType = f.customPayMode || 'cash';
-                                    if(mType === 'upi') todayColUpi += f.advancePaid;
-                                    else todayColCash += f.advancePaid;
-                                    todayAdv += f.advancePaid;
-                                    monthAdv += f.advancePaid;
+                                    if(mType === 'upi') todayColUpi += liveAdv;
+                                    else todayColCash += liveAdv;
+                                    todayAdv += liveAdv;
+                                    monthAdv += liveAdv;
                                     
-                                    // 🌟 CRITICAL FIX: Live Partial Pay Detection (Before Day-End)
-                                    let totalDue = activeEmiAmount + (f.overdue || 0);
-                                    if (f.advancePaid < totalDue) {
+                                    let totalDue = Math.min(Number(f.outstanding) || 0, activeEmiAmount + (Number(f.overdue) || 0));
+                                    if (liveAdv < totalDue) {
                                         todayPartialCount++;
                                         monthPartialCount++;
                                     }
                                 }
                             }
                             
-                            // 🌟 NAYA & FIXED: Unmarked Clients Counter Logic
-                            // Yeh logic strictly Unmarked Modal ke naye rule se match karta hai taaki number hamesha 100% same rahein
+                            // 🌟 UNMARKED FIX: Marked ya Paid clients Unmarked mein count nahi honge
                             if (f.outstanding > 0) {
                                 let tDate = new Date(targetDateObj); tDate.setHours(0,0,0,0);
                                 let eDate = parseSysDate(f.nextEmiDate && f.nextEmiDate !== "Completed" && f.nextEmiDate !== "N/A" ? f.nextEmiDate : todayStr);
                                 
                                 let isPastDue = eDate < tDate;
                                 let isExactToday = eDate.getTime() === tDate.getTime();
-                                let isDayEndDoneToday = (f.lastDayEndProcessed === todayStr);
-                                
-                                let qualifiesForUnmarked = false;
-                                let pendingAmt = 0;
-                                
-                                if (f.overdue > 0) {
-                                    qualifiesForUnmarked = true;
-                                    // 🚨 CRITICAL FIX: Prevent the ledger counter from displaying inflated false debt
-                                    pendingAmt = Math.min(f.outstanding || 0, (f.overdue || 0) + (isExactToday ? (f.cycleEmi || 0) : 0));
-                                } else if (isPastDue) {
-                                    qualifiesForUnmarked = true;
-                                    pendingAmt = Math.min(f.outstanding||0, f.cycleEmi||0);
-                                } else if (isExactToday && !isDayEndDoneToday) { // 🚨 FIX: Warn BEFORE Day-End, not after!
-                                    let hasTxToday = f.transactions && f.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Direct Settle'].includes(tx.type));
-                                    if (!hasTxToday && !f.emiSettled && !(f.advancePaid > 0)) {
+                                let hasTxToday = f.transactions && f.transactions.some(tx => tx.type && (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && (isCollectionTxType(tx.type) || tx.type === 'Bounced'));
+                                let paidOrMarkedToday = hasTxToday || (isActuallyToday && isActionFromToday && (f.emiSettled || f.advancePaid > 0)) || (f.lastPaymentDate === todayStr);
+
+                                if (!paidOrMarkedToday) {
+                                    let qualifiesForUnmarked = false;
+                                    let pendingAmt = 0;
+                                    
+                                    if (f.overdue > 0) {
+                                        qualifiesForUnmarked = true;
+                                        pendingAmt = Math.min(f.outstanding || 0, (f.overdue || 0) + (isExactToday ? (f.cycleEmi || 0) : 0));
+                                    } else if (isPastDue) {
+                                        qualifiesForUnmarked = true;
+                                        pendingAmt = Math.min(f.outstanding||0, f.cycleEmi||0);
+                                    } else if (isExactToday && !isDayEndDoneToday) {
                                         qualifiesForUnmarked = true;
                                         pendingAmt = Math.min(f.outstanding||0, f.cycleEmi||0);
                                     }
-                                }
 
-                                if (qualifiesForUnmarked) {
-                                    totalUnmarkedAmt += pendingAmt;
-                                    totalUnmarkedCount++;
-                                    
-                                    // "Exact Today" tabhi mana jayega jab Due Date aaj ki ho
-                                    if (isExactToday) {
-                                        todayUnmarkedAmt += pendingAmt;
-                                        todayUnmarkedCount++;
+                                    if (qualifiesForUnmarked && pendingAmt > 0) {
+                                        totalUnmarkedAmt += pendingAmt;
+                                        totalUnmarkedCount++;
+                                        if (isExactToday) {
+                                            todayUnmarkedAmt += pendingAmt;
+                                            todayUnmarkedCount++;
+                                        }
                                     }
                                 }
                             }
@@ -6146,47 +6148,25 @@ if (isCloudNewer) {
                                 } else if (!c.nextEmiDate || c.nextEmiDate === "N/A") {
                                     isDueToday = true;
                                 }
-                                if (isDueToday || c.overdue > 0) {
+                                let isLiveMarked = (c.lastDayEndProcessed !== todayStr && c.tempActionDate === todayStr && (c.emiSettled || c.advancePaid > 0));
+                                if ((isDueToday || c.overdue > 0) && !isLiveMarked) {
                                     // 🚨 CRITICAL FIX: Target kabhi bhi client ke bache hue Total Balance (Outstanding) se zyada nahi ho sakta!
                                     expectedToday += Math.min(c.outstanding || 0, (c.cycleEmi || 0) + (c.overdue || 0));
-                                }
-                            }
-                            
-                    // Cashflow Analytics (Today's ins and outs)
-                            if (c.approvalDate === todayStr && c.isApproved) {
-                                headDisbursedToday += (c.principal || 0);
-                            }
-                            if (c.transactions) {
-                                c.transactions.forEach(t => {
-                                    // 🌟 SECURITY FIX: Net Cashflow Drawer Match (Includes Late Marks physically collected today)
-                                    let isPhysicallyCollectedToday = (t.collectedOn === todayStr) || (!t.collectedOn && t.date === todayStr);
-                                    // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty'. Penalty unpaid paisa hai, isey cash drawer mein jodna galla kharab kar dega!
-                                    let isValidCashflow = ['Received', 'Online App', 'Custom Pay', 'Advance', 'Advance (Pre-Settle)', 'Direct Settle', 'Insurance Fee Deducted (Upfront)'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
-                                    
-                                    if (isPhysicallyCollectedToday && isValidCashflow) {
-                                        headCollectedToday += t.amount;
-                                    }
-                                });
-                            }
-                            
-                            // 🛡️ FUNCTIONAL FIX: Add LIVE un-day-ended collections to Head Cashflow so it matches the Collection Card!
-                            let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
-                            if (!isDayEndDoneToday && c.tempActionDate === todayStr) {
-                                if (['received_cash', 'received_upi', 'received', 'online_paid'].includes(c.emiSettled)) {
-                                    headCollectedToday += Math.min(c.outstanding || 0, c.cycleEmi || 0);
-                                } else if (c.advancePaid > 0) {
-                                    headCollectedToday += c.advancePaid;
                                 }
                             }
                         }
                     });
 
+                    // 🌟 EXACT HISAAB SYNC: Net Cashflow = Today Collection + Today Insurance - Today Disbursal
+                    headCollectedToday = cT + insT;
+                    headDisbursedToday = dT;
+
                     let netCashflow = headCollectedToday - headDisbursedToday;        
                     let parPercentage = totalOut > 0 ? ((totalNpa / totalOut) * 100).toFixed(1) : 0;
                     
-                    // 🛡️ TRUE EFFICIENCY FIX: Total Demand = Unpaid (Expected) + Already Paid (Collected)
-                    let trueExpectedGlobal = expectedToday + headCollectedToday;
-                    let rawEfficiency = trueExpectedGlobal > 0 ? ((headCollectedToday / trueExpectedGlobal) * 100) : (headCollectedToday > 0 ? 100 : 0);
+                    // 🛡️ TRUE EFFICIENCY FIX: Sirf EMI Collections (cT) use hoga, Insurance nahi
+                    let trueExpectedGlobal = expectedToday + cT;
+                    let rawEfficiency = trueExpectedGlobal > 0 ? ((cT / trueExpectedGlobal) * 100) : (cT > 0 ? 100 : 0);
                     if(rawEfficiency > 100) rawEfficiency = 100; 
                     let collectionEfficiency = rawEfficiency.toFixed(1);
 
@@ -6612,17 +6592,14 @@ if (isCloudNewer) {
                     let isPastDue = eDate < tDate;
                     let isExactToday = eDate.getTime() === tDate.getTime();
                     let isDayEndDoneToday = (c.lastDayEndProcessed === todayStr);
-                    
-                    // 🌟 SMART RULE: Only Past Due, OR Today IF Day-End is Bypassed
+                    let hasTxToday = c.transactions && c.transactions.some(tx => tx.type && (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
+
+                    // Already marked or processed today -> skip from Unmarked count
+                    if (isDayEndDoneToday || hasTxToday || c.emiSettled || c.advancePaid > 0) return;
+
                     let qualifiesForUnmarked = false;
-                    
-                    if (c.overdue > 0 || isPastDue) {
+                    if (c.overdue > 0 || isPastDue || isExactToday) {
                         qualifiesForUnmarked = true;
-                    } else if (isExactToday && isDayEndDoneToday) {
-                        let hasTxToday = c.transactions && c.transactions.some(tx => (tx.collectedOn === todayStr || (!tx.collectedOn && tx.date === todayStr)) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
-                        if (!hasTxToday && !c.emiSettled && c.advancePaid <= 0) {
-                            qualifiesForUnmarked = true;
-                        }
                     }
 
                     if (qualifiesForUnmarked && c.outstanding > 0) {
@@ -6634,19 +6611,6 @@ if (isCloudNewer) {
                 
                 setHtmlSafe('ledger-unmarked-amt', `₹${unmAmt.toLocaleString('en-IN')}`);
                 setHtmlSafe('ledger-unmarked-count', `${unmCount} Pending`);
-                
-                // 🌟 FIX: Soft Warning for Day-End (No Hard Lock)
-                let uploadBtn = document.getElementById('upload-day-btn');
-                if(uploadBtn) {
-                    uploadBtn.disabled = false; // 🔓 Hamesha enabled rahega
-                    if(unmCount === 0) {
-                        uploadBtn.className = "btn-fluid w-full bg-blue-600 text-white hover:bg-blue-700 font-black py-4 rounded-xl text-[11px] uppercase tracking-widest mt-2 shadow-lg shadow-blue-500/30 transition-all hover-scale pulse-glow";
-                        uploadBtn.innerHTML = "Upload Day-End 📤";
-                    } else {
-                        uploadBtn.className = "btn-fluid w-full bg-amber-500 text-white hover:bg-amber-600 font-black py-4 rounded-xl text-[11px] uppercase tracking-widest mt-2 shadow-lg shadow-amber-500/30 transition-all hover-scale";
-                        uploadBtn.innerHTML = `⚠️ Upload Day-End (${unmCount} Unmarked Left)`;
-                    }
-                }
             } catch(e) {}
         }
 
@@ -8111,6 +8075,8 @@ if (isCloudNewer) {
 
                 const cf = getSafeValue('ledger-active-centre-select');
                 if(!con) return; con.innerHTML = ''; let h = '';
+                let markedHtml = '';
+                let markedCount = 0;
                 
                 const searchQ = getSafeValue('ledger-search').toLowerCase();
 
@@ -8125,7 +8091,8 @@ if (isCloudNewer) {
                     
                     if (a.lastDayEndProcessed === currentTodayStr) return;
                     
-                    if (a.emiSettled || a.advancePaid > 0) {
+                    let isMarkedLive = Boolean(a.emiSettled || a.advancePaid > 0);
+                    if (isMarkedLive && (bf === "ALL" || a.branch === bf)) {
                         readyToUploadCount++;
                     }
                     
@@ -8146,19 +8113,23 @@ if (isCloudNewer) {
                         }
                     }
 
+                    let hasTransactionToday = a.transactions && a.transactions.some(tx => tx.type && (tx.date === currentTodayStr || tx.collectedOn === currentTodayStr) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
+
                     let isUniversallyDue = a.isApproved && (bf === "ALL" || a.branch === bf) && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0);
-                    if (isUniversallyDue && !a.emiSettled && !(a.advancePaid > 0)) {
+                    if (isUniversallyDue && !isMarkedLive && !hasTransactionToday) {
                         if (a.planType === currentActiveStaffTab) hasUnmarkedActiveTab = true;
                         else hasUnmarkedOtherTab = true;
                     }
 
+                    // Aaj ka payment/resolve/settle pehle hi ho chuka hai -> list se clear rakho
+                    if (hasTransactionToday && !isMarkedLive && !matchesSearch) return;
+
                     let matchCentre = matchesSearch ? true : (cf === "ALL" || !cf || a.center === cf);
                     let isDueAndActive = a.isApproved && (bf === "ALL" || a.branch === bf) && matchCentre && a.outstanding > 0 && a.status === "Active" && (isClientDue || a.overdue > 0);
 
-                    let hasTransactionToday = a.transactions && a.transactions.some(tx => (tx.date === currentTodayStr || tx.collectedOn === currentTodayStr) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type));
-                    let shouldRenderClient = isDueAndActive || matchesSearch || a.emiSettled || (a.advancePaid > 0) || hasTransactionToday;
+                    let shouldRenderClient = isDueAndActive || matchesSearch || isMarkedLive;
 
-                    if (shouldRenderClient && (a.status === "Active" || hasTransactionToday) && (bf === "ALL" || a.branch === bf) && matchCentre) {
+                    if (shouldRenderClient && a.status === "Active" && (bf === "ALL" || a.branch === bf) && matchCentre) {
                         if (a.planType === currentActiveStaffTab || matchesSearch) {
                             if (searchQ && !matchesSearch) return; 
                             
@@ -8235,7 +8206,7 @@ if (isCloudNewer) {
                                 </div>`;
                             }
 
-                            h += `<div class="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
+                            let cardHtml = `<div class="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-3 animate-fade hover-scale">
                                 <div class="flex justify-between items-start">
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors w-fit" onclick="showClientFullInfo('${m}')">
@@ -8259,15 +8230,33 @@ if (isCloudNewer) {
                                 </div>
                                 <div class="flex">${aB}</div>
                             </div>`;
+
+                            if (isMarkedLive && !matchesSearch) {
+                                markedHtml += cardHtml;
+                                markedCount++;
+                            } else {
+                                h += cardHtml;
+                            }
                         }
                     }
                 });
                 
-                let btn = document.getElementById('upload-day-btn'); 
-                if(!h) {
+                let btn = document.getElementById('upload-day-btn');
+                let markedDrawer = markedCount > 0 ? `
+                    <details class="mt-3 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3">
+                        <summary class="text-[10px] font-black text-emerald-700 uppercase tracking-widest cursor-pointer flex justify-between items-center list-none">
+                            <span>✅ Marked Today (${markedCount}) — Tap to View / Undo</span>
+                            <span class="bg-emerald-600 text-white px-2 py-0.5 rounded-md text-[9px]">${markedCount}</span>
+                        </summary>
+                        <div class="space-y-3 mt-3">${markedHtml}</div>
+                    </details>` : '';
+
+                if(!h && markedCount > 0) {
+                    con.innerHTML = `<div class="text-center py-6 px-4 bg-emerald-50 rounded-2xl border border-emerald-200"><p class="text-2xl mb-1">✅</p><p class="text-xs text-emerald-700 font-black uppercase">Collection List Clear!</p><p class="text-[9px] text-emerald-600 font-bold mt-1 uppercase">${markedCount} clients marked — Ab Upload Day-End dabayein.</p></div>` + markedDrawer;
+                } else if(!h) {
                     con.innerHTML = `<p class="text-xs text-slate-400 text-center py-8 font-bold uppercase bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No EMIs To Show.</p>`;
                 } else {
-                    con.innerHTML = h;
+                    con.innerHTML = h + markedDrawer;
                 }
 
                 if(btn) { 
@@ -8338,9 +8327,10 @@ if (isCloudNewer) {
                         isClientDue = true; 
                     }
 
+                    let hasTxTodayCheck = c.transactions && c.transactions.some(tx => tx.type && (tx.date === todayStr || tx.collectedOn === todayStr) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
                     let isDueAndActive = c.isApproved && c.outstanding > 0 && c.status === "Active" && (isClientDue || c.overdue > 0);
 
-                    if (isDueAndActive && !c.emiSettled && !(c.advancePaid > 0)) {
+                    if (isDueAndActive && !c.emiSettled && !(c.advancePaid > 0) && !hasTxTodayCheck) {
                         if (c.planType === currentActiveStaffTab) unmarkedCurrentTab++;
                         else unmarkedOtherTab++;
                     }
@@ -8404,8 +8394,12 @@ if (isCloudNewer) {
                         isClientDue = true; 
                     }
 
-                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && tx.date === todayStr && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
-                    if (hasTransactionToday && !c.emiSettled && !c.advancePaid) { return; }
+                    let hasTransactionToday = c.transactions && c.transactions.some(tx => tx.type && (tx.date === todayStr || tx.collectedOn === todayStr) && ['Received', 'Online App', 'Advance', 'Custom Pay', 'Bounced', 'Direct Settle', 'Shortfall Penalty'].includes(tx.type.replace(' (Late Mark)', '')));
+                    if (hasTransactionToday && !c.emiSettled && !c.advancePaid) {
+                        c.lastDayEndProcessed = todayStr;
+                        c.lastUpdated = Date.now();
+                        return;
+                    }
 
                     if (c.lastDayEndProcessed !== todayStr) {
                         if (c.emiSettled === 'bounce') {
@@ -9462,8 +9456,8 @@ if (isCloudNewer) {
                     routePanelSection('cust-portal'); 
                 } 
                 else if (role === 'head') { 
-                    // BUG FIX: Admin ke dashboard par Active aur Closed accounts ke boxes show karne ke liye IDs add ki gayi
-                    document.querySelectorAll('.role-head, #dash-branch-filter-zone, #dash-active-acc-block, #dash-closed-acc-block').forEach(el => el.classList.remove('hidden'));
+                    // BUG FIX: Duplicate Branch View hata kar sirf Branch Analytics Filter active rakha
+                    document.querySelectorAll('.role-head, #dash-active-acc-block, #dash-closed-acc-block').forEach(el => el.classList.remove('hidden'));
                     setHtmlSafe('sidebar-name', "System Admin"); setHtmlSafe('sidebar-role', "Main Head"); setHtmlSafe('sidebar-avatar', "HD");
                     updateLeaveRequestBadge(); // Update badge on load
                     routePanelSection('dashboard'); 
@@ -9535,6 +9529,7 @@ if (isCloudNewer) {
                     targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
                 }
             }
+            targetDateObj.setHours(0,0,0,0);
             let todayStr = formatSysDate(targetDateObj);
             let selectedMonthVal = `${targetDateObj.getFullYear()}-${(targetDateObj.getMonth()+1).toString().padStart(2,'0')}`;
 
@@ -9583,48 +9578,58 @@ if (isCloudNewer) {
                 let realTodayObj = new Date(); realTodayObj.setHours(0,0,0,0);
                 let isActuallyToday = (targetDateObj.getTime() === realTodayObj.getTime());
                 
-                // BUG FIX: Master Fix for all Popup Lists! Live data will automatically hide if date filter is set to past.
-                let isDayEndDoneToday = isActuallyToday ? (c.lastDayEndProcessed === formatSysDate(new Date())) : true; 
-                let activeEmiAmount = Math.min(c.outstanding || 0, c.cycleEmi || 0);
+                let isDayEndDoneToday = isActuallyToday ? (c.lastDayEndProcessed === todayStr) : true;
+                let isActionFromToday = (c.tempActionDate === todayStr);
+                let activeEmiAmount = Math.min(Number(c.outstanding) || 0, Number(c.cycleEmi) || 0);
+                let liveAdv = Math.min(Number(c.outstanding) || 0, Number(c.advancePaid) || 0);
+                let allTx = getAllClientTransactions(c);
 
                 if (type === 'advance') {
                     title = "Today's Advance / Custom Collections";
-                    if(c.transactions) {
-                        c.transactions.forEach(t => {
-                        if((t.type === 'Advance' || t.type === 'Custom Pay') && (t.collectedOn === todayStr || (!t.collectedOn && t.date === todayStr))) { match = true; amount += t.amount; trackMode(t); }    
-                        });
-                    }
-                    if (!isDayEndDoneToday && c.advancePaid > 0) {
-                        match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
+                    allTx.forEach(t => {
+                        if(!t || !t.type) return;
+                        let txAmt = Number(t.amount) || 0;
+                        let activeDateStr = t.collectedOn || t.date || "";
+                        if((t.type === 'Advance' || t.type === 'Custom Pay' || t.type === 'Advance (Pre-Settle)' || t.type.includes('Custom Pay (Late Mark)')) && activeDateStr === todayStr) { match = true; amount += txAmt; trackMode(t); }
+                    });
+                    if (!isDayEndDoneToday && isActionFromToday && c.status === "Active" && liveAdv > 0) {
+                        match = true; amount += liveAdv; trackMode({mode: c.customPayMode || 'cash'});
                     }
                 } else if (type === 'advance-month') { 
                     title = "Month's Advance / Custom Collections";
-                    if(c.transactions) {
-                        c.transactions.forEach(t => {
-                            let activeDateStr = t.collectedOn || t.date;
-if((t.type === 'Advance' || t.type === 'Custom Pay') && activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
-                        });
+                    allTx.forEach(t => {
+                        if(!t || !t.type) return;
+                        let txAmt = Number(t.amount) || 0;
+                        let activeDateStr = t.collectedOn || t.date || "";
+                        let activeMY = activeDateStr.length >= 10 ? (activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5)) : "";
+                        if((t.type === 'Advance' || t.type === 'Custom Pay' || t.type === 'Advance (Pre-Settle)' || t.type.includes('Custom Pay (Late Mark)')) && activeMY === selectedMonthVal) { match = true; amount += txAmt; trackMode(t); }
+                    });
+                    if (!isDayEndDoneToday && isActionFromToday && c.status === "Active" && liveAdv > 0) {
+                        match = true; amount += liveAdv; trackMode({mode: c.customPayMode || 'cash'});
                     }
                 } else if (type === 'settle') {
                     title = "Today's Direct Settlements";
-                    if(c.transactions) {
-                        c.transactions.forEach(t => {
-                           if(t.type === 'Direct Settle' && (t.collectedOn === todayStr || (!t.collectedOn && t.date === todayStr))) { match = true; amount += t.amount; trackMode(t); } 
-                        });
-                    }
+                    allTx.forEach(t => {
+                        if(!t || !t.type) return;
+                        let txAmt = Number(t.amount) || 0;
+                        let activeDateStr = t.collectedOn || t.date || "";
+                        if(t.type === 'Direct Settle' && activeDateStr === todayStr) { match = true; amount += txAmt; trackMode(t); } 
+                    });
                 } else if (type === 'settle-month') { 
                     title = "Month's Direct Settlements";
-                    if(c.transactions) {
-                        c.transactions.forEach(t => {
-                            let activeDateStr = t.collectedOn || t.date;
-if(t.type === 'Direct Settle' && activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5) === selectedMonthVal) { match = true; amount += t.amount; trackMode(t); }
-                        });
-                    }
+                    allTx.forEach(t => {
+                        if(!t || !t.type) return;
+                        let txAmt = Number(t.amount) || 0;
+                        let activeDateStr = t.collectedOn || t.date || "";
+                        let activeMY = activeDateStr.length >= 10 ? (activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5)) : "";
+                        if(t.type === 'Direct Settle' && activeMY === selectedMonthVal) { match = true; amount += txAmt; trackMode(t); }
+                    });
                 } else if (type === 'today-bounce') {
                     title = "Today's Bounced EMIs";
-                    let tx = c.transactions?.find(t => t.date === todayStr && t.type === 'Bounced');
-                    if(tx) { match = true; amount += tx.amount; }
-                    if (!isDayEndDoneToday && c.emiSettled === 'bounce') {
+                    allTx.forEach(t => {
+                        if(t && t.date === todayStr && t.type === 'Bounced') { match = true; amount += (Number(t.amount) || 0); }
+                    });
+                    if (!isDayEndDoneToday && isActionFromToday && c.status === "Active" && c.emiSettled === 'bounce') {
                         match = true; amount += activeEmiAmount;
                     }
                 } else if (type === 'total-risk') {
@@ -9632,41 +9637,38 @@ if(t.type === 'Direct Settle' && activeDateStr.substring(6,10) + "-" + activeDat
                     if(c.overdue && c.overdue > 0 && c.status === "Active") { match = true; amount = c.overdue; }
                 } else if (type === 'disburse-today') {
                     title = "Today's Disbursals";
-                    if(c.isApproved && c.approvalDate === todayStr) { match = true; amount = c.principal; }
+                    if(c.isApproved && c.approvalDate === todayStr) { match = true; amount = Number(c.principal) || 0; }
                 } else if (type === 'disburse-month') {
                     title = "Month's Disbursals";
-                    if(c.isApproved && appDateMonth === selectedMonthVal) { match = true; amount = c.principal; }
+                    if(c.isApproved && appDateMonth === selectedMonthVal) { match = true; amount = Number(c.principal) || 0; }
                 } else if (type === 'collect-today') {
                     title = "Today's Collections";
                     let hasShortfall = false;
-                    if(c.transactions) {
-                        c.transactions.forEach(t => {
-                            // 🌟 FIX: Include physically collected late marks and pre-settles
-                            let isPhysicallyCollectedToday = (t.collectedOn === todayStr) || (!t.collectedOn && t.date === todayStr);
-                            
-                            if(isPhysicallyCollectedToday && t.type === 'Shortfall Penalty') hasShortfall = true;
-                            
-                            // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty' from isValidType. Unpaid amount ko total collection math mein nahi jodna hai!
-                            let isValidType = ['Received', 'Online App', 'Advance', 'Advance (Pre-Settle)', 'Custom Pay', 'Direct Settle'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
+                    allTx.forEach(t => {
+                        if(!t || !t.type) return;
+                        let txAmt = Number(t.amount) || 0;
+                        let activeDateStr = t.collectedOn || t.date || "";
+                        let isPhysicallyCollectedToday = (activeDateStr === todayStr);
+                        
+                        if(isPhysicallyCollectedToday && t.type === 'Shortfall Penalty') hasShortfall = true;
 
-                            if(isValidType && isPhysicallyCollectedToday) {
-                                match = true; amount += t.amount; trackMode(t); 
-                                if (t.type === 'Direct Settle') { collectionCategory = 'settle'; if(type.includes('collect')) sumSettle += t.amount; }
-                                else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) { collectionCategory = 'partial'; if(type.includes('collect')) sumPartial += t.amount; }
-                                else if (t.type.includes('Advance')) { collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial'; if(type.includes('collect')) sumAdvance += t.amount; }
-                                else { if(type.includes('collect')) sumNormal += t.amount; }
-                            }
-                        });
-                    }
-                    if (!isDayEndDoneToday && c.status === "Active") {
+                        if(isCollectionTxType(t.type) && isPhysicallyCollectedToday) {
+                            match = true; amount += txAmt; trackMode(t); 
+                            if (t.type === 'Direct Settle') { collectionCategory = 'settle'; sumSettle += txAmt; }
+                            else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) { collectionCategory = 'partial'; sumPartial += txAmt; }
+                            else if (t.type.includes('Advance')) { collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial'; sumAdvance += txAmt; }
+                            else { sumNormal += txAmt; }
+                        }
+                    });
+                    if (!isDayEndDoneToday && isActionFromToday && c.status === "Active") {
                         if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
                             match = true; amount += activeEmiAmount; trackMode({mode: c.emiSettled.includes('upi') || c.emiSettled === 'online_paid' ? 'upi' : 'cash'});
-                            if (type.includes('collect')) sumNormal += activeEmiAmount;
-                        } else if (c.advancePaid > 0) {
-                            match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
-                            let totalDue = activeEmiAmount + (c.overdue || 0);
-                            if (c.advancePaid < totalDue) { collectionCategory = 'partial'; if (type.includes('collect')) sumPartial += c.advancePaid; }
-                            else { collectionCategory = 'advance'; if (type.includes('collect')) sumAdvance += c.advancePaid; }
+                            sumNormal += activeEmiAmount;
+                        } else if (liveAdv > 0) {
+                            match = true; amount += liveAdv; trackMode({mode: c.customPayMode || 'cash'});
+                            let totalDue = Math.min(Number(c.outstanding) || 0, activeEmiAmount + (Number(c.overdue) || 0));
+                            if (liveAdv < totalDue) { collectionCategory = 'partial'; sumPartial += liveAdv; }
+                            else { collectionCategory = 'advance'; sumAdvance += liveAdv; }
                         }
                     }
                     if (hasShortfall) collectionCategory = 'partial';
@@ -9674,40 +9676,34 @@ if(t.type === 'Direct Settle' && activeDateStr.substring(6,10) + "-" + activeDat
                 } else if (type === 'collect-month') {
                     title = "Month's Collections";
                     let hasShortfall = false;
-                    if(c.transactions) {
-                        c.transactions.forEach(t => {
-                            // 🌟 FIX: Extract actual month even if it was late-marked
-                            let activeDateStr = t.collectedOn || t.date;
-                            let activeMY = activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5);
-                            
-                            if(activeMY === selectedMonthVal && t.type === 'Shortfall Penalty') hasShortfall = true;
-                            
-                            // 🌟 FATAL BUG FIX: Removed 'Shortfall Penalty'. Month ke total collection list mein bhi fake numbers nahi aayenge ab.
-                            let isValidType = ['Received', 'Online App', 'Advance', 'Advance (Pre-Settle)', 'Custom Pay', 'Direct Settle'].includes(t.type) || t.type.includes('Received (Late Mark)') || t.type.includes('Custom Pay (Late Mark)');
-
-                            if(isValidType && activeMY === selectedMonthVal) {
-                                match = true; amount += t.amount; trackMode(t); 
-                                if (t.type === 'Direct Settle') { collectionCategory = 'settle'; if(type.includes('collect')) sumSettle += t.amount; }
-                                else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) { collectionCategory = 'partial'; if(type.includes('collect')) sumPartial += t.amount; }
-                                else if (t.type.includes('Advance')) { collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial'; if(type.includes('collect')) sumAdvance += t.amount; }
-                                else { if(type.includes('collect')) sumNormal += t.amount; }
-                            }
-                        });
-                    }
-                    
-                    // 🌟 FIX: Added Live Un-day-ended data for Monthly View too!
-                    if (!isDayEndDoneToday && c.status === "Active") {
-                        let isTodayInSelectedMonth = (todayStr.substring(6,10) + "-" + todayStr.substring(3,5) === selectedMonthVal);
+                    allTx.forEach(t => {
+                        if(!t || !t.type) return;
+                        let txAmt = Number(t.amount) || 0;
+                        let activeDateStr = t.collectedOn || t.date || "";
+                        let activeMY = activeDateStr.length >= 10 ? (activeDateStr.substring(6,10) + "-" + activeDateStr.substring(3,5)) : "";
                         
+                        if(activeMY === selectedMonthVal && t.type === 'Shortfall Penalty') hasShortfall = true;
+
+                        if(isCollectionTxType(t.type) && activeMY === selectedMonthVal) {
+                            match = true; amount += txAmt; trackMode(t); 
+                            if (t.type === 'Direct Settle') { collectionCategory = 'settle'; sumSettle += txAmt; }
+                            else if (t.type.includes('Custom Pay') || t.type.includes('Late Mark')) { collectionCategory = 'partial'; sumPartial += txAmt; }
+                            else if (t.type.includes('Advance')) { collectionCategory = collectionCategory !== 'partial' ? 'advance' : 'partial'; sumAdvance += txAmt; }
+                            else { sumNormal += txAmt; }
+                        }
+                    });
+                    
+                    if (!isDayEndDoneToday && isActionFromToday && c.status === "Active") {
+                        let isTodayInSelectedMonth = (todayStr.substring(6,10) + "-" + todayStr.substring(3,5) === selectedMonthVal);
                         if (isTodayInSelectedMonth) {
-                        if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
+                            if (c.emiSettled === 'received_cash' || c.emiSettled === 'received_upi' || c.emiSettled === 'received' || c.emiSettled === 'online_paid') {
                                 match = true; amount += activeEmiAmount; trackMode({mode: c.emiSettled.includes('upi') || c.emiSettled === 'online_paid' ? 'upi' : 'cash'});
-                                if (type.includes('collect')) sumNormal += activeEmiAmount;
-                            } else if (c.advancePaid > 0) {
-                                match = true; amount += c.advancePaid; trackMode({mode: c.customPayMode || 'cash'});
-                                let totalDue = activeEmiAmount + (c.overdue || 0);
-                                if (c.advancePaid < totalDue) { collectionCategory = 'partial'; if (type.includes('collect')) sumPartial += c.advancePaid; }
-                                else { collectionCategory = 'advance'; if (type.includes('collect')) sumAdvance += c.advancePaid; }
+                                sumNormal += activeEmiAmount;
+                            } else if (liveAdv > 0) {
+                                match = true; amount += liveAdv; trackMode({mode: c.customPayMode || 'cash'});
+                                let totalDue = Math.min(Number(c.outstanding) || 0, activeEmiAmount + (Number(c.overdue) || 0));
+                                if (liveAdv < totalDue) { collectionCategory = 'partial'; sumPartial += liveAdv; }
+                                else { collectionCategory = 'advance'; sumAdvance += liveAdv; }
                             }    
                         }
                     }
